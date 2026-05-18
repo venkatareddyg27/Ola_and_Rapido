@@ -2,7 +2,8 @@
 # ENUMS
 # =========================================================
 
-from sqlalchemy import Enum
+from sqlalchemy import Enum 
+from enum import Enum 
 
 
 class PaymentStatus(str, Enum):
@@ -46,3 +47,34 @@ class EscrowTransactionType(str, Enum):
     RELEASE = "RELEASE"
     REFUND = "REFUND"
     DEDUCTION = "DEDUCTION"
+
+
+
+# -------------------------
+# ENUMS
+# -------------------------
+
+class PackageType(str, Enum):
+    document = "document"
+    food = "food"
+    electronics = "electronics"
+    grocery = "grocery"
+    medicine = "medicine"
+    clothes = "clothes"
+    others = "others"
+
+
+class WeightTier(str,Enum):
+    light = "light"
+    medium = "medium"
+    heavy = "heavy"
+
+
+class ParcelStatus(str, Enum):
+    pending_pickup = "pending_pickup"
+    driver_assigned = "driver_assigned"
+    picked_up = "picked_up"
+    in_transit = "in_transit"
+    delivered = "delivered"
+    cancelled = "cancelled"
+
