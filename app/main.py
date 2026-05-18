@@ -32,7 +32,11 @@ from app.models.admin import (
     AdminLog,
     SystemConfig
 )
-
+from app.models.user import (
+    User,
+    CustomerProfile,
+    DriverProfile,
+    CarOwnerProfile)
 # =========================================================
 # FASTAPI APP
 # =========================================================
