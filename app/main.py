@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from app.core.database import Base, engine
 
 # Import Models
+from app.models.user import User
 from app.models.parcel import Parcel
 
 

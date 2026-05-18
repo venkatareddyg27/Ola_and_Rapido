@@ -36,7 +36,7 @@ class Parcel(Base):
     # Foreign Keys
     sender_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        ForeignKey("user.id"),
         nullable=False
     )
 
