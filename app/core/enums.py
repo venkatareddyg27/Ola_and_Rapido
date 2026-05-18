@@ -147,16 +147,6 @@ class VehicleVerificationStatus(str, Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
 
-    # =========================================================
-# VERIFICATION STATUS
-# =========================================================
-
-class VerificationStatus(str, Enum):
-    pending = "pending"
-    verified = "verified"
-    rejected = "rejected"
-
-
 # =========================================================
 # DOCUMENT TYPES
 # =========================================================
@@ -180,3 +170,46 @@ class AadhaarEkycStatus(str, Enum):
     otp_verified = "otp_verified"
     completed = "completed"
     failed = "failed"
+
+    
+
+class RentalBookingStatus(str, Enum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    REJECTED = "rejected"
+
+
+class DamageClaimStatus(str, Enum):
+    NONE = "none"
+    RAISED = "raised"
+    UNDER_REVIEW = "under_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    SETTLED = "settled"
+
+class RideType(str, Enum):
+    BIKE = "bike"
+    AUTO = "auto"
+    CAB = "cab"
+    RENTAL = "rental"
+
+
+class RideStatus(str, Enum):
+    SEARCHING = "searching"
+    DRIVER_ASSIGNED = "driver_assigned"
+    DRIVER_ARRIVED = "driver_arrived"
+    OTP_VERIFIED = "otp_verified"
+    STARTED = "started"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    FAILED = "failed"
+
+
+class PaymentMethod(str, Enum):
+    CASH = "cash"
+    UPI = "upi"
+    CARD = "card"
+    WALLET = "wallet"
