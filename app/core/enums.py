@@ -49,10 +49,6 @@ class EscrowTransactionType(str, Enum):
 
 
 
-# -------------------------
-# ENUMS
-# -------------------------
-
 class PackageType(str, Enum):
     document = "document"
     food = "food"
@@ -147,14 +143,6 @@ class VehicleVerificationStatus(str, Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
 
-    # =========================================================
-# VERIFICATION STATUS
-# =========================================================
-
-class VerificationStatus(str, Enum):
-    pending = "pending"
-    verified = "verified"
-    rejected = "rejected"
 
 
 # =========================================================
