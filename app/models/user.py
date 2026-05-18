@@ -102,6 +102,20 @@ class User(Base):
         cascade="all, delete",
     )
 
+    driver_profile = relationship(
+        "DriverProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete",
+    )
+
+    car_owner_profile = relationship(
+        "CarOwnerProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete",
+    )
+
 
 # =========================================================
 # CUSTOMER PROFILE MODEL
@@ -162,9 +176,9 @@ class CustomerProfile(Base):
 
     # Relationships
     user = relationship(
-        "User",
-        back_populates="customer_profile",
-    )
+    "User",
+    back_populates="customer_profile",)
+    
 
 # =========================================================
 # DRIVER PROFILE MODEL
@@ -185,10 +199,7 @@ class DriverProfile(Base):
 
     current_vehicle_id = Column(
         BigInteger,
-        ForeignKey("vehicles.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
+        ForeignKey("vehicles.id", ondelete="SET NULL"))
 
     is_online = Column(Boolean, default=False, nullable=False)
 
@@ -250,7 +261,9 @@ class DriverProfile(Base):
         onupdate=datetime.utcnow,
     )
 
-    user = relationship("User", back_populates="driver_profile")
+    user = relationship(
+    "User",
+    back_populates="driver_profile")
 
 # =========================================================
 # CAR OWNER PROFILE MODEL
@@ -309,4 +322,6 @@ class CarOwnerProfile(Base):
         onupdate=datetime.utcnow,
     )
 
-    user = relationship("User", back_populates="car_owner_profile")
+    user = relationship(
+    "User",
+    back_populates="car_owner_profile")

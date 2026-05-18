@@ -37,6 +37,10 @@ from app.models.user import (
     CustomerProfile,
     DriverProfile,
     CarOwnerProfile)
+from app.models.vehicle import (
+    Vehicle,
+    VehicleListing
+)
 # =========================================================
 # FASTAPI APP
 # =========================================================
