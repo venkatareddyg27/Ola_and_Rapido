@@ -2,7 +2,6 @@
 
 from app.core.enums import (
     PackageType,WeightTier,ParcelStatus)
-import uuid
 
 from sqlalchemy import (
     Column,

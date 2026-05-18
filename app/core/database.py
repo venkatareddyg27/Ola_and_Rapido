@@ -1,32 +1,55 @@
-
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-# PostgreSQL URL
-DATABASE_URL = "postgresql://postgres:Kittu2001@localhost:5432/ola_rapido"
-
-# Create Engine
-engine = create_engine(
+from app.core.config import settings
+ 
+ 
+# =========================================================
+# DATABASE URL
+# =========================================================
+ 
+DATABASE_URL = settings.DATABASE_URL
+ 
+ 
+# =========================================================
+# ENGINE
+# =========================================================
+ 
+engine = create_async_engine(
     DATABASE_URL,
-    echo=True
+    echo=True,
 )
-
-# Session
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
+ 
+ 
+# =========================================================
+# SESSION
+# =========================================================
+ 
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
 )
-
-# Base Class
+ 
+ 
+# =========================================================
+# BASE
+# =========================================================
+ 
 Base = declarative_base()
-
-
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+ 
+ 
+# =========================================================
+# DATABASE DEPENDENCY
+# =========================================================
+ 
+async def get_db() -> AsyncSession:
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+ 
