@@ -8,7 +8,7 @@ from app.core.database import Base, engine
 from app.models.user import User
 from app.models.parcel import Parcel
 from app.models.vehicle import Vehicle
-
+from app.models.kyc import AadhaarEkycSession,KycDocument
 # Create Tables
 Base.metadata.create_all(bind=engine)
 

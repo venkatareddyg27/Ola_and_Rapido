@@ -4,7 +4,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # PostgreSQL URL
-DATABASE_URL = "postgresql://postgres:1234@localhost:5432/ola_rapido_db"
+DATABASE_URL = "postgresql://postgres:Kittu2001@localhost:5432/ola_rapido"
 
 # Create Engine
 engine = create_engine(

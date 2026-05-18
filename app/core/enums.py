@@ -146,3 +146,37 @@ class VehicleVerificationStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
+
+    # =========================================================
+# VERIFICATION STATUS
+# =========================================================
+
+class VerificationStatus(str, Enum):
+    pending = "pending"
+    verified = "verified"
+    rejected = "rejected"
+
+
+# =========================================================
+# DOCUMENT TYPES
+# =========================================================
+
+class DocumentType(str, Enum):
+    aadhaar = "aadhaar"
+    pan = "pan"
+    driving_license = "driving_license"
+    rc = "rc"
+    insurance = "insurance"
+    puc = "puc"
+    selfie = "selfie"
+
+
+# =========================================================
+# AADHAAR EKYC STATUS
+# =========================================================
+
+class AadhaarEkycStatus(str, Enum):
+    otp_sent = "otp_sent"
+    otp_verified = "otp_verified"
+    completed = "completed"
+    failed = "failed"
