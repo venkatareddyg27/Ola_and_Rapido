@@ -97,3 +97,21 @@ class DriverStatus(str, Enum):
     ON_DELIVERY = "on_delivery"
     OFFLINE = "offline"
     BREAK = "break"
+    
+class FuelType(str, Enum):
+    PETROL = "petrol"
+    DIESEL = "diesel"
+    CNG = "cng"
+    EV = "ev"
+    HYBRID = "hybrid"
+
+
+class TransmissionType(str, Enum):
+    MANUAL = "manual"
+    AUTOMATIC = "automatic"
+
+
+class VehicleVerificationStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
