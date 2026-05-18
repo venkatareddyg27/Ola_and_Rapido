@@ -1,0 +1,120 @@
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.config import settings
+from app.core.database import engine, Base
+
+
+# =========================================================
+# IMPORT ALL MODELS
+# =========================================================
+
+from app.models.payment import (
+    Payment,
+    PaymentTransaction,
+    Wallet,
+    WalletTransaction,
+    Invoice,
+    Refund
+)
+
+from app.models.escrow_holds import (
+    EscrowHold,
+    EscrowTransaction,
+    DamageClaim
+)
+
+from app.models.dispute import (
+    Dispute,
+)
+
+from app.models.live_location import (
+    LiveLocation
+)
+
+from app.models.admin import (
+    AdminLog,
+    SystemConfig
+)
+
+from app.models.user import (
+    User,
+    CustomerProfile,
+    DriverProfile,
+    CarOwnerProfile
+)
+
+from app.models.vehicle import (
+    Vehicle,
+    VehicleListing
+)
+
+from app.models.parcel import (
+    Parcel
+)
+
+
+# =========================================================
+# LIFESPAN
+# =========================================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    print("Database tables created successfully")
+
+    yield
+
+
+# =========================================================
+# FASTAPI APP
+# =========================================================
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    debug=settings.DEBUG,
+    lifespan=lifespan
+)
+
+
+# =========================================================
+# CORS
+# =========================================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# =========================================================
+# ROOT API
+# =========================================================
+
+@app.get("/")
+async def root():
+    return {
+        "message": f"{settings.APP_NAME} Running Successfully"
+    }
+
+
+# =========================================================
+# HEALTH CHECK
+# =========================================================
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "success",
+        "app_name": settings.APP_NAME,
+        "version": settings.APP_VERSION
+    }
