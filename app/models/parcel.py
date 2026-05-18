@@ -14,7 +14,8 @@ from sqlalchemy import (
     Numeric,
     Enum,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import BigInteger
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -28,26 +29,26 @@ class Parcel(Base):
     __tablename__ = "parcels"
 
     # Primary Key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(BigInteger, primary_key=True, index=True)
 
     # Booking Reference
     booking_reference = Column(String(20), unique=True, nullable=False)
 
     # Foreign Keys
     sender_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("user.id"),
+        BigInteger,
+        ForeignKey("users.id"),
         nullable=False
     )
 
     receiver_id = Column(
-        UUID(as_uuid=True),
+        BigInteger,
         ForeignKey("users.id"),
         nullable=True
     )
 
     driver_id = Column(
-        UUID(as_uuid=True),
+        BigInteger,
         ForeignKey("users.id"),
         nullable=True
     )

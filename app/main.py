@@ -7,7 +7,7 @@ from app.core.database import Base, engine
 # Import Models
 from app.models.user import User
 from app.models.parcel import Parcel
-
+from app.models.vehicle import Vehicle
 
 # Create Tables
 Base.metadata.create_all(bind=engine)
