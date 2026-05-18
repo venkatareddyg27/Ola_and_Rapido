@@ -1,7 +1,8 @@
 # =========================================================
 # ENUMS
 # =========================================================
-from enum import Enum
+
+from sqlalchemy import Enum
 
 
 class PaymentStatus(str, Enum):
@@ -63,3 +64,36 @@ class ActionTypeEnum(str, Enum):
     resolve = "resolve"
     assign = "assign"
     export = "export"
+
+class UserRole(str, Enum):
+    USER = "USER"
+    ADMIN = "ADMIN"
+    DRIVER = "DRIVER"
+    STORE_MANAGER = "STORE_MANAGER"
+
+
+class Gender(str, Enum):
+    MALE = "MALE"
+    FEMALE = "FEMALE"
+    OTHER = "OTHER"
+    
+class KYCStatus(str, Enum):
+    NOT_STARTED = "not_started"
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    EXPIRED = "expired"
+
+
+class LoyaltyTier(str, Enum):
+    BRONZE = "bronze"
+    SILVER = "silver"
+    GOLD = "gold"
+    PLATINUM = "platinum"
+    
+class DriverStatus(str, Enum):
+    IDLE = "idle"
+    ON_RIDE = "on_ride"
+    ON_DELIVERY = "on_delivery"
+    OFFLINE = "offline"
+    BREAK = "break"
