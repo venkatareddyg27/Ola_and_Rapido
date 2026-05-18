@@ -46,3 +46,21 @@ class EscrowTransactionType(str, Enum):
     RELEASE = "RELEASE"
     REFUND = "REFUND"
     DEDUCTION = "DEDUCTION"
+
+
+
+
+class UserTypeEnum(str, Enum):
+    driver = "driver"
+    customer = "customer"
+class ActionTypeEnum(str, Enum):
+    create = "create"
+    update = "update"
+    delete = "delete"
+    ban = "ban"
+    unban = "unban"
+    refund = "refund"
+    escalate = "escalate"
+    resolve = "resolve"
+    assign = "assign"
+    export = "export"
