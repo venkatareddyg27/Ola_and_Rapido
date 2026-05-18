@@ -1,8 +1,7 @@
 # =========================================================
 # ENUMS
 # =========================================================
-
-from sqlalchemy import Enum
+from enum import Enum
 
 
 class PaymentStatus(str, Enum):

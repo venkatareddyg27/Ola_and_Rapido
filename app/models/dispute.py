@@ -38,5 +38,3 @@ class Dispute(Base):
     status = Column(String, default="open", index=True)
     resolution = Column(Text, nullable=True)
     escalation_count = Column(Integer, default=0)
-
-    # SLA & R

@@ -15,8 +15,8 @@ from sqlalchemy import (
 
 from sqlalchemy.orm import relationship
 
-from core.database import Base
-from core.enums import (PaymentStatus, TransactionStatus, WalletTransactionType, RefundStatus)
+from app.core.database import Base
+from app.core.enums import (PaymentStatus, TransactionStatus, WalletTransactionType, RefundStatus)
 
 
 
