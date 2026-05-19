@@ -12,7 +12,7 @@ from app.core.enums import (
     SubscriptionPlan,
     OTPPurpose,
 )
-
+""
 class UserBase(BaseModel):
     phone: str
     email: Optional[EmailStr] = None

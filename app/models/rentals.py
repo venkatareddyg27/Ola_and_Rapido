@@ -1,8 +1,8 @@
 # rentals.py
-
+ 
 import uuid
 from datetime import datetime
-
+ 
 from sqlalchemy import (
     Column,
     DateTime,
@@ -13,29 +13,36 @@ from sqlalchemy import (
     String,
     Text
 )
+<<<<<<< HEAD
 
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
+=======
+ 
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
+ 
+>>>>>>> f130a11f3e48383a0003076f2801887ee2655dd4
 from app.core.enums import InspectionType
 from models.base import Base
-
-
+ 
+ 
 class Rental(Base):
     __tablename__ = "rentals"
-
+ 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
+ 
     vehicle_id = Column(
         UUID(as_uuid=True),
         ForeignKey("vehicles.id")
     )
-
+ 
     renter_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id")
     )
-
+ 
     owner_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id")
@@ -55,50 +62,60 @@ class Rental(Base):
     aggrement_url = Column(String(255))
     total_fare = Column(Numeric(10, 2))
     created_at = Column(DateTime, default=datetime.utcnow)
-
+ 
     # RELATIONSHIPS
-
+ 
     vehicle = relationship(
         "Vehicle",
         back_populates="rentals"
     )
-
+ 
     renter = relationship(
         "User",
         foreign_keys=[renter_id],
         back_populates="rentals_as_renter"
     )
-
+ 
     owner = relationship(
         "User",
         foreign_keys=[owner_id],
         back_populates="rentals_as_owner"
     )
-
+ 
     inspections = relationship(
         "RentalInspection",
         back_populates="rental"
     )
-
+ 
     payments = relationship(
         "Payment",
         back_populates="rental"
     )
-    
+   
     disputes = relationship(
     "Dispute",
     back_populates="rental")
+<<<<<<< HEAD
 
 class RentalInspection(Base):
     __tablename__ = "rental_inspections"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
+=======
+ 
+class RentalInspection(Base):
+    __tablename__ = "rental_inspections"
+ 
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+ 
+>>>>>>> f130a11f3e48383a0003076f2801887ee2655dd4
     rental_id = Column(
         UUID(as_uuid=True),
         ForeignKey("rentals.id"),
         nullable=False
     )
+<<<<<<< HEAD
 
     inspection_type = Column(Enum(InspectionType), nullable=False)
 
@@ -109,22 +126,51 @@ class RentalInspection(Base):
     photo_urls = Column(JSONB, nullable=True)
     video_url = Column(String(255), nullable=True)
 
+=======
+ 
+    inspection_type = Column(Enum(InspectionType), nullable=False)
+ 
+    fuel_level = Column(Numeric(5, 2), nullable=True)
+    odometer_reading = Column(Integer, nullable=True)
+ 
+    damage_notes = Column(Text, nullable=True)
+    photo_urls = Column(JSONB, nullable=True)
+    video_url = Column(String(255), nullable=True)
+ 
+>>>>>>> f130a11f3e48383a0003076f2801887ee2655dd4
     inspector_user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         nullable=False
     )
+<<<<<<< HEAD
 
     inspected_at = Column(DateTime, nullable=False)
 
     # RELATIONSHIPS
 
+=======
+ 
+    inspected_at = Column(DateTime, nullable=False)
+ 
+    # RELATIONSHIPS
+ 
+>>>>>>> f130a11f3e48383a0003076f2801887ee2655dd4
     rental = relationship(
         "Rental",
         back_populates="inspections"
     )
+<<<<<<< HEAD
 
     inspector = relationship(
         "User",
         back_populates="rental_inspections"
     )
+=======
+ 
+    inspector = relationship(
+        "User",
+        back_populates="rental_inspections"
+    )
+ 
+>>>>>>> f130a11f3e48383a0003076f2801887ee2655dd4
