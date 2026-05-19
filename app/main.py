@@ -1,74 +1,21 @@
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import engine, Base
 
-
-# =========================================================
-# IMPORT ALL MODELS
-# =========================================================
-
-from app.models.payment import (
-    Payment,
-    PaymentTransaction,
-    Wallet,
-    WalletTransaction,
-    Invoice,
-    Refund
-)
-
-from app.models.escrow_holds import (
-    EscrowHold,
-    EscrowTransaction,
-    DamageClaim
-)
-
-from app.models.dispute import (
-    Dispute,
-)
-
-from app.models.live_location import (
-    LiveLocation
-)
-
-from app.models.admin import (
-    AdminLog,
-    SystemConfig
-)
-
-from app.models.user import (
-    User,
-    CustomerProfile,
-    DriverProfile,
-    CarOwnerProfile
-)
-
 from app.models.vehicle import (
     Vehicle,
     VehicleListing
 )
 
-from app.models.parcel import (
-    Parcel
-)
-
-
 # =========================================================
-# LIFESPAN
+# CREATE TABLES
 # =========================================================
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+Base.metadata.create_all(bind=engine)
 
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    print("Database tables created successfully")
-
-    yield
+print("Database tables created successfully")
 
 
 # =========================================================
@@ -79,7 +26,6 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     debug=settings.DEBUG,
-    lifespan=lifespan
 )
 
 
@@ -101,7 +47,7 @@ app.add_middleware(
 # =========================================================
 
 @app.get("/")
-async def root():
+def root():
     return {
         "message": f"{settings.APP_NAME} Running Successfully"
     }
@@ -112,7 +58,7 @@ async def root():
 # =========================================================
 
 @app.get("/health")
-async def health_check():
+def health_check():
     return {
         "status": "success",
         "app_name": settings.APP_NAME,

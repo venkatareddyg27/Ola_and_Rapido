@@ -1,107 +1,201 @@
+from datetime import datetime
+
 from sqlalchemy import (
     Column,
     String,
+    Text,
     Boolean,
     DateTime,
-    Date,
-    Integer,
-    BigInteger,
-    Text,
     ForeignKey,
     Numeric,
-    Enum as SQLEnum,
+    BigInteger,
+    Integer,
+    Enum as SqlEnum
 )
 
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 
 from app.core.database import Base
-
-from app.core.enums import (
-    FuelType,
-    TransmissionType,
-    VehicleVerificationStatus,
-)
+from app.core.enums import VehicleType, FuelType, TransmissionType, VehicleVerificationStatus
 
 
 # =========================================================
 # VEHICLE MODEL
 # =========================================================
-
 class Vehicle(Base):
     __tablename__ = "vehicles"
 
     id = Column(BigInteger, primary_key=True, index=True)
 
-    owner_user_id = Column(
+    owner_id = Column(
         BigInteger,
         ForeignKey("users.id"),
         nullable=False
     )
 
-    registration_number = Column(
-        String(20),
-        unique=True,
-        nullable=False,
-        index=True
+    vehicle_type = Column(
+        SqlEnum(VehicleType),
+        nullable=False
     )
 
-    rc_verified = Column(Boolean, default=False)
-    rc_verification_date = Column(DateTime, nullable=True)
+    brand = Column(String(100), nullable=False)
 
-    rc_photo_url = Column(Text, nullable=False)
-    rc_owner_name = Column(String(255), nullable=True)
-
-    make = Column(String(100), nullable=False)
     model = Column(String(100), nullable=False)
 
     year = Column(Integer, nullable=False)
-    color = Column(String(50), nullable=True)
+
+    registration_number = Column(
+        String(50),
+        unique=True,
+        nullable=False
+    )
+
+    color = Column(String(50))
 
     fuel_type = Column(
-        SQLEnum(FuelType),
-        nullable=True
+        SqlEnum(FuelType),
+        nullable=False
     )
 
-    transmission = Column(
-        SQLEnum(TransmissionType),
-        nullable=True
+    transmission_type = Column(
+        SqlEnum(TransmissionType),
+        nullable=False
     )
 
-    seating_capacity = Column(Integer, default=5)
+    seating_capacity = Column(Integer)
 
-    insurance_policy_number = Column(String(100), nullable=True)
-    insurance_valid_until = Column(Date, nullable=True)
-    insurance_photo_url = Column(Text, nullable=True)
+    description = Column(Text)
 
-    puc_certificate_number = Column(String(100), nullable=True)
-    puc_valid_until = Column(Date, nullable=True)
-    puc_photo_url = Column(Text, nullable=True)
+    price_per_day = Column(
+        Numeric(10, 2),
+        nullable=False
+    )
+
+    is_available = Column(
+        Boolean,
+        default=True
+    )
 
     verification_status = Column(
-        SQLEnum(VehicleVerificationStatus),
+        SqlEnum(VehicleVerificationStatus),
         default=VehicleVerificationStatus.PENDING
     )
 
-    is_active = Column(Boolean, default=True)
-
-    gps_tracker_imei = Column(String(50), nullable=True)
-    gps_tracker_installed = Column(Boolean, default=False)
-
     created_at = Column(
         DateTime,
-        server_default=func.now()
+        default=func.now()
     )
 
     updated_at = Column(
         DateTime,
-        server_default=func.now(),
+        default=func.now(),
         onupdate=func.now()
     )
 
 
 # =========================================================
-# VEHICLE LISTING MODEL
+# VEHICLE DOCUMENTS
+# =========================================================
+
+class VehicleDocument(Base):
+    __tablename__ = "vehicle_documents"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    vehicle_id = Column(
+        BigInteger,
+        ForeignKey("vehicles.id"),
+        nullable=False
+    )
+
+    rc_document_url = Column(Text)
+
+    insurance_document_url = Column(Text)
+
+    pollution_certificate_url = Column(Text)
+
+    driving_license_url = Column(Text)
+
+    is_verified = Column(
+        Boolean,
+        default=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=func.now()
+    )
+
+
+# =========================================================
+# VEHICLE INSURANCE
+# =========================================================
+
+class VehicleInsurance(Base):
+    __tablename__ = "vehicle_insurance"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    vehicle_id = Column(
+        BigInteger,
+        ForeignKey("vehicles.id"),
+        nullable=False
+    )
+
+    provider_name = Column(String(255))
+
+    policy_number = Column(String(255))
+
+    valid_from = Column(DateTime)
+
+    valid_till = Column(DateTime)
+
+    insurance_amount = Column(
+        Numeric(12, 2)
+    )
+
+    created_at = Column(
+        DateTime,
+        default=func.now()
+    )
+
+
+# =========================================================
+# VEHICLE MAINTENANCE LOGS
+# =========================================================
+
+class VehicleMaintenanceLog(Base):
+    __tablename__ = "vehicle_maintenance_logs"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    vehicle_id = Column(
+        BigInteger,
+        ForeignKey("vehicles.id"),
+        nullable=False
+    )
+
+    title = Column(String(255))
+
+    description = Column(Text)
+
+    maintenance_cost = Column(
+        Numeric(10, 2)
+    )
+
+    maintenance_date = Column(DateTime)
+
+    next_service_due = Column(DateTime)
+
+    created_at = Column(
+        DateTime,
+        default=func.now()
+    )
+
+
+# =========================================================
+# VEHICLE LISTINGS
 # =========================================================
 
 class VehicleListing(Base):
@@ -115,90 +209,169 @@ class VehicleListing(Base):
         nullable=False
     )
 
-    owner_user_id = Column(
-        BigInteger,
-        ForeignKey("users.id"),
-        nullable=False
+    title = Column(String(255))
+
+    description = Column(Text)
+
+    city = Column(String(100))
+
+    price_per_hour = Column(
+        Numeric(10, 2)
     )
 
-    daily_rate = Column(
-        Numeric(10, 2),
-        nullable=False
+    minimum_booking_hours = Column(Integer)
+
+    is_active = Column(
+        Boolean,
+        default=True
     )
-
-    per_km_rate = Column(
-        Numeric(5, 2),
-        nullable=True
-    )
-
-    security_deposit_amount = Column(
-        Numeric(10, 2),
-        nullable=False
-    )
-
-    minimum_rental_days = Column(
-        Integer,
-        default=1
-    )
-
-    maximum_rental_days = Column(
-        Integer,
-        default=30
-    )
-
-    available_from = Column(Date, nullable=True)
-    available_until = Column(Date, nullable=True)
-
-    is_available = Column(Boolean, default=True)
-
-    pickup_latitude = Column(
-        Numeric(10, 8),
-        nullable=False
-    )
-
-    pickup_longitude = Column(
-        Numeric(11, 8),
-        nullable=False
-    )
-
-    pickup_address = Column(Text, nullable=True)
-
-    photos = Column(JSONB, default=list)
-    interior_photos = Column(JSONB, default=list)
-
-    description = Column(Text, nullable=True)
-
-    amenities = Column(JSONB, default=list)
-
-    km_limit_per_day = Column(Integer, nullable=True)
-
-    allowed_states = Column(JSONB, default=list)
-
-    total_bookings = Column(Integer, default=0)
-
-    total_revenue = Column(
-        Numeric(12, 2),
-        default=0
-    )
-
-    average_rating = Column(
-        Numeric(3, 2),
-        default=5.0
-    )
-
-    admin_approved = Column(Boolean, default=False)
-
-    admin_approval_at = Column(DateTime, nullable=True)
-
-    admin_notes = Column(Text, nullable=True)
 
     created_at = Column(
         DateTime,
-        server_default=func.now()
+        default=func.now()
     )
 
-    updated_at = Column(
+
+# =========================================================
+# VEHICLE IMAGES
+# =========================================================
+
+class VehicleImage(Base):
+    __tablename__ = "vehicle_images"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    vehicle_id = Column(
+        BigInteger,
+        ForeignKey("vehicles.id"),
+        nullable=False
+    )
+
+    image_url = Column(Text, nullable=False)
+
+    is_primary = Column(
+        Boolean,
+        default=False
+    )
+
+    created_at = Column(
         DateTime,
-        server_default=func.now(),
-        onupdate=func.now()
+        default=func.now()
+    )
+
+
+# =========================================================
+# VEHICLE FEATURES
+# =========================================================
+
+class VehicleFeature(Base):
+    __tablename__ = "vehicle_features"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    vehicle_id = Column(
+        BigInteger,
+        ForeignKey("vehicles.id"),
+        nullable=False
+    )
+
+    feature_name = Column(String(255))
+
+    created_at = Column(
+        DateTime,
+        default=func.now()
+    )
+
+
+# =========================================================
+# VEHICLE TRACKING DEVICES
+# =========================================================
+
+class VehicleTrackingDevice(Base):
+    __tablename__ = "vehicle_tracking_devices"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    vehicle_id = Column(
+        BigInteger,
+        ForeignKey("vehicles.id"),
+        nullable=False
+    )
+
+    device_imei = Column(
+        String(255),
+        unique=True
+    )
+
+    provider_name = Column(String(255))
+
+    installed_at = Column(DateTime)
+
+    is_active = Column(
+        Boolean,
+        default=True
+    )
+
+
+# =========================================================
+# VEHICLE DAMAGE REPORTS
+# =========================================================
+
+class VehicleDamageReport(Base):
+    __tablename__ = "vehicle_damage_reports"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    vehicle_id = Column(
+        BigInteger,
+        ForeignKey("vehicles.id"),
+        nullable=False
+    )
+
+    reported_by = Column(
+        BigInteger,
+        ForeignKey("users.id")
+    )
+
+    damage_description = Column(Text)
+
+    damage_images = Column(JSONB)
+
+    estimated_repair_cost = Column(
+        Numeric(10, 2)
+    )
+
+    reported_at = Column(
+        DateTime,
+        default=func.now()
+    )
+
+
+# =========================================================
+# VEHICLE AVAILABILITY CALENDAR
+# =========================================================
+
+class VehicleAvailabilityCalendar(Base):
+    __tablename__ = "vehicle_availability_calendar"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    vehicle_id = Column(
+        BigInteger,
+        ForeignKey("vehicles.id"),
+        nullable=False
+    )
+
+    available_from = Column(DateTime)
+
+    available_to = Column(DateTime)
+
+    is_available = Column(
+        Boolean,
+        default=True
+    )
+
+    created_at = Column(
+        DateTime,
+        default=func.now()
     )

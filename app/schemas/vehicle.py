@@ -1,93 +1,106 @@
-from datetime import datetime, date
+from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel
 
-from app.core.enums import (
+from app.models.vehicle import (
+    VehicleType,
     FuelType,
     TransmissionType,
-    VehicleVerificationStatus,
+    VehicleVerificationStatus
 )
 
 
 # =========================================================
-# VEHICLE SCHEMAS
+# VEHICLE CREATE
 # =========================================================
 
-class VehicleBase(BaseModel):
+class VehicleCreateSchema(BaseModel):
 
-    registration_number: Optional[str] = Field(None, max_length=20)
+    owner_id: int
 
-    rc_photo_url: Optional[str] = None
-    rc_owner_name: Optional[str] = None
+    vehicle_type: VehicleType
 
-    make: Optional[str] = None
-    model: Optional[str] = None
+    brand: str
 
-    year: Optional[int] = Field(None, ge=2000)
-
-    color: Optional[str] = None
-
-    fuel_type: Optional[FuelType] = None
-    transmission: Optional[TransmissionType] = None
-
-    seating_capacity: Optional[int] = 5
-
-    insurance_policy_number: Optional[str] = None
-    insurance_valid_until: Optional[date] = None
-    insurance_photo_url: Optional[str] = None
-
-    puc_certificate_number: Optional[str] = None
-    puc_valid_until: Optional[date] = None
-    puc_photo_url: Optional[str] = None
-
-    gps_tracker_imei: Optional[str] = None
-    gps_tracker_installed: Optional[bool] = False
-
-
-class VehicleCreate(VehicleBase):
-
-    owner_user_id: int
-
-    registration_number: str
-    rc_photo_url: str
-
-    make: str
     model: str
 
     year: int
 
+    registration_number: str
 
-class VehicleUpdate(VehicleBase):
+    color: Optional[str] = None
 
-    rc_verified: Optional[bool] = None
+    fuel_type: FuelType
+
+    transmission_type: TransmissionType
+
+    seating_capacity: Optional[int] = None
+
+    description: Optional[str] = None
+
+    price_per_day: Decimal
+
+
+# =========================================================
+# VEHICLE UPDATE
+# =========================================================
+
+class VehicleUpdateSchema(BaseModel):
+
+    color: Optional[str] = None
+
+    description: Optional[str] = None
+
+    price_per_day: Optional[Decimal] = None
+
+    is_available: Optional[bool] = None
 
     verification_status: Optional[
         VehicleVerificationStatus
     ] = None
 
-    is_active: Optional[bool] = None
 
+# =========================================================
+# VEHICLE RESPONSE
+# =========================================================
 
-class VehicleResponse(VehicleBase):
-
-    model_config = ConfigDict(from_attributes=True)
+class VehicleResponseSchema(BaseModel):
 
     id: int
-    owner_user_id: int
+
+    owner_id: int
+
+    vehicle_type: VehicleType
+
+    brand: str
+
+    model: str
+
+    year: int
 
     registration_number: str
 
-    rc_verified: bool
+    color: Optional[str]
 
-    rc_verification_date: Optional[
-        datetime
-    ] = None
+    fuel_type: FuelType
+
+    transmission_type: TransmissionType
+
+    seating_capacity: Optional[int]
+
+    description: Optional[str]
+
+    price_per_day: Decimal
+
+    is_available: bool
 
     verification_status: VehicleVerificationStatus
 
-    is_active: bool
-
     created_at: datetime
+
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
