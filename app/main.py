@@ -1,20 +1,18 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import engine, Base
 
-from app.models.vehicle import (
-    Vehicle,
-    VehicleListing
-)
-
-# =========================================================
-# CREATE TABLES
-# =========================================================
-
-import app.models.user_models
-
+# USERS
+from app.models import user_models
+# VEHICLES
+from app.models import vehicle
+# PAYMENTS
+from app.models import payment_models
+#customers
+from app.models import customer_model
 
 # =========================================================
 # LIFESPAN
