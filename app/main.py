@@ -19,6 +19,8 @@ import app.models.vehicle
 import app.models.driver
 import app.models.kyc_models
 import app.models.promo
+import app.models.rental_booking
+import app.models.parcel_booking
 
 # =========================================================
 # LIFESPAN

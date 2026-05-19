@@ -635,9 +635,309 @@ class ShiftStatus(str, Enum):
 # =========================================================
 # VERIFICATION STATUS
 # =========================================================
+    ACTIVE = "ACTIVE"
+    PAID = "PAID"
+    WAIVED = "WAIVED"
 
-class VerificationStatus(str, Enum):
+# =========================================================
+# RENTAL BOOKING
+# =========================================================
+ 
+class RentalBookingStatus(str, Enum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    ONGOING = "ongoing"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    REJECTED = "rejected"
+ 
+ 
+class DamageClaimStatus(str, Enum):
+    NONE = "none"
+    RAISED = "raised"
+    UNDER_REVIEW = "under_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    SETTLED = "settled"
+    PENDING = "PENDING"
+ 
+class RentalExtensionStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+ 
+ 
+class ChecklistType(str, Enum):
+    PICKUP = "pickup"
+    RETURN = "return"
+  
+# =========================================================
+# PAYMENT ENUMS
+# =========================================================
+ 
+class PaymentStatus(str, Enum):
+    PENDING = "PENDING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    REFUNDED = "REFUNDED"
+    CANCELLED = "CANCELLED"
+ 
+ 
+class TransactionStatus(str, Enum):
+    INITIATED = "INITIATED"
+    PROCESSING = "PROCESSING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+ 
+ 
+class WalletTransactionType(str, Enum):
+    CREDIT = "CREDIT"
+    DEBIT = "DEBIT"
+ 
+ 
+class RefundStatus(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    PROCESSED = "PROCESSED"
+ 
+ 
+# =========================================================
+# ESCROW ENUMS
+# =========================================================
+ 
+class EscrowStatus(str, Enum):
+    INITIATED = "INITIATED"
+    HELD = "HELD"
+    UNDER_REVIEW = "UNDER_REVIEW"
+    RELEASED = "RELEASED"
+    PARTIALLY_RELEASED = "PARTIALLY_RELEASED"
+    FORFEITED = "FORFEITED"
+    FAILED = "FAILED"
+ 
+ 
+class EscrowTransactionType(str, Enum):
+    HOLD = "HOLD"
+    RELEASE = "RELEASE"
+    REFUND = "REFUND"
+    DEDUCTION = "DEDUCTION"
+ 
+ 
+# =========================================================
+# PARCEL ENUMS
+# =========================================================
+ 
+class PackageType(str, Enum):
+    DOCUMENT = "document"
+    FOOD = "food"
+    ELECTRONICS = "electronics"
+    GROCERY = "grocery"
+    MEDICINE = "medicine"
+    CLOTHES = "clothes"
+    OTHERS = "others"
+ 
+ 
+class WeightTier(str, Enum):
+    LIGHT = "light"
+    MEDIUM = "medium"
+    HEAVY = "heavy"
+ 
+ 
+class ParcelStatus(str, Enum):
+    PENDING_PICKUP = "pending_pickup"
+    DRIVER_ASSIGNED = "driver_assigned"
+    PICKED_UP = "picked_up"
+    IN_TRANSIT = "in_transit"
+    OUT_FOR_DELIVERY = "out_for_delivery"
+    DELIVERED = "delivered"
+    FAILED_DELIVERY = "failed_delivery"
+    RETURNED = "returned"
+    CANCELLED = "cancelled"
+ 
+ 
+class ParcelTrackingStatus(str, Enum):
+    DRIVER_ASSIGNED = "driver_assigned"
+    PICKED_UP = "picked_up"
+    REACHED_HUB = "reached_hub"
+    IN_TRANSIT = "in_transit"
+    OUT_FOR_DELIVERY = "out_for_delivery"
+    DELIVERED = "delivered"
+ 
+ 
+class DeliveryAttemptStatus(str, Enum):
+    SUCCESS = "success"
+    FAILED = "failed"
+    RESCHEDULED = "rescheduled"
+ 
+ 
+class ProofType(str, Enum):
+    IMAGE = "image"
+    SIGNATURE = "signature"
+    OTP = "otp"
+ 
+ 
+class FeedbackRating(str, Enum):
+    ONE = "1"
+    TWO = "2"
+    THREE = "3"
+    FOUR = "4"
+    FIVE = "5"
+ 
+ 
+# =========================================================
+# USER ENUMS
+# =========================================================
+ 
+class UserTypeEnum(str, Enum):
+    DRIVER = "driver"
+    CUSTOMER = "customer"
+ 
+ 
+class ActionTypeEnum(str, Enum):
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+    BAN = "ban"
+    UNBAN = "unban"
+    REFUND = "refund"
+    ESCALATE = "escalate"
+    RESOLVE = "resolve"
+    ASSIGN = "assign"
+    EXPORT = "export"
+ 
+ 
+class UserRole(str, Enum):
+    USER = "USER"
+    ADMIN = "ADMIN"
+    DRIVER = "DRIVER"
+    STORE_MANAGER = "STORE_MANAGER"
+ 
+ 
+class Gender(str, Enum):
+    MALE = "MALE"
+    FEMALE = "FEMALE"
+    OTHER = "OTHER"
+ 
+ 
+# =========================================================
+# KYC ENUMS
+# =========================================================
+ 
+class KYCStatus(str, Enum):
+    NOT_STARTED = "not_started"
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    EXPIRED = "expired"
+ 
+ class VerificationStatus(str, Enum):
     PENDING = "pending"
     VERIFIED = "verified"
     REJECTED = "rejected"
     UNDER_REVIEW = "under_review"
+ 
+ 
+class DocumentType(str, Enum):
+    AADHAAR = "aadhaar"
+    PAN = "pan"
+    DRIVING_LICENSE = "driving_license"
+    RC = "rc"
+    INSURANCE = "insurance"
+    PUC = "puc"
+    SELFIE = "selfie"
+ 
+ 
+class AadhaarEkycStatus(str, Enum):
+    OTP_SENT = "otp_sent"
+    OTP_VERIFIED = "otp_verified"
+    COMPLETED = "completed"
+    FAILED = "failed"
+ 
+ 
+# =========================================================
+# LOYALTY ENUMS
+# =========================================================
+ 
+class LoyaltyTier(str, Enum):
+    BRONZE = "bronze"
+    SILVER = "silver"
+    GOLD = "gold"
+    PLATINUM = "platinum"
+ 
+ 
+# =========================================================
+# DRIVER ENUMS
+# =========================================================
+ 
+class DriverStatus(str, Enum):
+    IDLE = "idle"
+    ON_RIDE = "on_ride"
+    ON_DELIVERY = "on_delivery"
+    PENDING = "PENDING"
+    OFFLINE = "offline"
+    BREAK = "break"
+ 
+ 
+# =========================================================
+# VEHICLE ENUMS
+# =========================================================
+ 
+class FuelType(str, Enum):
+    PETROL = "petrol"
+    DIESEL = "diesel"
+    CNG = "cng"
+    EV = "ev"
+    HYBRID = "hybrid"
+ 
+ 
+class TransmissionType(str, Enum):
+    MANUAL = "manual"
+    AUTOMATIC = "automatic"
+ 
+ 
+class VehicleVerificationStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+ 
+ 
+# =========================================================
+# RIDE ENUMS
+# =========================================================
+ 
+class RideType(str, Enum):
+    CITY = "city"
+    OUTSTATION = "outstation"
+    RENTAL = "rental"
+ 
+ 
+class RideStatus(str, Enum):
+    SEARCHING = "SEARCHING"
+    ACCEPTED = "ACCEPTED"
+    ARRIVED = "ARRIVED"
+    STARTED = "STARTED"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+ 
+ 
+class PaymentMethod(str, Enum):
+    CASH = "CASH"
+    UPI = "UPI"
+    CARD = "CARD"
+    WALLET = "WALLET"
+ 
+ 
+# =========================================================
+# RENTAL ENUMS
+# =========================================================
+ 
+class RentalBookingStatus(str, Enum):
+    PENDING = "PENDING"
+    CONFIRMED = "CONFIRMED"
+    ACTIVE = "ACTIVE"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+    REJECTED = "REJECTED"
+ 
+ 
+
