@@ -606,3 +606,26 @@ class PaymentMethod(str, Enum):
     UPI = "UPI"
     CARD = "CARD"
     WALLET = "WALLET"
+
+    
+# =========================================================
+# vehicle
+# =========================================================
+class VehicleType(str, Enum):
+    BIKE = "bike"
+    AUTO = "auto"
+    CAR = "car"
+
+class FuelType(str, Enum):
+    PETROL = "petrol"
+    DIESEL = "diesel"
+    ELECTRIC = "electric"
+    
+class TransmissionType(str, Enum):
+    MANUAL = "manual"
+    AUTOMATIC = "automatic"
+    
+class VehicleVerificationStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
