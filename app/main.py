@@ -1,26 +1,28 @@
+# main.py
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import settings
-from app.core.database import engine, Base
+from core.config import settings
+from core.database import engine, Base
 
 
 # =========================================================
 # IMPORT ALL MODELS
 # =========================================================
 
-import app.models.user_models
-import app.models.customer_model
-import app.models.escrow_models
-import app.models.payment_models
-import app.models.vehicle
-import app.models.driver
-import app.models.kyc_models
-import app.models.promo
-import app.models.rental_booking
-import app.models.parcel_booking
+# IMPORT ALL MODELS
+
+from models.users import *
+from models.vehicles import *
+from models.trips import *
+from models.rentals import *
+from models.payments import *
+from models.support import *
+from models.operations import *
+
 
 # =========================================================
 # LIFESPAN
@@ -33,6 +35,7 @@ async def lifespan(app: FastAPI):
     # DEBUG REGISTERED TABLES
     # =====================================================
 
+    print("\nRegistered Tables:")
     print(Base.metadata.tables.keys())
 
     # =====================================================
@@ -42,7 +45,7 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    #print("Database tables created successfully")
+    print("\nDatabase tables created successfully")
 
     yield
 
