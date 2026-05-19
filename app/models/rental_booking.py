@@ -18,6 +18,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 from app.core.database import Base
 from app.core.enums import RentalBookingStatus, DamageClaimStatus
+from app.models.vehicle import VehicleListing
 
 
 class RentalBooking(Base):
@@ -27,7 +28,12 @@ class RentalBooking(Base):
 
     customer_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     owner_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    listing_id = Column(BigInteger, ForeignKey("listings.id", ondelete="CASCADE"), nullable=False, index=True)
+    listing_id = Column(
+    BigInteger,
+    ForeignKey("vehicle_listings.id", ondelete="CASCADE"),
+    nullable=False,
+    index=True
+)
     vehicle_id = Column(BigInteger, ForeignKey("vehicles.id", ondelete="CASCADE"), nullable=False, index=True)
 
     pickup_date = Column(Date, nullable=False)

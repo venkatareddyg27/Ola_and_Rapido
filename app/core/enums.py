@@ -222,3 +222,11 @@ class PaymentMethod(str, Enum):
     UPI = "upi"
     CARD = "card"
     WALLET = "wallet"
+
+
+
+class VerificationStatus(str, Enum):
+    pending = "pending"
+    verified = "verified"
+    rejected = "rejected"
+ 

@@ -13,8 +13,8 @@ from sqlalchemy import (
     Enum as SqlEnum,
 )
 
-from core.database import Base
-from core.enums import (
+from app.core.database import Base
+from app.core.enums import (
     RideType,
     RideStatus,
     PaymentMethod,
