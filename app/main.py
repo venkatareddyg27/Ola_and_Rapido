@@ -17,7 +17,12 @@ import app.models.escrow_models
 import app.models.payment_models
 import app.models.vehicle
 import app.models.driver
+
 import app.models.kyc_models
+
+
+import app.models.rental_booking
+import app.models.parcel_booking
 
 # =========================================================
 # LIFESPAN
