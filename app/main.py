@@ -3,15 +3,25 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
+
+from app.core.database import engine, Base
 from core.config import settings
 from core.database import engine, Base
 
 
 # =========================================================
+
 # IMPORT ALL MODELS
-# =========================================================
+
+
+from app.models.user_model import (
+    User,
+    DriverProfile,
+    KYCDocument,
+    OTPLog,
+    DriverSubscription,
+)
 
 # IMPORT ALL MODELS
 
@@ -54,48 +64,26 @@ async def lifespan(app: FastAPI):
 # FASTAPI APP
 # =========================================================
 
+
 app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.APP_VERSION,
-    debug=settings.DEBUG,
-    lifespan=lifespan
+    title="Rapido & Ola Backend",
+    version="1.0.0"
 )
 
 
-# =========================================================
-# CORS
-# =========================================================
+# =====================================================
+# CREATE DATABASE TABLES
+# =====================================================
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+Base.metadata.create_all(bind=engine)
 
 
-# =========================================================
+# =====================================================
 # ROOT API
-# =========================================================
+# =====================================================
 
 @app.get("/")
 async def root():
-
     return {
-        "message": f"{settings.APP_NAME} Running Successfully"
-    }
-
-
-# =========================================================
-# HEALTH CHECK
-# =========================================================
-
-@app.get("/health")
-async def health_check():
-
-    return {
-        "status": "success",
-        "app_name": settings.APP_NAME,
-        "version": settings.APP_VERSION
+        "message": "Backend Running Successfully"
     }

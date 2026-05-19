@@ -1,1 +1,0 @@
-# rental_service.py

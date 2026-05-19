@@ -3,6 +3,41 @@
 import enum
 
 
+
+class UserRole(str, enum.Enum):
+    CUSTOMER = "CUSTOMER"
+    DRIVER = "DRIVER"
+    OWNER = "OWNER"
+    ADMIN = "ADMIN"
+
+
+class UserStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    ACTIVE = "ACTIVE"
+    BLOCKED = "BLOCKED"
+    DELETED = "DELETED"
+
+
+class DriverStatus(str, enum.Enum):
+    OFFLINE = "OFFLINE"
+    ONLINE = "ONLINE"
+    BUSY = "BUSY"
+    ON_TRIP = "ON_TRIP"
+
+
+class SubscriptionPlan(str, enum.Enum):
+    BASIC = "BASIC"
+    SILVER = "SILVER"
+    GOLD = "GOLD"
+    PLATINUM = "PLATINUM"
+
+
+class OTPPurpose(str, enum.Enum):
+    LOGIN = "LOGIN"
+    REGISTER = "REGISTER"
+    RESET_PASSWORD = "RESET_PASSWORD"
+    VERIFY_PHONE = "VERIFY_PHONE"
+
 # =========================================================
 # USER & AUTHENTICATION ENUMS
 # =========================================================
@@ -230,3 +265,4 @@ class DisputePriority(str, enum.Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
