@@ -13,11 +13,10 @@ from sqlalchemy import (
     Text
 )
 
-
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from app.core.enums import InspectionType
-from models.base import Base
+from app.models.base import Base
  
  
 class Rental(Base):
@@ -111,7 +110,6 @@ class RentalInspection(Base):
         ForeignKey("users.id"),
         nullable=False
     )
-
     inspected_at = Column(DateTime, nullable=False)
  
     # RELATIONSHIPS
@@ -124,4 +122,3 @@ class RentalInspection(Base):
         "User",
         back_populates="rental_inspections"
     )
- 

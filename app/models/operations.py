@@ -1,4 +1,4 @@
-# operations.py
+
 
 import uuid
 from datetime import datetime
@@ -17,8 +17,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID, ARRAY, JSONB
 from sqlalchemy.orm import relationship
 
-from models.base import Base
-from core.enums import DiscountType
+from app.models.base import Base
+from app.core.enums import DiscountType
 
 
 # =========================================================

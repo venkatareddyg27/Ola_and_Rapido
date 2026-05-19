@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-=======
+
 from dotenv import load_dotenv
 load_dotenv() 
 
@@ -39,4 +38,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
->>>>>>> f130a11f3e48383a0003076f2801887ee2655dd4
+

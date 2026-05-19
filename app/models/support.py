@@ -16,9 +16,9 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
-from models.base import Base
+from app.models.base import Base
 
-from core.enums import (
+from app.core.enums import (
     DisputeCategory,
     DisputeStatus,
     DisputePriority
