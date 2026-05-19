@@ -13,7 +13,28 @@ from app.models.vehicle import (
 # CREATE TABLES
 # =========================================================
 
-Base.metadata.create_all(bind=engine)
+import app.models.user_models
+
+
+# =========================================================
+# LIFESPAN
+# =========================================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    # =====================================================
+    # DEBUG REGISTERED TABLES
+    # =====================================================
+
+    print(Base.metadata.tables.keys())
+
+    # =====================================================
+    # CREATE DATABASE TABLES
+    # =====================================================
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 print("Database tables created successfully")
 
