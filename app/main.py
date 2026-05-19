@@ -16,7 +16,7 @@ import app.models.customer_model
 import app.models.escrow_models
 import app.models.payment_models
 import app.models.vehicle
-
+import app.models.driver
 
 # =========================================================
 # LIFESPAN
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    print("Database tables created successfully")
+    #print("Database tables created successfully")
 
     yield
 

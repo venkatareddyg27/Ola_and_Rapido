@@ -525,3 +525,102 @@ class VehicleVerificationStatus(str, Enum):
     REJECTED = "REJECTED"
     EXPIRED = "EXPIRED"
     SUSPENDED = "SUSPENDED"
+
+    import enum
+
+
+# =========================================================
+# DRIVER STATUS
+# =========================================================
+
+class DriverStatus(str, Enum):
+    PENDING = "PENDING"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    SUSPENDED = "SUSPENDED"
+    BLOCKED = "BLOCKED"
+
+
+# =========================================================
+# ONLINE STATUS
+# =========================================================
+
+class OnlineStatus(str, Enum):
+    ONLINE = "ONLINE"
+    OFFLINE = "OFFLINE"
+    ON_TRIP = "ON_TRIP"
+
+
+# =========================================================
+# DOCUMENT TYPE
+# =========================================================
+
+class DriverDocumentType(str, Enum):
+    LICENSE = "LICENSE"
+    AADHAAR = "AADHAAR"
+    PAN = "PAN"
+    RC = "RC"
+    INSURANCE = "INSURANCE"
+    PUC = "PUC"
+    SELFIE = "SELFIE"
+
+
+# =========================================================
+# VERIFICATION STATUS
+# =========================================================
+
+class VerificationStatus(str,Enum):
+    PENDING = "PENDING"
+    VERIFIED = "VERIFIED"
+    REJECTED = "REJECTED"
+
+
+# =========================================================
+# PAYOUT STATUS
+# =========================================================
+
+class PayoutStatus(str, Enum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+
+
+# =========================================================
+# PAYOUT METHOD
+# =========================================================
+
+class PayoutMethod(str, Enum):
+    BANK = "BANK"
+    UPI = "UPI"
+    WALLET = "WALLET"
+
+
+# =========================================================
+# SHIFT STATUS
+# =========================================================
+
+class ShiftStatus(str, Enum):
+    STARTED = "STARTED"
+    ENDED = "ENDED"
+    BREAK = "BREAK"
+
+
+# =========================================================
+# ATTENDANCE STATUS
+# =========================================================
+
+class AttendanceStatus(str, Enum):
+    PRESENT = "PRESENT"
+    ABSENT = "ABSENT"
+    HALF_DAY = "HALF_DAY"
+
+
+# =========================================================
+# PENALTY STATUS
+# =========================================================
+
+class PenaltyStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    PAID = "PAID"
+    WAIVED = "WAIVED"
