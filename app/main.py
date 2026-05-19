@@ -11,14 +11,44 @@ from app.core.database import engine, Base
 # IMPORT ALL MODELS
 # =========================================================
 
-import app.models.user_models
-import app.models.customer_model
-import app.models.escrow_models
-import app.models.payment_models
-import app.models.vehicle
-import app.models.driver
-import app.models.kyc_models
+from app.models.payment_models import (
+    Payment,
+    PaymentTransaction,
+    Wallet,
+    WalletTransaction,
+    Invoice,
+    Refund
+)
 
+from app.models.escrow_models import (
+    EscrowHold,
+    EscrowTransaction,
+    DamageClaim
+)
+
+
+
+
+
+
+
+from app.models.user_model import (
+    User,
+    
+)
+
+from app.models.vehicle_models import (
+    Vehicle,
+    VehicleListing
+)
+
+from app.models.parcel_models import (
+    Parcel
+)
+
+from app.models.ride_models import *
+
+from app.routers import login,profile,mobile
 # =========================================================
 # LIFESPAN
 # =========================================================
@@ -49,12 +79,10 @@ async def lifespan(app: FastAPI):
 # =========================================================
 
 app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.APP_VERSION,
-    debug=settings.DEBUG,
-    lifespan=lifespan
+    title="Ola and Rapido Backend API",
+    version="1.0.0",
+    lifespan=lifespan,
 )
-
 
 # =========================================================
 # CORS
@@ -70,26 +98,10 @@ app.add_middleware(
 
 
 # =========================================================
-# ROOT API
+#endpoints
 # =========================================================
 
-@app.get("/")
-async def root():
 
-    return {
-        "message": f"{settings.APP_NAME} Running Successfully"
-    }
-
-
-# =========================================================
-# HEALTH CHECK
-# =========================================================
-
-@app.get("/health")
-async def health_check():
-
-    return {
-        "status": "success",
-        "app_name": settings.APP_NAME,
-        "version": settings.APP_VERSION
-    }
+app.include_router(login.router)
+app.include_router(mobile.router)
+app.include_router(profile.router)

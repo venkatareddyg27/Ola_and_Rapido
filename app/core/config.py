@@ -1,13 +1,13 @@
 from dotenv import load_dotenv
-load_dotenv()  # 🔥 FORCE LOAD FIRST
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+load_dotenv()
 
 
 class Settings(BaseSettings):
     APP_NAME: str
     APP_VERSION: str
-    DEBUG: bool = True
+    DEBUG: bool = False
     DATABASE_URL: str
 
     SECRET_KEY: str = "secret"
@@ -15,8 +15,6 @@ class Settings(BaseSettings):
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-
-    model_config = SettingsConfigDict(extra="ignore")
 
     REDIS_URL: str = "redis://localhost:6379"
 
@@ -29,6 +27,11 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_REGION: str = ""
     AWS_BUCKET_NAME: str = ""
+
+    # ✅ ADD THIS
+    SUPERADMIN_MOBILE: str = "+918639890450"
+    SUPERADMIN_PASSWORD: str = "Admin@123"
+    SUPERADMIN_ROLE: str = "SUPER_ADMIN"
 
     model_config = SettingsConfigDict(
         env_file=".env",
