@@ -14,8 +14,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from core.database import Base
-from core.enums import (
+from app.core.database import Base
+from app.core.enums import (
     LoyaltyTier,
     AddressType,
     PreferredLanguage,
