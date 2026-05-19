@@ -1,6 +1,7 @@
 from enum import Enum
 
 
+
 # =========================================================
 # USER ROLE ENUM
 # =========================================================
@@ -525,3 +526,118 @@ class VehicleVerificationStatus(str, Enum):
     REJECTED = "REJECTED"
     EXPIRED = "EXPIRED"
     SUSPENDED = "SUSPENDED"
+    
+class CouponType(str, Enum):
+    PERCENTAGE = "percentage"
+    FIXED = "fixed"
+
+
+class CampaignStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    EXPIRED = "expired"
+
+
+# =========================================================
+# ATTENDANCE STATUS
+# =========================================================
+
+class AttendanceStatus(str,Enum):
+    PRESENT = "present"
+    ABSENT = "absent"
+    HALF_DAY = "half_day"
+    LEAVE = "leave"
+
+
+# =========================================================
+# DRIVER DOCUMENT TYPE
+# =========================================================
+
+class DriverDocumentType(str,Enum):
+    DRIVING_LICENSE = "driving_license"
+    AADHAR_CARD = "aadhar_card"
+    PAN_CARD = "pan_card"
+    VEHICLE_RC = "vehicle_rc"
+    VEHICLE_INSURANCE = "vehicle_insurance"
+    POLLUTION_CERTIFICATE = "pollution_certificate"
+    PROFILE_PHOTO = "profile_photo"
+
+
+# =========================================================
+# DRIVER STATUS
+# =========================================================
+
+class DriverStatus(str,Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    BLOCKED = "blocked"
+    SUSPENDED = "suspended"
+    PENDING_APPROVAL = "pending_approval"
+
+
+# =========================================================
+# ONLINE STATUS
+# =========================================================
+
+class OnlineStatus(str, Enum):
+    ONLINE = "online"
+    OFFLINE = "offline"
+    ON_RIDE = "on_ride"
+    IDLE = "idle"
+
+
+# =========================================================
+# PAYOUT METHOD
+# =========================================================
+
+class PayoutMethod(str, Enum):
+    BANK_TRANSFER = "bank_transfer"
+    UPI = "upi"
+    CASH = "cash"
+    WALLET = "wallet"
+
+
+# =========================================================
+# PAYOUT STATUS
+# =========================================================
+
+class PayoutStatus(str, Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+# =========================================================
+# PENALTY STATUS
+# =========================================================
+
+class PenaltyStatus(str, Enum):
+    PENDING = "pending"
+    PAID = "paid"
+    WAIVED = "waived"
+    OVERDUE = "overdue"
+    ACTIVE = "active"
+
+
+# =========================================================
+# SHIFT STATUS
+# =========================================================
+
+class ShiftStatus(str, Enum):
+    STARTED = "started"
+    ENDED = "ended"
+    BREAK = "break"
+    MISSED = "missed"
+
+
+# =========================================================
+# VERIFICATION STATUS
+# =========================================================
+
+class VerificationStatus(str, Enum):
+    PENDING = "pending"
+    VERIFIED = "verified"
+    REJECTED = "rejected"
+    UNDER_REVIEW = "under_review"

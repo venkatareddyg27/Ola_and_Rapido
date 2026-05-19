@@ -133,6 +133,15 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    coupon_usages = relationship(
+    "CouponUsage",
+    back_populates="user"
+    )
+
+    referral_codes = relationship(
+        "ReferralCode",
+        back_populates="user"
+    )
 
 # =========================================================
 # USER SESSIONS
