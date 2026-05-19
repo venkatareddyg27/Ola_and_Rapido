@@ -16,7 +16,7 @@ import app.models.customer_model
 import app.models.escrow_models
 import app.models.payment_models
 import app.models.vehicle
-import app.models.driver
+
 
 # =========================================================
 # LIFESPAN
