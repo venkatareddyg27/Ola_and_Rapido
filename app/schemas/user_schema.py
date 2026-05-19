@@ -13,7 +13,6 @@ from app.core.enums import (
     OTPPurpose,
 )
 
-
 class UserBase(BaseModel):
     phone: str
     email: Optional[EmailStr] = None
