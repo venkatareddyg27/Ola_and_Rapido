@@ -142,5 +142,3 @@ class RentalInspection(Base):
         "User",
         back_populates="rental_inspections"
     )
- 
->>>>>>> f130a11f3e48383a0003076f2801887ee2655dd4
