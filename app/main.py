@@ -15,9 +15,20 @@ from app.core.database import engine, Base
 # IMPORT ALL MODELS
 # =========================================================
 
+<<<<<<< HEAD
 import app.models.user_models
 import app.models.payment_models
 import app.models.escrow_models
+=======
+from app.models.customer_model import (
+    CustomerProfile,
+    SavedAddress,
+    CustomerPreference,
+    EmergencyContact,
+    FavoriteDriver,
+    LoyaltyTransaction
+)
+>>>>>>> f0c5970 (Changes are added in models/schemas customer_model.py)
 # =========================================================
 # LIFESPAN
 # =========================================================
