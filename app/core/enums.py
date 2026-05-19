@@ -1,232 +1,137 @@
-# =========================================================
-# ENUMS
-# =========================================================
- 
 from enum import Enum
- 
- 
-class PaymentStatus(str, Enum):
-    PENDING = "PENDING"
-    SUCCESS = "SUCCESS"
-    FAILED = "FAILED"
-    REFUNDED = "REFUNDED"
-    CANCELLED = "CANCELLED"
- 
- 
-class TransactionStatus(str, Enum):
-    INITIATED = "INITIATED"
-    PROCESSING = "PROCESSING"
-    SUCCESS = "SUCCESS"
-    FAILED = "FAILED"
- 
- 
-class WalletTransactionType(str, Enum):
-    CREDIT = "CREDIT"
-    DEBIT = "DEBIT"
- 
- 
-class RefundStatus(str, Enum):
-    PENDING = "PENDING"
-    APPROVED = "APPROVED"
-    REJECTED = "REJECTED"
-    PROCESSED = "PROCESSED"
-   
-class EscrowStatus(str, Enum):
-    INITIATED = "INITIATED"
-    HELD = "HELD"
-    UNDER_REVIEW = "UNDER_REVIEW"
-    RELEASED = "RELEASED"
-    PARTIALLY_RELEASED = "PARTIALLY_RELEASED"
-    FORFEITED = "FORFEITED"
-    FAILED = "FAILED"
- 
- 
-class EscrowTransactionType(str, Enum):
-    HOLD = "HOLD"
-    RELEASE = "RELEASE"
-    REFUND = "REFUND"
-    DEDUCTION = "DEDUCTION"
- 
- 
- 
-# -------------------------
-# ENUMS
-# -------------------------
- 
-class PackageType(str, Enum):
-    document = "document"
-    food = "food"
-    electronics = "electronics"
-    grocery = "grocery"
-    medicine = "medicine"
-    clothes = "clothes"
-    others = "others"
- 
- 
-class WeightTier(str,Enum):
-    light = "light"
-    medium = "medium"
-    heavy = "heavy"
- 
- 
-class ParcelStatus(str, Enum):
-    pending_pickup = "pending_pickup"
-    driver_assigned = "driver_assigned"
-    picked_up = "picked_up"
-    in_transit = "in_transit"
-    delivered = "delivered"
-    cancelled = "cancelled"
- 
- 
- 
- 
- 
-class UserTypeEnum(str, Enum):
-    driver = "driver"
-    customer = "customer"
-class ActionTypeEnum(str, Enum):
-    create = "create"
-    update = "update"
-    delete = "delete"
-    ban = "ban"
-    unban = "unban"
-    refund = "refund"
-    escalate = "escalate"
-    resolve = "resolve"
-    assign = "assign"
-    export = "export"
- 
-class UserRole(str, Enum):
+
+
+# =========================================================
+# USER ROLE ENUM
+# =========================================================
+
+class UserRoleEnum(str, Enum):
     USER = "USER"
-    ADMIN = "ADMIN"
     DRIVER = "DRIVER"
+    ADMIN = "ADMIN"
+    SUPPORT = "SUPPORT"
     STORE_MANAGER = "STORE_MANAGER"
- 
- 
-class Gender(str, Enum):
+
+
+# =========================================================
+# GENDER ENUM
+# =========================================================
+
+class GenderEnum(str, Enum):
     MALE = "MALE"
     FEMALE = "FEMALE"
     OTHER = "OTHER"
-   
-class KYCStatus(str, Enum):
-    NOT_STARTED = "not_started"
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-    EXPIRED = "expired"
- 
- 
-class LoyaltyTier(str, Enum):
-    BRONZE = "bronze"
-    SILVER = "silver"
-    GOLD = "gold"
-    PLATINUM = "platinum"
-   
-class DriverStatus(str, Enum):
-    IDLE = "idle"
-    ON_RIDE = "on_ride"
-    ON_DELIVERY = "on_delivery"
-    OFFLINE = "offline"
-    BREAK = "break"
-   
-class FuelType(str, Enum):
-    PETROL = "petrol"
-    DIESEL = "diesel"
-    CNG = "cng"
-    EV = "ev"
-    HYBRID = "hybrid"
- 
- 
-class TransmissionType(str, Enum):
-    MANUAL = "manual"
-    AUTOMATIC = "automatic"
- 
- 
-class VehicleVerificationStatus(str, Enum):
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
- 
-    # =========================================================
-# VERIFICATION STATUS
+
+
 # =========================================================
- 
-class VerificationStatus(str, Enum):
-    pending = "pending"
-    verified = "verified"
-    rejected = "rejected"
- 
- 
+# DEVICE TYPE ENUM
 # =========================================================
-# DOCUMENT TYPES
+
+class DeviceTypeEnum(str, Enum):
+    ANDROID = "ANDROID"
+    IOS = "IOS"
+    WEB = "WEB"
+
+
 # =========================================================
- 
-class DocumentType(str, Enum):
-    aadhaar = "aadhaar"
-    pan = "pan"
-    driving_license = "driving_license"
-    rc = "rc"
-    insurance = "insurance"
-    puc = "puc"
-    selfie = "selfie"
- 
- 
+# OTP PURPOSE ENUM
 # =========================================================
-# AADHAAR EKYC STATUS
+
+class OTPPurposeEnum(str, Enum):
+    LOGIN = "LOGIN"
+    REGISTER = "REGISTER"
+    PASSWORD_RESET = "PASSWORD_RESET"
+    MOBILE_VERIFICATION = "MOBILE_VERIFICATION"
+
+
 # =========================================================
- 
-class AadhaarEkycStatus(str, Enum):
-    otp_sent = "otp_sent"
-    otp_verified = "otp_verified"
-    completed = "completed"
-    failed = "failed"
-    
+# LOGIN STATUS ENUM
+# =========================================================
 
-class RentalBookingStatus(str, Enum):
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    ACTIVE = "active"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-    REJECTED = "rejected"
+class LoginStatusEnum(str, Enum):
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    BLOCKED = "BLOCKED"
 
 
-class DamageClaimStatus(str, Enum):
-    NONE = "none"
-    RAISED = "raised"
-    UNDER_REVIEW = "under_review"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-    SETTLED = "settled"
+# =========================================================
+# BLOCK STATUS ENUM
+# =========================================================
 
-class RideType(str, Enum):
-    BIKE = "bike"
-    AUTO = "auto"
-    CAB = "cab"
-    RENTAL = "rental"
+class BlockStatusEnum(str, Enum):
+    TEMPORARY = "TEMPORARY"
+    PERMANENT = "PERMANENT"
 
 
-class RideStatus(str, Enum):
-    SEARCHING = "searching"
-    DRIVER_ASSIGNED = "driver_assigned"
-    DRIVER_ARRIVED = "driver_arrived"
-    OTP_VERIFIED = "otp_verified"
-    STARTED = "started"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-    FAILED = "failed"
+# =========================================================
+# PERMISSION ENUM
+# =========================================================
+
+class PermissionEnum(str, Enum):
+    CREATE_USER = "CREATE_USER"
+    UPDATE_USER = "UPDATE_USER"
+    DELETE_USER = "DELETE_USER"
+
+    CREATE_DRIVER = "CREATE_DRIVER"
+    UPDATE_DRIVER = "UPDATE_DRIVER"
+    DELETE_DRIVER = "DELETE_DRIVER"
+
+    CREATE_RIDE = "CREATE_RIDE"
+    CANCEL_RIDE = "CANCEL_RIDE"
+    COMPLETE_RIDE = "COMPLETE_RIDE"
+
+    CREATE_PARCEL = "CREATE_PARCEL"
+    UPDATE_PARCEL = "UPDATE_PARCEL"
+
+    VIEW_REPORTS = "VIEW_REPORTS"
+
+    MANAGE_PAYMENTS = "MANAGE_PAYMENTS"
+
+    MANAGE_KYC = "MANAGE_KYC"
+
+    MANAGE_DISPUTES = "MANAGE_DISPUTES"
+
+    FULL_ADMIN_ACCESS = "FULL_ADMIN_ACCESS"
 
 
-class PaymentMethod(str, Enum):
-    CASH = "cash"
-    UPI = "upi"
-    CARD = "card"
-    WALLET = "wallet"
+# =========================================================
+# ROLE NAME ENUM
+# =========================================================
+
+class RoleNameEnum(str, Enum):
+    USER = "USER"
+    DRIVER = "DRIVER"
+    ADMIN = "ADMIN"
+    SUPPORT_AGENT = "SUPPORT_AGENT"
+    FINANCE_MANAGER = "FINANCE_MANAGER"
 
 
+# =========================================================
+# ACCOUNT STATUS ENUM
+# =========================================================
 
-class VerificationStatus(str, Enum):
-    pending = "pending"
-    verified = "verified"
-    rejected = "rejected"
- 
+class AccountStatusEnum(str, Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    BLOCKED = "BLOCKED"
+    SUSPENDED = "SUSPENDED"
+
+
+# =========================================================
+# TOKEN TYPE ENUM
+# =========================================================
+
+class TokenTypeEnum(str, Enum):
+    ACCESS = "ACCESS"
+    REFRESH = "REFRESH"
+    RESET = "RESET"
+
+
+# =========================================================
+# PASSWORD RESET STATUS ENUM
+# =========================================================
+
+class PasswordResetStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    USED = "USED"
+    EXPIRED = "EXPIRED"

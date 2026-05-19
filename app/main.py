@@ -1,3 +1,7 @@
+# =========================================================
+# app/main.py
+# =========================================================
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -11,60 +15,8 @@ from app.core.database import engine, Base
 # IMPORT ALL MODELS
 # =========================================================
 
-from app.models.payment import (
-    Payment,
-    PaymentTransaction,
-    Wallet,
-    WalletTransaction,
-    Invoice,
-    Refund
-)
+import app.models.user_models
 
-from app.models.escrow_holds import (
-    EscrowHold,
-    EscrowTransaction,
-    DamageClaim
-)
-
-from app.models.dispute import (
-    Dispute,
-)
-
-from app.models.live_location import (
-    LiveLocation
-)
-
-from app.models.admin import (
-    AdminLog,
-    SystemConfig
-)
-
-from app.models.user import (
-    User,
-    CustomerProfile,
-    DriverProfile,
-    CarOwnerProfile
-)
-
-from app.models.vehicle import (
-    Vehicle,
-    VehicleListing
-)
-
-from app.models.parcel import (
-    Parcel
-)
-from app.models.kyc import (
-    KycDocument,    
-    AadhaarEkycSession
-)
-from app.models.rental_booking import (
-    RentalBooking,
-    
-)
-from app.models.ride import (
-    Ride,   
-)
 
 # =========================================================
 # LIFESPAN
@@ -72,6 +24,16 @@ from app.models.ride import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
+    # =====================================================
+    # DEBUG REGISTERED TABLES
+    # =====================================================
+
+    print(Base.metadata.tables.keys())
+
+    # =====================================================
+    # CREATE DATABASE TABLES
+    # =====================================================
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -94,7 +56,7 @@ app = FastAPI(
 
 
 # =========================================================
-# CORS
+# CORS MIDDLEWARE
 # =========================================================
 
 app.add_middleware(
@@ -112,17 +74,19 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
+
     return {
         "message": f"{settings.APP_NAME} Running Successfully"
     }
 
 
 # =========================================================
-# HEALTH CHECK
+# HEALTH CHECK API
 # =========================================================
 
 @app.get("/health")
 async def health_check():
+
     return {
         "status": "success",
         "app_name": settings.APP_NAME,
