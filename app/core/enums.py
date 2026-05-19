@@ -135,3 +135,279 @@ class PasswordResetStatusEnum(str, Enum):
     PENDING = "PENDING"
     USED = "USED"
     EXPIRED = "EXPIRED"
+    
+
+class PaymentStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+    REFUNDED = "REFUNDED"
+
+
+# =========================================================
+# PAYMENT METHOD TYPE ENUM
+# =========================================================
+
+class PaymentMethodTypeEnum(str, Enum):
+    CARD = "CARD"
+    UPI = "UPI"
+    NET_BANKING = "NET_BANKING"
+    WALLET = "WALLET"
+    CASH = "CASH"
+
+
+# =========================================================
+# WALLET TRANSACTION TYPE ENUM
+# =========================================================
+
+class WalletTransactionTypeEnum(str, Enum):
+    CREDIT = "CREDIT"
+    DEBIT = "DEBIT"
+
+
+# =========================================================
+# RECHARGE STATUS ENUM
+# =========================================================
+
+class WalletRechargeStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+# =========================================================
+# PAYMENT TRANSACTION STATUS ENUM
+# =========================================================
+
+class PaymentTransactionStatusEnum(str, Enum):
+    INITIATED = "INITIATED"
+    PROCESSING = "PROCESSING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    TIMEOUT = "TIMEOUT"
+
+
+# =========================================================
+# REFUND STATUS ENUM
+# =========================================================
+
+class RefundStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    REJECTED = "REJECTED"
+
+
+# =========================================================
+# INVOICE STATUS ENUM
+# =========================================================
+
+class InvoiceStatusEnum(str, Enum):
+    GENERATED = "GENERATED"
+    SENT = "SENT"
+    PAID = "PAID"
+    CANCELLED = "CANCELLED"
+
+
+# =========================================================
+# SETTLEMENT STATUS ENUM
+# =========================================================
+
+class SettlementStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+# =========================================================
+# GATEWAY NAME ENUM
+# =========================================================
+
+class PaymentGatewayEnum(str, Enum):
+    RAZORPAY = "RAZORPAY"
+    STRIPE = "STRIPE"
+    PAYTM = "PAYTM"
+    PHONEPE = "PHONEPE"
+    CASHFREE = "CASHFREE"
+
+
+# =========================================================
+# CURRENCY ENUM
+# =========================================================
+
+class CurrencyEnum(str, Enum):
+    INR = "INR"
+    USD = "USD"
+    EUR = "EUR"
+
+
+# =========================================================
+# REFERENCE TYPE ENUM
+# =========================================================
+
+class PaymentReferenceTypeEnum(str, Enum):
+    RIDE = "RIDE"
+    PARCEL = "PARCEL"
+    RENTAL = "RENTAL"
+    WALLET_RECHARGE = "WALLET_RECHARGE"
+    ESCROW = "ESCROW"
+
+
+# =========================================================
+# GATEWAY LOG STATUS ENUM
+# =========================================================
+
+class GatewayLogStatusEnum(str, Enum):
+    REQUESTED = "REQUESTED"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+
+
+# =========================================================
+# TAX TYPE ENUM
+# =========================================================
+
+class TaxTypeEnum(str, Enum):
+    CGST = "CGST"
+    SGST = "SGST"
+    IGST = "IGST"
+
+
+# =========================================================
+# PAYMENT SOURCE ENUM
+# =========================================================
+
+class PaymentSourceEnum(str, Enum):
+    MOBILE_APP = "MOBILE_APP"
+    WEB_APP = "WEB_APP"
+    ADMIN_PANEL = "ADMIN_PANEL"
+    API = "API"
+
+class EscrowStatusEnum(str, Enum):
+    INITIATED = "INITIATED"
+    HELD = "HELD"
+    PARTIALLY_RELEASED = "PARTIALLY_RELEASED"
+    RELEASED = "RELEASED"
+    REFUNDED = "REFUNDED"
+    FORFEITED = "FORFEITED"
+    FAILED = "FAILED"
+
+
+# =========================================================
+# ESCROW TRANSACTION TYPE ENUM
+# =========================================================
+
+class EscrowTransactionTypeEnum(str, Enum):
+    HOLD = "HOLD"
+    RELEASE = "RELEASE"
+    REFUND = "REFUND"
+    DEDUCTION = "DEDUCTION"
+    ADJUSTMENT = "ADJUSTMENT"
+
+
+# =========================================================
+# ESCROW TRANSACTION STATUS ENUM
+# =========================================================
+
+class EscrowTransactionStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+# =========================================================
+# DAMAGE CLAIM STATUS ENUM
+# =========================================================
+
+class DamageClaimStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    UNDER_REVIEW = "UNDER_REVIEW"
+    APPROVED = "APPROVED"
+    PARTIALLY_APPROVED = "PARTIALLY_APPROVED"
+    REJECTED = "REJECTED"
+    RESOLVED = "RESOLVED"
+
+
+# =========================================================
+# DAMAGE SEVERITY ENUM
+# =========================================================
+
+class DamageSeverityEnum(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+
+# =========================================================
+# CLAIM EVIDENCE TYPE ENUM
+# =========================================================
+
+class ClaimEvidenceTypeEnum(str, Enum):
+    IMAGE = "IMAGE"
+    VIDEO = "VIDEO"
+    PDF = "PDF"
+    AUDIO = "AUDIO"
+    DOCUMENT = "DOCUMENT"
+
+
+# =========================================================
+# ESCROW REFUND STATUS ENUM
+# =========================================================
+
+class EscrowRefundStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    REJECTED = "REJECTED"
+
+
+# =========================================================
+# BOOKING REFERENCE TYPE ENUM
+# =========================================================
+
+class BookingReferenceTypeEnum(str, Enum):
+    RIDE = "RIDE"
+    RENTAL = "RENTAL"
+    PARCEL = "PARCEL"
+
+
+# =========================================================
+# ESCROW PARTY TYPE ENUM
+# =========================================================
+
+class EscrowPartyTypeEnum(str, Enum):
+    CUSTOMER = "CUSTOMER"
+    DRIVER = "DRIVER"
+    VEHICLE_OWNER = "VEHICLE_OWNER"
+    ADMIN = "ADMIN"
+
+
+# =========================================================
+# CLAIM RESOLUTION TYPE ENUM
+# =========================================================
+
+class ClaimResolutionTypeEnum(str, Enum):
+    FULL_DEDUCTION = "FULL_DEDUCTION"
+    PARTIAL_DEDUCTION = "PARTIAL_DEDUCTION"
+    FULL_REFUND = "FULL_REFUND"
+    MANUAL_SETTLEMENT = "MANUAL_SETTLEMENT"
+
+
+# =========================================================
+# ESCROW ACTION SOURCE ENUM
+# =========================================================
+
+class EscrowActionSourceEnum(str, Enum):
+    SYSTEM = "SYSTEM"
+    ADMIN = "ADMIN"
+    USER = "USER"
+    PAYMENT_GATEWAY = "PAYMENT_GATEWAY"

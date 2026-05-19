@@ -16,8 +16,8 @@ from app.core.database import engine, Base
 # =========================================================
 
 import app.models.user_models
-
-
+import app.models.payment_models
+import app.models.escrow_models
 # =========================================================
 # LIFESPAN
 # =========================================================
