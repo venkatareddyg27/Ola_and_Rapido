@@ -1,12 +1,13 @@
+from dotenv import load_dotenv
+load_dotenv()  # 🔥 FORCE LOAD FIRST
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-
     APP_NAME: str
     APP_VERSION: str
     DEBUG: bool = True
-
     DATABASE_URL: str
 
     SECRET_KEY: str = "secret"
@@ -14,6 +15,8 @@ class Settings(BaseSettings):
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    model_config = SettingsConfigDict(extra="ignore")
 
     REDIS_URL: str = "redis://localhost:6379"
 

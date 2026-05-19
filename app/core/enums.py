@@ -1,36 +1,36 @@
 # =========================================================
 # ENUMS
 # =========================================================
-
+ 
 from enum import Enum
-
-
+ 
+ 
 class PaymentStatus(str, Enum):
     PENDING = "PENDING"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
     REFUNDED = "REFUNDED"
     CANCELLED = "CANCELLED"
-
-
+ 
+ 
 class TransactionStatus(str, Enum):
     INITIATED = "INITIATED"
     PROCESSING = "PROCESSING"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
-
-
+ 
+ 
 class WalletTransactionType(str, Enum):
     CREDIT = "CREDIT"
     DEBIT = "DEBIT"
-
-
+ 
+ 
 class RefundStatus(str, Enum):
     PENDING = "PENDING"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
     PROCESSED = "PROCESSED"
-    
+   
 class EscrowStatus(str, Enum):
     INITIATED = "INITIATED"
     HELD = "HELD"
@@ -39,20 +39,20 @@ class EscrowStatus(str, Enum):
     PARTIALLY_RELEASED = "PARTIALLY_RELEASED"
     FORFEITED = "FORFEITED"
     FAILED = "FAILED"
-
-
+ 
+ 
 class EscrowTransactionType(str, Enum):
     HOLD = "HOLD"
     RELEASE = "RELEASE"
     REFUND = "REFUND"
     DEDUCTION = "DEDUCTION"
-
-
-
+ 
+ 
+ 
 # -------------------------
 # ENUMS
 # -------------------------
-
+ 
 class PackageType(str, Enum):
     document = "document"
     food = "food"
@@ -61,14 +61,14 @@ class PackageType(str, Enum):
     medicine = "medicine"
     clothes = "clothes"
     others = "others"
-
-
+ 
+ 
 class WeightTier(str,Enum):
     light = "light"
     medium = "medium"
     heavy = "heavy"
-
-
+ 
+ 
 class ParcelStatus(str, Enum):
     pending_pickup = "pending_pickup"
     driver_assigned = "driver_assigned"
@@ -76,11 +76,11 @@ class ParcelStatus(str, Enum):
     in_transit = "in_transit"
     delivered = "delivered"
     cancelled = "cancelled"
-
-
-
-
-
+ 
+ 
+ 
+ 
+ 
 class UserTypeEnum(str, Enum):
     driver = "driver"
     customer = "customer"
@@ -95,62 +95,72 @@ class ActionTypeEnum(str, Enum):
     resolve = "resolve"
     assign = "assign"
     export = "export"
-
+ 
 class UserRole(str, Enum):
     USER = "USER"
     ADMIN = "ADMIN"
     DRIVER = "DRIVER"
     STORE_MANAGER = "STORE_MANAGER"
-
-
+ 
+ 
 class Gender(str, Enum):
     MALE = "MALE"
     FEMALE = "FEMALE"
     OTHER = "OTHER"
-    
+   
 class KYCStatus(str, Enum):
     NOT_STARTED = "not_started"
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
     EXPIRED = "expired"
-
-
+ 
+ 
 class LoyaltyTier(str, Enum):
     BRONZE = "bronze"
     SILVER = "silver"
     GOLD = "gold"
     PLATINUM = "platinum"
-    
+   
 class DriverStatus(str, Enum):
     IDLE = "idle"
     ON_RIDE = "on_ride"
     ON_DELIVERY = "on_delivery"
     OFFLINE = "offline"
     BREAK = "break"
-    
+   
 class FuelType(str, Enum):
     PETROL = "petrol"
     DIESEL = "diesel"
     CNG = "cng"
     EV = "ev"
     HYBRID = "hybrid"
-
-
+ 
+ 
 class TransmissionType(str, Enum):
     MANUAL = "manual"
     AUTOMATIC = "automatic"
-
-
+ 
+ 
 class VehicleVerificationStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
-
+ 
+    # =========================================================
+# VERIFICATION STATUS
+# =========================================================
+ 
+class VerificationStatus(str, Enum):
+    pending = "pending"
+    verified = "verified"
+    rejected = "rejected"
+ 
+ 
 # =========================================================
 # DOCUMENT TYPES
 # =========================================================
-
+ 
 class DocumentType(str, Enum):
     aadhaar = "aadhaar"
     pan = "pan"
@@ -159,18 +169,17 @@ class DocumentType(str, Enum):
     insurance = "insurance"
     puc = "puc"
     selfie = "selfie"
-
-
+ 
+ 
 # =========================================================
 # AADHAAR EKYC STATUS
 # =========================================================
-
+ 
 class AadhaarEkycStatus(str, Enum):
     otp_sent = "otp_sent"
     otp_verified = "otp_verified"
     completed = "completed"
     failed = "failed"
-
     
 
 class RentalBookingStatus(str, Enum):
@@ -213,3 +222,11 @@ class PaymentMethod(str, Enum):
     UPI = "upi"
     CARD = "card"
     WALLET = "wallet"
+
+
+
+class VerificationStatus(str, Enum):
+    pending = "pending"
+    verified = "verified"
+    rejected = "rejected"
+ 

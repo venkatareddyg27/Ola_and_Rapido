@@ -24,7 +24,7 @@ from app.core.enums import (
 # =========================================================
 class KycDocument(Base):
     __tablename__ = "kyc_documents"
-
+ 
     id = Column(BigInteger,primary_key=True, autoincrement=True,)
     user_id = Column(
     BigInteger,
@@ -46,12 +46,12 @@ class KycDocument(Base):
     expires_at = Column(Date,nullable=True,)
     created_at = Column(DateTime(timezone=True),server_default=func.now(),nullable=False,)
     updated_at = Column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now(),nullable=False,)
-
-
+ 
+ 
 # =========================================================
 # AADHAAR EKYC SESSION MODEL
 # =========================================================
-
+ 
 class AadhaarEkycSession(Base):
     __tablename__ = "aadhaar_ekyc_sessions"
     id = Column( BigInteger,primary_key=True,autoincrement=True,)
