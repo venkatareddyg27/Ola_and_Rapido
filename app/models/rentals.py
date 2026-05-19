@@ -13,17 +13,13 @@ from sqlalchemy import (
     String,
     Text
 )
-<<<<<<< HEAD
+
 
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
-
-=======
  
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
- 
->>>>>>> f130a11f3e48383a0003076f2801887ee2655dd4
 from app.core.enums import InspectionType
 from models.base import Base
  
@@ -95,27 +91,16 @@ class Rental(Base):
     disputes = relationship(
     "Dispute",
     back_populates="rental")
-<<<<<<< HEAD
-
-class RentalInspection(Base):
-    __tablename__ = "rental_inspections"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-=======
  
 class RentalInspection(Base):
     __tablename__ = "rental_inspections"
  
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
- 
->>>>>>> f130a11f3e48383a0003076f2801887ee2655dd4
     rental_id = Column(
         UUID(as_uuid=True),
         ForeignKey("rentals.id"),
         nullable=False
     )
-<<<<<<< HEAD
 
     inspection_type = Column(Enum(InspectionType), nullable=False)
 
@@ -125,8 +110,6 @@ class RentalInspection(Base):
     damage_notes = Column(Text, nullable=True)
     photo_urls = Column(JSONB, nullable=True)
     video_url = Column(String(255), nullable=True)
-
-=======
  
     inspection_type = Column(Enum(InspectionType), nullable=False)
  
@@ -136,37 +119,24 @@ class RentalInspection(Base):
     damage_notes = Column(Text, nullable=True)
     photo_urls = Column(JSONB, nullable=True)
     video_url = Column(String(255), nullable=True)
- 
->>>>>>> f130a11f3e48383a0003076f2801887ee2655dd4
     inspector_user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         nullable=False
     )
-<<<<<<< HEAD
 
-    inspected_at = Column(DateTime, nullable=False)
-
-    # RELATIONSHIPS
-
-=======
- 
     inspected_at = Column(DateTime, nullable=False)
  
     # RELATIONSHIPS
- 
->>>>>>> f130a11f3e48383a0003076f2801887ee2655dd4
     rental = relationship(
         "Rental",
         back_populates="inspections"
     )
-<<<<<<< HEAD
 
     inspector = relationship(
         "User",
         back_populates="rental_inspections"
     )
-=======
  
     inspector = relationship(
         "User",
