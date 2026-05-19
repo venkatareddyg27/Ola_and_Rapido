@@ -5,14 +5,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
 
-# USERS
-from app.models import user_models
-# VEHICLES
-from app.models import vehicle
-# PAYMENTS
-from app.models import payment_models
-#customers
-from app.models import customer_model
+from app.models.vehicle import (
+    Vehicle,
+    VehicleListing
+)
+
+# =========================================================
+# CREATE TABLES
+# =========================================================
+
+import app.models.user_models
+
 
 # =========================================================
 # LIFESPAN
@@ -34,7 +37,9 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-print("Database tables created successfully")
+    #print("Database tables created successfully")
+
+    yield
 
 
 # =========================================================
@@ -45,6 +50,7 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     debug=settings.DEBUG,
+    lifespan=lifespan
 )
 
 
@@ -66,7 +72,8 @@ app.add_middleware(
 # =========================================================
 
 @app.get("/")
-def root():
+async def root():
+
     return {
         "message": f"{settings.APP_NAME} Running Successfully"
     }
@@ -77,7 +84,8 @@ def root():
 # =========================================================
 
 @app.get("/health")
-def health_check():
+async def health_check():
+
     return {
         "status": "success",
         "app_name": settings.APP_NAME,
