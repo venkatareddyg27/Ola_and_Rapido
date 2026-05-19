@@ -1,4 +1,3 @@
-# rentals.py
  
 import uuid
 from datetime import datetime
@@ -15,9 +14,6 @@ from sqlalchemy import (
 )
 
 
-from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import relationship
- 
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from app.core.enums import InspectionType
@@ -110,15 +106,6 @@ class RentalInspection(Base):
     damage_notes = Column(Text, nullable=True)
     photo_urls = Column(JSONB, nullable=True)
     video_url = Column(String(255), nullable=True)
- 
-    inspection_type = Column(Enum(InspectionType), nullable=False)
- 
-    fuel_level = Column(Numeric(5, 2), nullable=True)
-    odometer_reading = Column(Integer, nullable=True)
- 
-    damage_notes = Column(Text, nullable=True)
-    photo_urls = Column(JSONB, nullable=True)
-    video_url = Column(String(255), nullable=True)
     inspector_user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
@@ -138,7 +125,3 @@ class RentalInspection(Base):
         back_populates="rental_inspections"
     )
  
-    inspector = relationship(
-        "User",
-        back_populates="rental_inspections"
-    )
