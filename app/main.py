@@ -54,7 +54,17 @@ from app.models.vehicle import (
 from app.models.parcel import (
     Parcel
 )
-
+from app.models.kyc import (
+    KycDocument,    
+    AadhaarEkycSession
+)
+from app.models.rental_booking import (
+    RentalBooking,
+    
+)
+from app.models.ride import (
+    Ride,   
+)
 
 # =========================================================
 # LIFESPAN
