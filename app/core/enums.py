@@ -1,10 +1,10 @@
-from enum import Enum
 
+from enum import Enum
 # =========================================================
 # ENUMS
 # =========================================================
 
-class FuelType(str,Enum):
+class FuelType(str, Enum):
     PETROL = "PETROL"
     DIESEL = "DIESEL"
     CNG = "CNG"
@@ -17,7 +17,7 @@ class TransmissionType(str, Enum):
     AUTOMATIC = "AUTOMATIC"
 
 
-class VehicleVerificationStatus(str,Enum):
+class VehicleVerificationStatus(str, Enum):
     PENDING = "PENDING"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
