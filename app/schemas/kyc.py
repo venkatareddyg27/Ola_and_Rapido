@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Dict, Optional
 from pydantic import BaseModel, ConfigDict
-from enums.kyc import (
+from app.core.enums import (
     AadhaarEkycStatus,
     DocumentType,
     VerificationStatus,
