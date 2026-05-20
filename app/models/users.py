@@ -211,6 +211,11 @@ class DriverProfile(Base):
     "DriverPayout",
     back_populates="driver",
     cascade="all, delete-orphan")
+    
+    locations = relationship(
+    "DriverLocation",
+    back_populates="driver",
+    cascade="all, delete-orphan")
 
 
 class KYCDocument(Base):
@@ -358,4 +363,78 @@ class DriverSubscription(Base):
     driver = relationship(
         "DriverProfile",
         back_populates="subscriptions"
+    )
+
+
+class DriverLocation(Base):
+    __tablename__ = "driver_locations"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    # =====================================================
+    # FOREIGN KEYS
+    # =====================================================
+
+    driver_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("driver_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    # =====================================================
+    # LOCATION DATA
+    # =====================================================
+
+    latitude = Column(
+        Numeric(10, 7),
+        nullable=False
+    )
+
+    longitude = Column(
+        Numeric(10, 7),
+        nullable=False
+    )
+
+    heading = Column(
+        Numeric(6, 2),
+        nullable=True
+    )
+
+    speed = Column(
+        Numeric(6, 2),
+        nullable=True
+    )
+
+    is_active = Column(
+        Boolean,
+        default=True
+    )
+
+    # =====================================================
+    # TIMESTAMPS
+    # =====================================================
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # =====================================================
+    # RELATIONSHIPS
+    # =====================================================
+
+    driver = relationship(
+        "DriverProfile",
+        back_populates="locations"
     )
