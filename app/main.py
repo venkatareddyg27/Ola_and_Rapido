@@ -13,12 +13,17 @@ from app.models.payments import *
 from app.models.support import *
 from app.models.operations import *
 
+
 from app.routers import trips as trips_router
 from app.routers import ratings as ratings_router
 from app.routers import parcels as parcels_router
 from app.routers import promo as promo_router
 from app.routers import notifications as notifications_router
 from app.routers import vehicles as vehicles_router
+from app.routers.dispute import router as dispute_router
+from app.routers.drivers import router as drivers_router
+from app.routers.payments import router as payments_router
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
@@ -45,6 +50,11 @@ app.include_router(parcels_router.router)
 app.include_router(promo_router.router)
 app.include_router(notifications_router.router)
 app.include_router(vehicles_router.router)
+app.include_router(dispute_router)
+app.include_router(drivers_router)
+app.include_router(payments_router)
+
+
 # =========================================================
 # ROOT API
 # =========================================================
