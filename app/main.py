@@ -13,7 +13,11 @@ from app.models.payments import *
 from app.models.support import *
 from app.models.operations import *
 
-
+from app.routers import trips as trips_router
+from app.routers import ratings as ratings_router
+from app.routers import parcels as parcels_router
+from app.routers import promo as promo_router
+from app.routers import notifications as notifications_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,6 +39,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+app.include_router(trips_router.router)
+app.include_router(ratings_router.router)
+app.include_router(parcels_router.router)
+app.include_router(promo_router.router)
+app.include_router(notifications_router.router)
 
 # =========================================================
 # ROOT API

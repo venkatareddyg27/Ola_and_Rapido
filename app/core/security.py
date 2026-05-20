@@ -44,7 +44,7 @@ def verify_password(
 # =========================================================
 
 SECRET_KEY = settings.SECRET_KEY
-ALGORITHM = settings.JWT_ALGORITHM
+ALGORITHM = settings.ALGORITHM
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 REFRESH_TOKEN_EXPIRE_DAYS = 7
