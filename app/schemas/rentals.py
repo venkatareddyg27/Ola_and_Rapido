@@ -1,10 +1,11 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 from typing import Optional, List
+
 from pydantic import BaseModel, ConfigDict
 
-from app.core.enums import InspectionType
+from app.core.enums import InspectionType, DisputeCategory
 
 
 # =========================================================
@@ -15,11 +16,15 @@ class RentalBase(BaseModel):
     vehicle_id: uuid.UUID
     renter_id: uuid.UUID
     owner_id: uuid.UUID
-    total_fare: Decimal
+    total_fare: Optional[Decimal] = None
 
 
-class RentalCreate(RentalBase):
-    pass
+class RentalCreate(BaseModel):
+    vehicle_id: uuid.UUID
+    renter_id: uuid.UUID
+    owner_id: Optional[uuid.UUID] = None
+    start_date: date
+    end_date: date
 
 
 class RentalUpdate(BaseModel):
@@ -41,7 +46,7 @@ class RentalResponse(RentalBase):
 # =========================================================
 
 class RentalInspectionBase(BaseModel):
-    rental_id: uuid.UUID
+    rental_id: Optional[uuid.UUID] = None
     inspection_type: InspectionType
 
     fuel_level: Optional[Decimal] = None
@@ -51,8 +56,8 @@ class RentalInspectionBase(BaseModel):
     photo_urls: Optional[List[str]] = None
     video_url: Optional[str] = None
 
-    inspector_user_id: uuid.UUID
-    inspected_at: datetime
+    inspector_user_id: Optional[uuid.UUID] = None
+    inspected_at: Optional[datetime] = None
 
 
 class RentalInspectionCreate(RentalInspectionBase):
@@ -77,3 +82,14 @@ class RentalInspectionResponse(RentalInspectionBase):
     id: uuid.UUID
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# =========================================================
+# RENTAL DISPUTE SCHEMA
+# =========================================================
+
+class RentalDisputeRequest(BaseModel):
+    user_id: uuid.UUID
+    category: DisputeCategory
+    description: str
+    damage_amount: Optional[Decimal] = None

@@ -61,7 +61,8 @@ def verify_password(
 # JWT CONFIG
 # =========================================================
 
-SECRET_KEY = settings.SECRET_KEY
+SECRET_KEY = settings.SECRET_KEY 
+
 
 ALGORITHM = settings.ALGORITHM
 

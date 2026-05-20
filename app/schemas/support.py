@@ -69,7 +69,9 @@ class NotificationResponse(NotificationBase):
     id: UUID
     read_at: Optional[datetime]
     created_at: datetime
-
+class NotificationMarkReadRequest(BaseModel):
+    notification_id: UUID
+    read_at: datetime
     class Config:
         from_attributes = True
 

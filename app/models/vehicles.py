@@ -74,6 +74,11 @@ class Vehicle(Base):
         "DriverProfile",
         back_populates="vehicle"
     )
+    
+    documents = relationship(
+    "VehicleDocument",
+    back_populates="vehicle",
+    cascade="all, delete-orphan")
 
 
 class VehiclePhoto(Base):
@@ -96,4 +101,55 @@ class VehiclePhoto(Base):
     vehicle = relationship(
         "Vehicle",
         back_populates="photos"
+    )
+
+class VehicleDocument(Base):
+
+    __tablename__ = "vehicle_documents"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    vehicle_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("vehicles.id"),
+        nullable=False
+    )
+
+    document_type = Column(
+        String(100),
+        nullable=False
+    )
+
+    document_url = Column(
+        String(500),
+        nullable=False
+    )
+
+    verification_status = Column(
+        String(50),
+        default="pending"
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # =====================================================
+    # RELATIONSHIPS
+    # =====================================================
+
+    vehicle = relationship(
+        "Vehicle",
+        back_populates="documents"
     )
