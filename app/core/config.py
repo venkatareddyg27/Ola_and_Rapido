@@ -1,41 +1,94 @@
-
 from dotenv import load_dotenv
-load_dotenv() 
+ 
+load_dotenv()
+ 
+from pydantic_settings import (
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+    BaseSettings,
 
+    SettingsConfigDict
 
+)
 class Settings(BaseSettings):
+ 
+    # =====================================================
+
+    # APP
+
+    # =====================================================
+ 
     APP_NAME: str
+ 
     APP_VERSION: str
+ 
     DEBUG: bool = True
+ 
+ 
+    # =====================================================
+
+    # DATABASE
+
+    # =====================================================
+ 
     DATABASE_URL: str
+ 
+ 
+    # =====================================================
 
+    # JWT
+
+    # =====================================================
+ 
     SECRET_KEY: str = "secret"
+ 
     ALGORITHM: str = "HS256"
-
+ 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+ 
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+ 
+ 
+    # =====================================================
 
-    model_config = SettingsConfigDict(extra="ignore")
+    # REDIS
 
+    # =====================================================
+ 
     REDIS_URL: str = "redis://localhost:6379"
+ 
+    REDIS_HOST: str = "localhost"
+ 
+    REDIS_PORT: int = 6379
+ 
+    REDIS_DB: int = 0
+ 
+ 
+    # =====================================================
 
-    RAZORPAY_KEY_ID: str = ""
-    RAZORPAY_KEY_SECRET: str = ""
+    # OTP
 
-    FIREBASE_PROJECT_ID: str = ""
+    # =====================================================
+ 
+    OTP_EXPIRY_SECONDS: int = 600
+ 
+    OTP_RATE_LIMIT: int = 3
+ 
+    OTP_RATE_LIMIT_WINDOW: int = 3600
 
-    AWS_ACCESS_KEY_ID: str = ""
-    AWS_SECRET_ACCESS_KEY: str = ""
-    AWS_REGION: str = ""
-    AWS_BUCKET_NAME: str = ""
+    # =====================================================
 
+    # ENV FILE
+
+    # =====================================================
+ 
     model_config = SettingsConfigDict(
+
         env_file=".env",
+
         extra="ignore"
+
     )
-
-
+ 
+ 
 settings = Settings()
-
+ 
