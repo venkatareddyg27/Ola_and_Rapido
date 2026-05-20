@@ -2,7 +2,7 @@ from uuid import UUID
 from decimal import Decimal
 from datetime import datetime
 from typing import Optional, List
-
+from pydantic import Field
 from pydantic import (
     BaseModel,
     EmailStr,
@@ -252,3 +252,50 @@ class DriverSubscriptionResponse(
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+    # =========================================================
+# AUTH SCHEMAS
+# =========================================================
+
+class SendOTPRequest(BaseModel):
+    phone: str
+
+
+class VerifyOTPRequest(BaseModel):
+    phone: str
+    otp: str
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: str
+
+
+class RegisterRequest(BaseModel):
+
+    phone: str
+
+    first_name: str
+
+    last_name: str
+
+    full_name: str
+
+    email: EmailStr
+
+    profile_photo_url: str | None = None
+
+    role: UserRole = Field(
+        ...,
+        description="""
+The registration system supports three user roles:
+- CUSTOMER: Regular riders who book trips and rentals
+- DRIVER: Service providers who complete trips
+- OWNER: Vehicle owners who list vehicles for rental
+""",
+        example="customer"
+    )

@@ -1,5 +1,3 @@
-# users.py
-
 import uuid
 from datetime import datetime
 
@@ -22,18 +20,35 @@ from app.core.enums import (
     UserRole,
     UserStatus,
     DriverStatus,
-    SubscriptionPlan, 
+    SubscriptionPlan,
     OTPPurpose,
 )
 
 
+# =========================================================
+# USER MODEL
+# =========================================================
+
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
 
-    phone = Column(String(20), unique=True, nullable=False, index=True)
-    email = Column(String(100), unique=True)
+    phone = Column(
+        String(20),
+        unique=True,
+        nullable=False,
+        index=True
+    )
+
+    email = Column(
+        String(100),
+        unique=True
+    )
 
     first_name = Column(String(60))
     last_name = Column(String(60))
@@ -41,17 +56,30 @@ class User(Base):
 
     profile_photo_url = Column(String(255))
 
-    role = Column(Enum(UserRole), default=UserRole.CUSTOMER)
-    status = Column(Enum(UserStatus), default=UserStatus.PENDING)
+    role = Column(
+        Enum(UserRole),
+        default=UserRole.CUSTOMER
+    )
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    status = Column(
+        Enum(UserStatus),
+        default=UserStatus.PENDING
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
     updated_at = Column(
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
 
+    # =====================================================
     # RELATIONSHIPS
+    # =====================================================
 
     driver_profile = relationship(
         "DriverProfile",
@@ -128,15 +156,16 @@ class User(Base):
         foreign_keys="Dispute.resolved_by",
         back_populates="resolver"
     )
+
     otp_logs = relationship(
         "OTPLog",
         back_populates="user",
         cascade="all, delete-orphan"
     )
-    
+
     promo_codes = relationship(
-    "PromoCode",
-    back_populates="creator"
+        "PromoCode",
+        back_populates="creator"
     )
 
     surge_zones = relationship(
@@ -148,14 +177,29 @@ class User(Base):
         "AuditLog",
         back_populates="actor"
     )
-    
-    
-    
-    
+
+    # =====================================================
+    # FIXED RELATIONSHIP
+    # =====================================================
+
+    rental_inspections = relationship(
+        "RentalInspection",
+        back_populates="inspector"
+    )
+
+
+# =========================================================
+# DRIVER PROFILE
+# =========================================================
+
 class DriverProfile(Base):
     __tablename__ = "driver_profiles"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
 
     user_id = Column(
         UUID(as_uuid=True),
@@ -173,18 +217,28 @@ class DriverProfile(Base):
         default=SubscriptionPlan.BASIC
     )
 
-    commission_rate = Column(Numeric(5, 2))
+    commission_rate = Column(
+        Numeric(5, 2)
+    )
 
     status = Column(
         Enum(DriverStatus),
         default=DriverStatus.OFFLINE
     )
 
-    rating = Column(Numeric(3, 2), default=5.0)
+    rating = Column(
+        Numeric(3, 2),
+        default=5.0
+    )
 
-    total_trips = Column(Integer, default=0)
+    total_trips = Column(
+        Integer,
+        default=0
+    )
 
+    # =====================================================
     # RELATIONSHIPS
+    # =====================================================
 
     user = relationship(
         "User",
@@ -206,36 +260,52 @@ class DriverProfile(Base):
         back_populates="driver",
         cascade="all, delete-orphan"
     )
-    
-    payouts = relationship(
-    "DriverPayout",
-    back_populates="driver",
-    cascade="all, delete-orphan")
-    
-    locations = relationship(
-    "DriverLocation",
-    back_populates="driver",
-    cascade="all, delete-orphan")
 
+    payouts = relationship(
+        "DriverPayout",
+        back_populates="driver",
+        cascade="all, delete-orphan"
+    )
+
+    locations = relationship(
+        "DriverLocation",
+        back_populates="driver",
+        cascade="all, delete-orphan"
+    )
+
+
+# =========================================================
+# KYC DOCUMENT
+# =========================================================
 
 class KYCDocument(Base):
     __tablename__ = "kyc_documents"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
 
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id")
     )
 
-    doc_url = Column(String(255), nullable=False)
-
-    # RELATIONSHIPS
+    doc_url = Column(
+        String(255),
+        nullable=False
+    )
 
     user = relationship(
         "User",
         back_populates="kyc_documents"
     )
+
+
+# =========================================================
+# OTP LOG
+# =========================================================
 
 class OTPLog(Base):
     __tablename__ = "otp_logs"
@@ -289,17 +359,15 @@ class OTPLog(Base):
         default=datetime.utcnow
     )
 
-    # =====================================================
-    # RELATIONSHIPS
-    # =====================================================
-
     user = relationship(
         "User",
         back_populates="otp_logs"
     )
-    
-    
-    
+
+
+# =========================================================
+# DRIVER SUBSCRIPTION
+# =========================================================
 
 class DriverSubscription(Base):
     __tablename__ = "driver_subscriptions"
@@ -356,15 +424,15 @@ class DriverSubscription(Base):
         onupdate=datetime.utcnow
     )
 
-    # =====================================================
-    # RELATIONSHIPS
-    # =====================================================
-
     driver = relationship(
         "DriverProfile",
         back_populates="subscriptions"
     )
 
+
+# =========================================================
+# DRIVER LOCATION
+# =========================================================
 
 class DriverLocation(Base):
     __tablename__ = "driver_locations"
@@ -375,20 +443,12 @@ class DriverLocation(Base):
         default=uuid.uuid4
     )
 
-    # =====================================================
-    # FOREIGN KEYS
-    # =====================================================
-
     driver_id = Column(
         UUID(as_uuid=True),
         ForeignKey("driver_profiles.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
-
-    # =====================================================
-    # LOCATION DATA
-    # =====================================================
 
     latitude = Column(
         Numeric(10, 7),
@@ -415,10 +475,6 @@ class DriverLocation(Base):
         default=True
     )
 
-    # =====================================================
-    # TIMESTAMPS
-    # =====================================================
-
     created_at = Column(
         DateTime,
         default=datetime.utcnow
@@ -429,10 +485,6 @@ class DriverLocation(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-
-    # =====================================================
-    # RELATIONSHIPS
-    # =====================================================
 
     driver = relationship(
         "DriverProfile",

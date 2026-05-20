@@ -1,7 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException
+)
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.schemas.auth_schema import LoginRequest
 from app.core.database import get_db
+
+from app.core.security import (
+    security,
+    get_current_user
+)
 
 from app.schemas.auth_schema import (
     SendOTPRequest,
@@ -16,8 +26,16 @@ from app.services.auth_service import (
     verify_otp_service,
     refresh_token_service,
     logout_service,
-    register_service
+    register_service,
+    login_service
 )
+
+from app.models.users import User
+
+
+# =========================================================
+# ROUTER
+# =========================================================
 
 router = APIRouter(
     prefix="/auth",
@@ -54,15 +72,51 @@ async def send_otp(
 # VERIFY OTP
 # =========================================================
 
-@router.post("/verify-otp")
+@router.post(
+    "/verify-otp",
+    summary="Verify OTP"
+)
 async def verify_otp(
     data: VerifyOTPRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        response = await verify_otp_service(
+            data=data,
+            db=db
+        )
+        return {
+            "success": True,
+            "message": "OTP verified successfully",
+            "verified": True
+        }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+@router.post(
+    "/register",
+    summary="Register User",
+    description="""
+AVAILABLE ROLES:
+
+- CUSTOMER → Regular riders who book trips and rentals
+- DRIVER → Service providers who complete trips
+- OWNER → Vehicle owners who list vehicles for rental
+    """
+)
+async def register(
+    data: RegisterRequest,
     db: AsyncSession = Depends(get_db)
 ):
 
     try:
 
-        return await verify_otp_service(
+        return await register_service(
             data=data,
             db=db
         )
@@ -74,7 +128,16 @@ async def verify_otp(
             detail=str(e)
         )
 
+@router.post("/login")
+async def login(
+    data: LoginRequest,
+    db: AsyncSession = Depends(get_db)
+):
 
+    return await login_service(
+        data=data,
+        db=db
+    )
 # =========================================================
 # REFRESH TOKEN
 # =========================================================
@@ -121,26 +184,19 @@ async def logout(
         )
 
 
+
 # =========================================================
-# REGISTER
+# CURRENT USER
 # =========================================================
 
-@router.post("/register")
-async def register(
-    data: RegisterRequest,
-    db: AsyncSession = Depends(get_db)
+@router.get("/me")
+async def get_me(
+    current_user: User = Depends(get_current_user)
 ):
 
-    try:
-
-        return await register_service(
-            data=data,
-            db=db
-        )
-
-    except Exception as e:
-
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
+    return {
+        "message": "Authorized Successfully",
+        "user_id": str(current_user.id),
+        "phone": current_user.phone,
+        "role": str(current_user.role)
+    }

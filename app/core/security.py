@@ -2,7 +2,10 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    HTTPBearer
+)
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -12,7 +15,20 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.database import get_db
+
 from app.models.users import User
+from app.core.enums import UserRole
+
+
+# =========================================================
+# HTTP BEARER AUTH
+# =========================================================
+
+security = HTTPBearer()
+
+optional_security = HTTPBearer(
+    auto_error=False
+)
 
 
 # =========================================================
@@ -26,6 +42,7 @@ pwd_context = CryptContext(
 
 
 def hash_password(password: str) -> str:
+
     return pwd_context.hash(password)
 
 
@@ -33,6 +50,7 @@ def verify_password(
     plain_password: str,
     hashed_password: str
 ) -> bool:
+
     return pwd_context.verify(
         plain_password,
         hashed_password
@@ -40,13 +58,15 @@ def verify_password(
 
 
 # =========================================================
-# JWT TOKEN CONFIG
+# JWT CONFIG
 # =========================================================
 
 SECRET_KEY = settings.SECRET_KEY
-ALGORITHM = settings.JWT_ALGORITHM
+
+ALGORITHM = settings.ALGORITHM
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 
@@ -62,8 +82,8 @@ def create_access_token(
     to_encode = data.copy()
 
     expire = datetime.utcnow() + (
-        expires_delta or
-        timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta
+        or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
 
     to_encode.update({
@@ -92,8 +112,8 @@ def create_refresh_token(
     to_encode = data.copy()
 
     expire = datetime.utcnow() + (
-        expires_delta or
-        timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_delta
+        or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     )
 
     to_encode.update({
@@ -111,7 +131,7 @@ def create_refresh_token(
 
 
 # =========================================================
-# VERIFY JWT TOKEN
+# VERIFY TOKEN
 # =========================================================
 
 def verify_token(token: str):
@@ -127,17 +147,11 @@ def verify_token(token: str):
         return payload
 
     except JWTError:
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token"
         )
-
-
-# =========================================================
-# HTTP BEARER SCHEME
-# =========================================================
-
-security = HTTPBearer()
 
 
 # =========================================================
@@ -146,16 +160,17 @@ security = HTTPBearer()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
 
     token = credentials.credentials
 
     payload = verify_token(token)
 
-    user_id = payload.get("sub")
+    user_id = payload.get("user_id")
 
     if not user_id:
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload"
@@ -168,12 +183,14 @@ async def get_current_user(
     user = result.scalar_one_or_none()
 
     if not user:
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
 
-    if not user.is_active:
+    if user.status.name != "ACTIVE":
+
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User is inactive"
@@ -183,19 +200,26 @@ async def get_current_user(
 
 
 # =========================================================
-# GET CURRENT ACTIVE ADMIN
+# GET CURRENT ADMIN
 # =========================================================
 
 async def get_current_admin(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
 
     token = credentials.credentials
 
     payload = verify_token(token)
 
-    user_id = payload.get("sub")
+    user_id = payload.get("user_id")
+
+    if not user_id:
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
 
     result = await db.execute(
         select(User).where(User.id == user_id)
@@ -204,12 +228,14 @@ async def get_current_admin(
     user = result.scalar_one_or_none()
 
     if not user:
+
         raise HTTPException(
             status_code=404,
             detail="User not found"
         )
 
-    if user.role != "admin":
+    if user.role != UserRole.ADMIN:
+
         raise HTTPException(
             status_code=403,
             detail="Admin access required"
@@ -224,12 +250,13 @@ async def get_current_admin(
 
 async def get_optional_user(
     credentials: HTTPAuthorizationCredentials = Depends(
-        HTTPBearer(auto_error=False)
+        optional_security
     ),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db)
 ):
 
     if not credentials:
+
         return None
 
     token = credentials.credentials
@@ -238,7 +265,11 @@ async def get_optional_user(
 
         payload = verify_token(token)
 
-        user_id = payload.get("sub")
+        user_id = payload.get("user_id")
+
+        if not user_id:
+
+            return None
 
         result = await db.execute(
             select(User).where(User.id == user_id)
@@ -249,4 +280,5 @@ async def get_optional_user(
         return user
 
     except Exception:
+
         return None
