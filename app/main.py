@@ -24,15 +24,6 @@ from app.routers.dispute import router as dispute_router
 from app.routers.drivers import router as drivers_router
 from app.routers.payments import router as payments_router
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-
-# Create all tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    yield
-
 
 # =========================================================
 # FASTAPI APP
@@ -40,9 +31,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Rapido & Ola Backend",
-    version="1.0.0",
-    lifespan=lifespan
-)
+    version="1.0.0")
 
 app.include_router(trips_router.router)
 app.include_router(ratings_router.router)
