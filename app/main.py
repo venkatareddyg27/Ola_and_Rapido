@@ -13,6 +13,10 @@ from app.models.payments import *
 from app.models.support import *
 from app.models.operations import *
 
+from app.routers.dispute import router as dispute_router
+from app.routers.drivers import router as drivers_router
+from app.routers.payments import router as payments_router
+
 
 
 @asynccontextmanager
@@ -34,7 +38,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
-
+app.include_router(dispute_router)
+app.include_router(drivers_router)
+app.include_router(payments_router)
 
 # =========================================================
 # ROOT API
