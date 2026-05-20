@@ -18,11 +18,11 @@ from app.routers import ratings as ratings_router
 from app.routers import parcels as parcels_router
 from app.routers import promo as promo_router
 from app.routers import notifications as notifications_router
-
+from app.routers import vehicles as vehicles_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
-    # Create all tables
+# Create all tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -44,7 +44,7 @@ app.include_router(ratings_router.router)
 app.include_router(parcels_router.router)
 app.include_router(promo_router.router)
 app.include_router(notifications_router.router)
-
+app.include_router(vehicles_router.router)
 # =========================================================
 # ROOT API
 # =========================================================

@@ -3,9 +3,9 @@ from datetime import datetime
 from uuid import UUID
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from core.enums import (
+from app.core.enums import (
     VehicleCategory,
     VehicleStatus,
     VehiclePhotoAngle
@@ -60,7 +60,38 @@ class VehicleUpdate(BaseModel):
 
     status: Optional[VehicleStatus] = None
 
+class VehicleUpdateStatus(
+    BaseModel
+):
 
+    status: str
+
+
+# =========================================================
+# VEHICLE DOCUMENT RESPONSE
+# =========================================================
+
+class VehicleDocumentResponse(
+    BaseModel
+):
+
+    id: UUID
+
+    vehicle_id: UUID
+
+    document_type: str
+
+    document_url: str
+
+    verification_status: str
+
+    created_at: Optional[
+        datetime
+    ] = None
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 # =========================================================
 # VEHICLE RESPONSE
 # =========================================================
