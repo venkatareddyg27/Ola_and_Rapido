@@ -7,48 +7,18 @@ from app.core.config import settings
 from app.core.database import engine, Base
 
 
+#endpoints
+from app.routers import profile,mobile,login
+
+
 # =========================================================
 # IMPORT ALL MODELS
 # =========================================================
 
-from app.models.payment_models import (
-    Payment,
-    PaymentTransaction,
-    Wallet,
-    WalletTransaction,
-    Invoice,
-    Refund
-)
-
-from app.models.escrow_models import (
-    EscrowHold,
-    EscrowTransaction,
-    DamageClaim
-)
-
-
-
-
-
-
-
-from app.models.user_model import (
-    User,
-    
-)
-
-from app.models.vehicle_models import (
-    Vehicle,
-    VehicleListing
-)
-
-from app.models.parcel_models import (
-    Parcel
-)
-
+from app.models.payment_models import *
+from app.models.escrow_models import *
 from app.models.ride_models import *
 
-from app.routers import login,profile,mobile
 # =========================================================
 # LIFESPAN
 # =========================================================
@@ -56,20 +26,10 @@ from app.routers import login,profile,mobile
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
-    # =====================================================
-    # DEBUG REGISTERED TABLES
-    # =====================================================
-
-    print(Base.metadata.tables.keys())
-
-    # =====================================================
-    # CREATE DATABASE TABLES
-    # =====================================================
-
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    #print("Database tables created successfully")
+    print("Database tables created successfully")
 
     yield
 
@@ -100,6 +60,7 @@ app.add_middleware(
 # =========================================================
 #endpoints
 # =========================================================
+
 
 
 app.include_router(login.router)

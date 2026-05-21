@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user_model import User, BlockedUser
+from app.models.user_models import User, BlockedUser
 from app.core.enums import UserRole
 
 
@@ -93,7 +93,8 @@ class OTPUserRepository:
 
         user = User(
             mobile_number=phone_number.strip(),
-            full_name="",
+            full_name=None,
+            email=None,
             role=role_value,
             is_verified=True,
             is_active=True,
@@ -104,7 +105,6 @@ class OTPUserRepository:
         await self.db.refresh(user)
 
         return user
-
     async def block_mobile_number(self, phone_number: str, reason: str):
         user = await self.get_user_by_phone(phone_number)
 

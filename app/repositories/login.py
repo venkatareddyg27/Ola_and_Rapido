@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.models.user_model import User
+from app.models.user_models import User
 
 
 class AuthRepository:

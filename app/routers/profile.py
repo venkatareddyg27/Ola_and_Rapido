@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models.user_model import User
+from app.models.user_models import User
 from app.schemas.profile import CreateProfileRequest
 from app.repositories.profile import ProfileRepository
 
@@ -30,9 +30,9 @@ async def create_profile(
         "profile_completed": True,
         "next_screen": "DASHBOARD",
         "user_id": user.id,
-        "phone_number": user.phone_number,
+        "phone_number": user.mobile_number,
         "full_name": user.full_name,
         "email": user.email,
         "profile_photo_url": user.profile_photo_url,
-        "role": user.role.value,
+        
     }

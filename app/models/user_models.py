@@ -18,6 +18,7 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 
+
 # =========================================================
 # USERS
 # =========================================================
@@ -34,13 +35,13 @@ class User(Base):
 
     full_name = Column(
         String(255),
-        nullable=False
+        nullable=True
     )
 
     email = Column(
         String(255),
         unique=True,
-        nullable=False,
+        nullable=True,
         index=True
     )
 
@@ -51,11 +52,7 @@ class User(Base):
         index=True
     )
 
-    password_hash = Column(
-        Text,
-        nullable=False
-    )
-
+   
     role = Column(
         String(50),
         default="USER"
@@ -133,7 +130,8 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
-
+   
+   
 # =========================================================
 # USER SESSIONS
 # =========================================================

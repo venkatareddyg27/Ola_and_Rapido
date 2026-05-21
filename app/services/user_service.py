@@ -3,8 +3,8 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import UserRole
-from app.repositories.mobile import otp_repo
-from app.repositories.mobile import OTPUserRepository
+from app.core.security import create_access_token
+from app.repositories.mobile import otp_repo, OTPUserRepository
 
 
 class OTPService:
@@ -12,27 +12,18 @@ class OTPService:
     async def send_otp(
         self,
         mobile: str,
-       
         db: AsyncSession,
     ):
         mobile = mobile.strip()
-        role = UserRole.CUSTOMER
 
         user_repo = OTPUserRepository(db)
         user = await user_repo.get_user_by_phone(mobile)
 
-        if user:
-            if user.is_blocked:
-                raise HTTPException(
-                    status_code=403,
-                    detail=f"User blocked: {user.blocked_reason}",
-                )
-
-            return {
-                "message": "User already exists",
-                "user_id": user.id,
-                
-            }
+        if user and not user.is_active:
+            raise HTTPException(
+                status_code=403,
+                detail="User blocked or inactive",
+            )
 
         otp = str(random.randint(100000, 999999))
 
@@ -46,7 +37,7 @@ class OTPService:
         return {
             "message": "OTP sent successfully",
             "mobile_number": mobile,
-            
+            "is_existing_user": bool(user),
         }
 
     async def resend_otp(
@@ -55,23 +46,15 @@ class OTPService:
         db: AsyncSession,
     ):
         mobile = mobile.strip()
-        role = UserRole.CUSTOMER
 
         user_repo = OTPUserRepository(db)
         user = await user_repo.get_user_by_phone(mobile)
 
-        if user:
-            if user.is_blocked:
-                raise HTTPException(
-                    status_code=403,
-                    detail=f"User blocked: {user.blocked_reason}",
-                )
-
-            return {
-                "message": "User already exists",
-                "user_id": user.id,
-                
-            }
+        if user and not user.is_active:
+            raise HTTPException(
+                status_code=403,
+                detail="User blocked or inactive",
+            )
 
         otp = str(random.randint(100000, 999999))
 
@@ -93,8 +76,7 @@ class OTPService:
         return {
             "message": "OTP resent successfully",
             "mobile_number": mobile,
-            "role": role.value,
-            
+            "is_existing_user": bool(user),
         }
 
     async def verify_otp(
@@ -110,10 +92,10 @@ class OTPService:
         user_repo = OTPUserRepository(db)
         user = await user_repo.get_user_by_phone(mobile)
 
-        if user and user.is_blocked:
+        if user and not user.is_active:
             raise HTTPException(
                 status_code=403,
-                detail=f"User blocked: {user.blocked_reason}",
+                detail="User blocked or inactive",
             )
 
         try:
@@ -129,22 +111,42 @@ class OTPService:
 
             raise HTTPException(status_code=400, detail=error_message)
 
-        if user:
-            return {
-                "message": "User already exists",
-                "user_id": user.id,
-                
-            }
+        if not user:
+            user = await user_repo.create_user_with_phone(
+                phone_number=mobile,
+                role=role,
+            )
+            is_new_user = True
+        else:
+            is_new_user = False
 
-        user = await user_repo.create_user_with_phone(
-            phone_number=mobile,
-            role=role,
-        )
+        user_role = user.role.value if hasattr(user.role, "value") else user.role
+
+        access_token = create_access_token({
+            "sub": str(user.id),
+            "role": user_role,
+            "type": "DB_USER",
+        })
+
+        refresh_token = create_access_token({
+            "sub": str(user.id),
+            "role": user_role,
+            "type": "DB_USER",
+        })
+
+        profile_completed = bool(user.full_name and user.email)
 
         return {
-            "message": "User created successfully",
+            "message": "Profile created successfully" if is_new_user else "Login successful",
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
             "user_id": user.id,
-            
+            "mobile_number": user.mobile_number,
+            "role": user_role,
+            "is_new_user": is_new_user,
+            "profile_completed": profile_completed,
+            "next_screen": "DASHBOARD" if profile_completed else "CREATE_PROFILE",
         }
 
 

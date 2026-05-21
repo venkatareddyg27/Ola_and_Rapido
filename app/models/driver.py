@@ -40,7 +40,7 @@ class DriverProfile(Base):
     driver_rating = Column(Numeric(3, 2), default=0)
     total_rides = Column(BigInteger, default=0)
     online_status = Column(Enum(OnlineStatus), default=OnlineStatus.OFFLINE)
-    status = Column(Enum(DriverStatus), default=DriverStatus.PENDING)
+    status = Column(Enum(DriverStatus), default=DriverStatus.PENDING_APPROVAL)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

@@ -1,58 +1,89 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
+import random
+from datetime import datetime, timedelta
 
-from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import verify_password, create_access_token
+from app.core.security import create_access_token
 from app.repositories.login import AuthRepository
 from app.utils.validators import validate_mobile
-from app.core.config import settings
 from app.core.dependencies import get_current_user
-from app.models.user_model import User
+from app.models.user_models import User
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
+# TEMP OTP storage
+otp_store = {}
 
-@router.post("/login")
-async def login_user(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+
+# ==========================
+# SEND OTP ROUTER
+# ==========================
+@router.post("/send-otp")
+async def send_otp(
+    mobile: str,
     db: AsyncSession = Depends(get_db),
 ):
-    validate_mobile(form_data.username)
+    validate_mobile(mobile)
 
-    # 1. SuperAdmin login from .env only
-    if (
-        form_data.username == settings.SUPERADMIN_MOBILE
-        and form_data.password == settings.SUPERADMIN_PASSWORD
-    ):
-        access_token = create_access_token({
-            "sub": "superadmin",
-            "role": "SUPER_ADMIN",
-            "type": "ENV_SUPER_ADMIN"
-        })
-        refresh_token = create_access_token({
-            "sub": "superadmin",
-            "role": "SUPER_ADMIN",
-            "type": "ENV_SUPER_ADMIN"
-        })
-
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-            "role": "SUPER_ADMIN",
-        }
-
-    # 2. Normal users login from DB
     auth_repo = AuthRepository(db)
-    user = await auth_repo.get_user_by_mobile(form_data.username)
+    user = await auth_repo.get_user_by_mobile(mobile)
 
+    # ✅ User must exist
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=404,
+            detail="Register first with mobile number"
+        )
 
-    if not verify_password(form_data.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    otp = str(random.randint(100000, 999999))
+
+    otp_store[mobile] = {
+        "otp": otp,
+        "expires_at": datetime.utcnow() + timedelta(minutes=5),
+    }
+
+    print(f"OTP for {mobile}: {otp}")
+
+    return {
+        "message": "OTP sent successfully"
+    }
+
+
+# ==========================
+# VERIFY OTP ROUTER
+# ==========================
+@router.post("/verify-otp")
+async def verify_otp(
+    mobile: str,
+    otp: str,
+    db: AsyncSession = Depends(get_db),
+):
+    validate_mobile(mobile)
+
+    saved_otp = otp_store.get(mobile)
+
+    if not saved_otp:
+        raise HTTPException(status_code=400, detail="OTP not requested")
+
+    if saved_otp["expires_at"] < datetime.utcnow():
+        otp_store.pop(mobile, None)
+        raise HTTPException(status_code=400, detail="OTP expired")
+
+    if saved_otp["otp"] != otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+
+    auth_repo = AuthRepository(db)
+    user = await auth_repo.get_user_by_mobile(mobile)
+
+    # ✅ Double safety check
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="Register first with mobile number"
+        )
+
+    otp_store.pop(mobile, None)
 
     role = user.role.value if hasattr(user.role, "value") else user.role
 
@@ -61,6 +92,7 @@ async def login_user(
         "role": role,
         "type": "DB_USER"
     })
+
     refresh_token = create_access_token({
         "sub": str(user.id),
         "role": role,
@@ -75,10 +107,14 @@ async def login_user(
         "role": role,
     }
 
+
+# ==========================
+# CURRENT USER
+# ==========================
 @router.get("/me")
 async def me(current_user: User = Depends(get_current_user)):
     return {
         "id": current_user.id,
         "phone_number": current_user.phone_number,
-        "role": current_user.role.value,
+        "role": current_user.role.value if hasattr(current_user.role, "value") else current_user.role,
     }
