@@ -1,18 +1,46 @@
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    field_validator,
+    Field
+)
 
-
-from pydantic import BaseModel, EmailStr, Field
-from app.core.enums import OTPPurpose, UserRole
+from app.core.enums import UserRole
 
 
 # =========================================================
-# SEND OTP
+# LOGIN
 # =========================================================
 
-class SendOTPRequest(BaseModel):
+class LoginRequest(BaseModel):
 
     phone: str
 
-    purpose: OTPPurpose
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value):
+
+        if not value.startswith("+91"):
+
+            raise ValueError(
+                "Phone number must start with +91"
+            )
+
+        mobile = value[3:]
+
+        if not mobile.isdigit():
+
+            raise ValueError(
+                "Phone number must contain digits only"
+            )
+
+        if len(mobile) != 10:
+
+            raise ValueError(
+                "Phone number must be exactly 10 digits"
+            )
+
+        return value
 
 
 # =========================================================
@@ -25,9 +53,35 @@ class VerifyOTPRequest(BaseModel):
 
     otp: str
 
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value):
+
+        if not value.startswith("+91"):
+
+            raise ValueError(
+                "Phone number must start with +91"
+            )
+
+        mobile = value[3:]
+
+        if not mobile.isdigit():
+
+            raise ValueError(
+                "Phone number must contain digits only"
+            )
+
+        if len(mobile) != 10:
+
+            raise ValueError(
+                "Phone number must be exactly 10 digits"
+            )
+
+        return value
+
 
 # =========================================================
-# REGISTER
+# UPDATE PROFILE
 # =========================================================
 
 class RegisterRequest(BaseModel):
@@ -45,33 +99,32 @@ class RegisterRequest(BaseModel):
     profile_photo_url: str | None = None
 
     role: UserRole = Field(
-        ...,
-        example="CUSTOMER"
+        default=UserRole.CUSTOMER,
+        examples=["CUSTOMER"]
     )
 
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value):
 
-# =========================================================
-# LOGIN
-# =========================================================
+        if not value.startswith("+91"):
 
-class LoginRequest(BaseModel):
+            raise ValueError(
+                "Phone number must start with +91"
+            )
 
-    phone: str
+        mobile = value[3:]
 
+        if not mobile.isdigit():
 
-# =========================================================
-# REFRESH TOKEN
-# =========================================================
+            raise ValueError(
+                "Phone number must contain digits only"
+            )
 
-class RefreshTokenRequest(BaseModel):
+        if len(mobile) != 10:
 
-    refresh_token: str
+            raise ValueError(
+                "Phone number must be exactly 10 digits"
+            )
 
-
-# =========================================================
-# LOGOUT
-# =========================================================
-
-class LogoutRequest(BaseModel):
-
-    refresh_token: str
+        return value

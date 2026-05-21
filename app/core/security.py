@@ -1,4 +1,4 @@
-
+from app.core.token_blacklist import BLACKLISTED_TOKENS
 import re
 
 from datetime import (
@@ -212,6 +212,47 @@ def decode_refresh_token(
 # GET CURRENT USER
 # =========================================================
 
+# async def get_current_user(
+
+#     credentials:
+#     HTTPAuthorizationCredentials = Depends(
+#         security
+#     ),
+
+#     db: AsyncSession = Depends(
+#         get_db
+#     )
+# ):
+
+#     token = credentials.credentials
+
+#     payload = verify_token(token)
+
+#     user_id = payload.get("sub")
+
+#     if not user_id:
+
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Invalid token payload"
+#         )
+
+#     result = await db.execute(
+#         select(User).where(
+#             User.id == user_id
+#         )
+#     )
+
+#     user = result.scalar_one_or_none()
+
+#     if not user:
+
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="User not found"
+#         )
+
+#     return user
 async def get_current_user(
 
     credentials:
@@ -225,6 +266,14 @@ async def get_current_user(
 ):
 
     token = credentials.credentials
+
+    # CHECK BLACKLISTED TOKEN
+    if token in BLACKLISTED_TOKENS:
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You are logged out. Please login again."
+        )
 
     payload = verify_token(token)
 
@@ -253,7 +302,6 @@ async def get_current_user(
         )
 
     return user
-
 # =========================================================
 # GET CURRENT ADMIN
 # =========================================================
