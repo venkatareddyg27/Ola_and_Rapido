@@ -1,32 +1,38 @@
-from redis.asyncio import Redis
+# redis.py
 
-from app.core.config import settings
+import redis.asyncio as redis
 
-
-# =========================================================
-# REDIS CONNECTION
-# =========================================================
-
-redis_client = Redis(
-    host=settings.REDIS_HOST,
-    port=settings.REDIS_PORT,
-    db=settings.REDIS_DB,
-    decode_responses=False,
+from app.core.config import (
+    settings
 )
 
+# =========================================================
+# REDIS CLIENT
+# =========================================================
+
+redis_client = redis.from_url(
+
+    settings.REDIS_URL,
+
+    decode_responses=True
+)
 
 # =========================================================
 # REDIS HEALTH CHECK
 # =========================================================
 
-async def check_redis_connection():
+async def check_redis():
 
     try:
 
         await redis_client.ping()
 
-        print("✅ Redis Connected")
+        print(
+            "✅ Redis Connected"
+        )
 
     except Exception as e:
 
-        print(f"❌ Redis Connection Failed: {e}")
+        print(
+            f"❌ Redis Error: {e}"
+        )

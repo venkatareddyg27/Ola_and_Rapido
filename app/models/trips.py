@@ -109,7 +109,7 @@ class TripLocation(Base):
     
     
 class TripParcel(Base):
-    __tablename__ = "trip_parcels"
+    __tablename__ = "parcels"
 
     id = Column(
         UUID(as_uuid=True),

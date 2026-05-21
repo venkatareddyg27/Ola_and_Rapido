@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 
-from app.models.users import User
+from app.models.user_models import User
 from app.models.operations import PromoCode
 
 from app.schemas.operations import (

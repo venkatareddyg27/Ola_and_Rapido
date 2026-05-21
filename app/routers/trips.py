@@ -24,7 +24,7 @@ from app.models.trips import (
     Trip
 )
 
-from app.models.users import (
+from app.models.user_models import (
     User
 )
 

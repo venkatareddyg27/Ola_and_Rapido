@@ -19,7 +19,7 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.models.users import User
+from app.models.user_models import User
 
 
 # =========================================================
