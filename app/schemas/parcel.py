@@ -34,7 +34,19 @@ class ParcelBase(BaseModel):
 
 
 class ParcelCreate(ParcelBase):
-    pass
+    pickup_address: str
+    pickup_lat: Decimal
+    pickup_lng: Decimal
+    drop_lat: Decimal
+    drop_lng: Decimal
+    sender_name: str
+    sender_phone: str
+    receiver_name: str
+    receiver_phone: str
+    receiver_address: str
+    package_type: str
+    weight_kg: Decimal
+    cod_amount: Decimal | None
 
 
 class ParcelUpdate(BaseModel):

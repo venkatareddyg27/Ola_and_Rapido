@@ -1,223 +1,331 @@
-
- 
 import enum
- 
- 
+
 # =========================================================
 # USER & AUTHENTICATION ENUMS
 # =========================================================
- 
+
 class UserRole(str, enum.Enum):
+
     CUSTOMER = "customer"
-    DRIVER   = "driver"
-    OWNER    = "owner"
-    ADMIN    = "admin"
- 
- 
+
+    DRIVER = "driver"
+
+    OWNER = "owner"
+
+    ADMIN = "admin"
+
+
 class UserStatus(str, enum.Enum):
-    ACTIVE    = "active"
+
+    ACTIVE = "active"
+
     SUSPENDED = "suspended"
-    PENDING   = "pending"
- 
- 
+
+    PENDING = "pending"
+
+
 class OTPPurpose(str, enum.Enum):
+
     LOGIN = "login"
-    KYC   = "kyc"
-    TRIP  = "trip"
- 
- 
+
+    KYC = "kyc"
+
+    TRIP = "trip"
+
 # =========================================================
 # KYC & DOCUMENT ENUMS
 # =========================================================
- 
+
 class KYCDocType(str, enum.Enum):
-    AADHAAR   = "aadhaar"
-    PAN       = "pan"
-    DL        = "dl"
-    RC        = "rc"
+
+    AADHAAR = "aadhaar"
+
+    PAN = "pan"
+
+    DL = "dl"
+
+    RC = "rc"
+
     INSURANCE = "insurance"
-    PUC       = "puc"
- 
- 
+
+    PUC = "puc"
+
+
 class KYCStatus(str, enum.Enum):
-    PENDING  = "pending"
+
+    PENDING = "pending"
+
     APPROVED = "approved"
+
     REJECTED = "rejected"
- 
- 
+
 # =========================================================
 # DRIVER & VEHICLE ENUMS
 # =========================================================
- 
+
 class SubscriptionPlan(str, enum.Enum):
+
     BASIC = "basic"
-    PRO   = "pro"
- 
- 
+
+    PRO = "pro"
+
+
 class DriverStatus(str, enum.Enum):
+
     OFFLINE = "offline"
+
     INACTIVE = "inactive"
-    ACTIVE  = "active"
-    ONLINE  = "online"
+
+    ACTIVE = "active"
+
+    ONLINE = "online"
+
     ON_TRIP = "on_trip"
-    BREAK   = "break"
+
+    BREAK = "break"
+
+
 class DriverOnTripStatus(str, enum.Enum):
- 
+
     AVAILABLE = "available"
- 
+
     ON_TRIP = "on_trip"
- 
+
     OFFLINE = "offline"
- 
+
+
 class VehicleCategory(str, enum.Enum):
+
     HATCHBACK = "hatchback"
-    SEDAN     = "sedan"
-    SUV       = "suv"
-    LUXURY    = "luxury"
-    BIKE      = "bike"
-    AUTO      = "auto"
- 
- 
+
+    SEDAN = "sedan"
+
+    SUV = "suv"
+
+    LUXURY = "luxury"
+
+    BIKE = "bike"
+
+    AUTO = "auto"
+
+
 class VehicleStatus(str, enum.Enum):
-    PENDING  = "pending"
-    ACTIVE   = "active"
-    PAUSED   = "paused"
+
+    PENDING = "pending"
+
+    ACTIVE = "active"
+
+    PAUSED = "paused"
+
     REJECTED = "rejected"
- 
- 
+
+
 class VehiclePhotoAngle(str, enum.Enum):
-    FRONT     = "front"
-    REAR      = "rear"
-    LEFT      = "left"
-    RIGHT     = "right"
-    INTERIOR  = "interior"
+
+    FRONT = "front"
+
+    REAR = "rear"
+
+    LEFT = "left"
+
+    RIGHT = "right"
+
+    INTERIOR = "interior"
+
     DASHBOARD = "dashboard"
- 
- 
+
 # =========================================================
 # TRIP & SERVICE ENUMS
 # =========================================================
- 
+
 class ServiceType(str, enum.Enum):
-    BIKE    = "bike"
-    AUTO    = "auto"
-    MINI    = "mini"
-    SEDAN   = "sedan"
-    SUV     = "suv"
-    PARCEL  = "parcel"
-    RENTAL  = "rental"
- 
- 
+
+    BIKE = "bike"
+
+    AUTO = "auto"
+
+    MINI = "mini"
+
+    SEDAN = "sedan"
+
+    SUV = "suv"
+
+    PARCEL = "parcel"
+
+    RENTAL = "rental"
+
+
 class TripStatus(str, enum.Enum):
-    SEARCHING       = "searching"
-    DRIVER_ASSIGNED = "driver_assigned"   # added — used by matching.py
-    ACCEPTED        = "accepted"
-    ARRIVED         = "arrived"
-    STARTED         = "started"
-    COMPLETED       = "completed"
-    CANCELLED       = "cancelled"
- 
- 
+
+    SEARCHING_DRIVER = "searching_driver"
+
+    DRIVER_ASSIGNED = "driver_assigned"
+
+    DRIVER_ARRIVED = "driver_arrived"
+
+    IN_PROGRESS = "in_progress"
+
+    COMPLETED = "completed"
+
+    CANCELLED = "cancelled"
+
+    NO_DRIVER_FOUND = "no_driver_found"
+
+# =========================================================
+# PACKAGE ENUMS
+# =========================================================
+
 class PackageType(str, enum.Enum):
+
     DOCUMENT = "document"
-    SMALL    = "small"
-    LARGE    = "large"
-    FOOD     = "food"
- 
- 
+
+    SMALL = "small"
+
+    LARGE = "large"
+
+    FOOD = "food"
+
 # =========================================================
 # RENTAL ENUMS
 # =========================================================
- 
+
 class RentalStatus(str, enum.Enum):
-    REQUESTED  = "requested"
-    ACCEPTED   = "accepted"
+
+    REQUESTED = "requested"
+
+    ACCEPTED = "accepted"
+
     INSPECTION = "inspection"
-    ACTIVE     = "active"
-    RETURNED   = "returned"
-    DISPUTED   = "disputed"
-    CANCELLED  = "cancelled"
- 
- 
+
+    ACTIVE = "active"
+
+    RETURNED = "returned"
+
+    DISPUTED = "disputed"
+
+    CANCELLED = "cancelled"
+
+
 class DepositStatus(str, enum.Enum):
-    HELD                = "held"
-    RELEASED            = "released"
-    PARTIALLY_DEDUCTED  = "partially_deducted"
-    FORFEITED           = "forfeited"
- 
- 
+
+    HELD = "held"
+
+    RELEASED = "released"
+
+    PARTIALLY_DEDUCTED = (
+        "partially_deducted"
+    )
+
+    FORFEITED = "forfeited"
+
+
 class InspectionType(str, enum.Enum):
-    PRE  = "pre"
+
+    PRE = "pre"
+
     POST = "post"
- 
- 
+
 # =========================================================
 # PAYMENT ENUMS
 # =========================================================
- 
+
 class PaymentMethod(str, enum.Enum):
-    UPI        = "upi"
-    CARD       = "card"
-    WALLET     = "wallet"
-    CASH       = "cash"
+
+    UPI = "upi"
+
+    CARD = "card"
+
+    WALLET = "wallet"
+
+    CASH = "cash"
+
     NETBANKING = "netbanking"
- 
- 
+
+
 class PaymentStatus(str, enum.Enum):
-    PENDING  = "pending"
-    SUCCESS  = "success"
-    FAILED   = "failed"
+
+    PENDING = "pending"
+
+    SUCCESS = "success"
+
+    FAILED = "failed"
+
     REFUNDED = "refunded"
- 
- 
+
+
 class WalletTransactionType(str, enum.Enum):
+
     CREDIT = "credit"
-    DEBIT  = "debit"
- 
- 
+
+    DEBIT = "debit"
+
+
 class PayoutMethod(str, enum.Enum):
-    UPI  = "upi"
+
+    UPI = "upi"
+
     BANK = "bank"
- 
- 
+
+
 class PayoutStatus(str, enum.Enum):
-    PENDING   = "pending"
+
+    PENDING = "pending"
+
     PROCESSED = "processed"
-    FAILED    = "failed"
- 
- 
+
+    FAILED = "failed"
+
 # =========================================================
 # SUPPORT & OPERATIONS ENUMS
 # =========================================================
- 
+
 class DisputeCategory(str, enum.Enum):
-    FARE      = "fare"
-    DAMAGE    = "damage"
+
+    FARE = "fare"
+
+    DAMAGE = "damage"
+
     BEHAVIOUR = "behaviour"
-    PAYMENT   = "payment"
-    DELIVERY  = "delivery"
-    OTHER     = "other"
- 
- 
+
+    PAYMENT = "payment"
+
+    DELIVERY = "delivery"
+
+    OTHER = "other"
+
+
 class DisputeStatus(str, enum.Enum):
-    OPEN       = "open"
-    IN_REVIEW  = "in_review"
-    RESOLVED   = "resolved"
-    ESCALATED  = "escalated"
- 
- 
+
+    OPEN = "open"
+
+    IN_REVIEW = "in_review"
+
+    RESOLVED = "resolved"
+
+    ESCALATED = "escalated"
+
+
 class DisputePriority(str, enum.Enum):
-    LOW      = "low"
-    MEDIUM   = "medium"
-    HIGH     = "high"
+
+    LOW = "low"
+
+    MEDIUM = "medium"
+
+    HIGH = "high"
+
     CRITICAL = "critical"
- 
- 
+
+
 class DiscountType(str, enum.Enum):
-    FLAT    = "flat"
+
+    FLAT = "flat"
+
     PERCENT = "percent"
- 
- 
+
+# =========================================================
+# OTP PURPOSE ENUMS
+# =========================================================
+
 class OTPPurposeEnum(str, enum.Enum):
 
     LOGIN = "login"
@@ -252,145 +360,96 @@ class OTPPurposeEnum(str, enum.Enum):
         "account_delete"
     )
 
-    DOCUMENT = "document"
-    SMALL    = "small"
-    LARGE    = "large"
-    FOOD     = "food"
- 
- 
 # =========================================================
-# RENTAL ENUMS
+# PARCEL ENUMS
 # =========================================================
- 
-class RentalStatus(str, enum.Enum):
-    REQUESTED  = "requested"
-    ACCEPTED   = "accepted"
-    INSPECTION = "inspection"
-    ACTIVE     = "active"
-    RETURNED   = "returned"
-    DISPUTED   = "disputed"
-    CANCELLED  = "cancelled"
- 
- 
-class DepositStatus(str, enum.Enum):
-    HELD                = "held"
-    RELEASED            = "released"
-    PARTIALLY_DEDUCTED  = "partially_deducted"
-    FORFEITED           = "forfeited"
- 
- 
-class InspectionType(str, enum.Enum):
-    PRE  = "pre"
-    POST = "post"
- 
- 
-# =========================================================
-# PAYMENT ENUMS
-# =========================================================
- 
-class PaymentMethod(str, enum.Enum):
-    UPI        = "upi"
-    CARD       = "card"
-    WALLET     = "wallet"
-    CASH       = "cash"
-    NETBANKING = "netbanking"
- 
- 
-class PaymentStatus(str, enum.Enum):
-    PENDING  = "pending"
-    SUCCESS  = "success"
-    FAILED   = "failed"
-    REFUNDED = "refunded"
- 
- 
-class WalletTransactionType(str, enum.Enum):
-    CREDIT = "credit"
-    DEBIT  = "debit"
- 
- 
-class PayoutMethod(str, enum.Enum):
-    UPI  = "upi"
-    BANK = "bank"
- 
- 
-class PayoutStatus(str, enum.Enum):
-    PENDING   = "pending"
-    PROCESSED = "processed"
-    FAILED    = "failed"
- 
- 
-# =========================================================
-# SUPPORT & OPERATIONS ENUMS
-# =========================================================
- 
-class DisputeCategory(str, enum.Enum):
-    FARE      = "fare"
-    DAMAGE    = "damage"
-    BEHAVIOUR = "behaviour"
-    PAYMENT   = "payment"
-    DELIVERY  = "delivery"
-    OTHER     = "other"
- 
- 
-class DisputeStatus(str, enum.Enum):
-    OPEN       = "open"
-    IN_REVIEW  = "in_review"
-    RESOLVED   = "resolved"
-    ESCALATED  = "escalated"
- 
- 
-class DisputePriority(str, enum.Enum):
-    LOW      = "low"
-    MEDIUM   = "medium"
-    HIGH     = "high"
-    CRITICAL = "critical"
- 
- 
-class DiscountType(str, enum.Enum):
-    FLAT    = "flat"
-    PERCENT = "percent"
- 
-class ParcelStatus(str, enum.Enum):
-    CREATED = "created"
-    REQUESTED = "requested"
-    DRIVER_ASSIGNED = "driver_assigned"
-    ACCEPTED = "accepted"
-    PICKUP_STARTED = "pickup_started"
-    PICKED_UP = "picked_up"
-    IN_TRANSIT = "in_transit"
-    DELIVERED = "delivered"
-    CANCELLED = "cancelled"
-    FAILED = "failed"
-    
-class ParcelType(str, enum.Enum):
-    PACKAGE = "package"
-    DOCUMENT = "document"
-    SMALL = "small"
-    LARGE = "large"
-    FOOD = "food"
-    
-class ParcelPriority(str, enum.Enum):
-    LOW = "low"
-    NORMAL = "normal"
-    HIGH = "high"
-    URGENT = "urgent"
-    
-class ProofType(str, enum.Enum):
-    PICKUP_PHOTO = "pickup_photo"
-    DELIVERY_PHOTO = "delivery_photo"
-    OTP = "otp"
-    SIGNATURE = "signature"
-    
-class DeliveryAttemptStatus(str, enum.Enum):
-    SUCCESS = "success"
-    FAILED = "failed"
-    RETRY = "retry"
-    
-class FeedbackType(str, enum.Enum):
-    DRIVER = "driver"
-    CUSTOMER = "customer"
-    DELIVERY = "delivery"
-    PAYMENT = "payment"
-    APP = "app"
-    OTHER = "other"
 
+class ParcelStatus(str, enum.Enum):
+
+    CREATED = "created"
+
+    REQUESTED = "requested"
+
+    DRIVER_ASSIGNED = (
+        "driver_assigned"
+    )
+
+    ACCEPTED = "accepted"
+
+    PICKUP_STARTED = (
+        "pickup_started"
+    )
+
+    PICKED_UP = "picked_up"
+
+    IN_TRANSIT = "in_transit"
+
+    DELIVERED = "delivered"
+
+    CANCELLED = "cancelled"
+
+    FAILED = "failed"
+
+
+class ParcelType(str, enum.Enum):
+
+    PACKAGE = "package"
+
+    DOCUMENT = "document"
+
+    SMALL = "small"
+
+    LARGE = "large"
+
+    FOOD = "food"
+
+
+class ParcelPriority(str, enum.Enum):
+
+    LOW = "low"
+
+    NORMAL = "normal"
+
+    HIGH = "high"
+
+    URGENT = "urgent"
+
+
+class ProofType(str, enum.Enum):
+
+    PICKUP_PHOTO = "pickup_photo"
+
+    DELIVERY_PHOTO = (
+        "delivery_photo"
+    )
+
+    OTP = "otp"
+
+    SIGNATURE = "signature"
+
+
+class DeliveryAttemptStatus(
+    str,
+    enum.Enum
+):
+
+    SUCCESS = "success"
+
+    FAILED = "failed"
+
+    RETRY = "retry"
+
+
+class FeedbackType(str, enum.Enum):
+
+    DRIVER = "driver"
+
+    CUSTOMER = "customer"
+
+    DELIVERY = "delivery"
+
+    PAYMENT = "payment"
+
+    APP = "app"
+
+    OTHER = "other"

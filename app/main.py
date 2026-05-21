@@ -45,7 +45,7 @@ from app.routers.admin import router as admin_router
 from app.routers.trips import router as trips_router
 from app.routers.ratings import router as ratings_router
 from app.routers.rentals import router as rentals_router
-from app.routers.parcels import router as parcels_router
+from app.routers.customer_parcels import router as parcels_router
 from app.routers.promo import router as promo_router
 from app.routers.notifications import router as notifications_router
 from app.routers.vehicles import router as vehicles_router

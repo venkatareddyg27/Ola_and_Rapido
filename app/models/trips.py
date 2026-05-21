@@ -84,7 +84,7 @@ class Trip(Base):
 
     status = Column(
         Enum(TripStatus),
-        default=TripStatus.SEARCHING
+        default=TripStatus.SEARCHING_DRIVER
     )
 
     fare = Column(
