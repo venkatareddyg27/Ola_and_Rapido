@@ -19,9 +19,12 @@ from app.core.database import get_db
 
 from app.models.trips import (
     Trip,
-    Parcel,
     TripLocation
 )
+from app.models.trips import (
+    Parcel
+)
+
 
 from app.models.user_models import (
     User

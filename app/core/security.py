@@ -7,6 +7,8 @@ from datetime import (
     timedelta
 )
 
+from typing import Optional
+
 from jose import (
     jwt,
     JWTError
@@ -47,6 +49,10 @@ from app.models.user_models import (
     User
 )
 
+from app.core.enums import (
+    UserRole
+)
+
 # =========================================================
 # PASSWORD HASHING
 # =========================================================
@@ -57,95 +63,154 @@ pwd_context = CryptContext(
 )
 
 # =========================================================
-# HTTP BEARER
+# HTTP BEARER AUTH
 # =========================================================
 
 security = HTTPBearer()
+
+optional_security = HTTPBearer(
+    auto_error=False
+)
+
+# =========================================================
+# JWT CONFIG
+# =========================================================
+
+SECRET_KEY = settings.SECRET_KEY
+
+ALGORITHM = settings.ALGORITHM
+
+ACCESS_TOKEN_EXPIRE_MINUTES = (
+    settings.ACCESS_TOKEN_EXPIRE_MINUTES
+)
+
+REFRESH_TOKEN_EXPIRE_DAYS = (
+    settings.REFRESH_TOKEN_EXPIRE_DAYS
+)
 
 # =========================================================
 # HASH PASSWORD
 # =========================================================
 
 def hash_password(
-    text: str
-):
+    password: str
+) -> str:
 
-    return pwd_context.hash(text)
+    return pwd_context.hash(password)
 
 # =========================================================
 # VERIFY PASSWORD
 # =========================================================
 
 def verify_password(
-    text: str,
-    hashed: str
-):
+    plain_password: str,
+    hashed_password: str
+) -> bool:
 
     return pwd_context.verify(
-        text,
-        hashed
+        plain_password,
+        hashed_password
     )
 
 # =========================================================
-# ACCESS TOKEN
+# CREATE ACCESS TOKEN
 # =========================================================
 
-ACCESS_TOKEN_EXPIRE_MINUTES = (
-    settings.ACCESS_TOKEN_EXPIRE_MINUTES
-)
-
 def create_access_token(
-    data: dict
+    data: dict,
+    expires_delta: Optional[
+        timedelta
+    ] = None
 ):
 
     to_encode = data.copy()
 
-    expire = (
-        datetime.utcnow()
-        +
-        timedelta(
+    expire = datetime.utcnow() + (
+
+        expires_delta
+
+        or timedelta(
             minutes=
             ACCESS_TOKEN_EXPIRE_MINUTES
         )
     )
 
     to_encode.update({
-        "exp": expire
+        "exp": expire,
+        "type": "access"
     })
 
-    return jwt.encode(
+    encoded_jwt = jwt.encode(
         to_encode,
-        settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM
+        SECRET_KEY,
+        algorithm=ALGORITHM
     )
 
+    return encoded_jwt
+
 # =========================================================
-# REFRESH TOKEN
+# CREATE REFRESH TOKEN
 # =========================================================
 
 def create_refresh_token(
-    user_id: str
+    data: dict,
+    expires_delta: Optional[
+        timedelta
+    ] = None
 ):
 
-    payload = {
+    to_encode = data.copy()
 
-        "user_id": user_id,
+    expire = datetime.utcnow() + (
 
-        "exp": (
-            datetime.utcnow()
-            +
-            timedelta(
-                days=settings
-                .REFRESH_TOKEN_EXPIRE_DAYS
-            )
+        expires_delta
+
+        or timedelta(
+            days=
+            REFRESH_TOKEN_EXPIRE_DAYS
         )
-    }
-
-    return jwt.encode(
-        payload,
-        settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM
     )
+
+    to_encode.update({
+        "exp": expire,
+        "type": "refresh"
+    })
+
+    encoded_jwt = jwt.encode(
+        to_encode,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+    return encoded_jwt
+
+# =========================================================
+# VERIFY TOKEN
+# =========================================================
+
+def verify_token(
+    token: str
+):
+
+    try:
+
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        return payload
+
+    except JWTError:
+
+        raise HTTPException(
+            status_code=
+            status.HTTP_401_UNAUTHORIZED,
+
+            detail=
+            "Invalid or expired token"
+        )
 
 # =========================================================
 # DECODE ACCESS TOKEN
@@ -155,21 +220,7 @@ def decode_access_token(
     token: str
 ):
 
-    try:
-
-        payload = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[
-                settings.ALGORITHM
-            ]
-        )
-
-        return payload
-
-    except JWTError:
-
-        return None
+    return verify_token(token)
 
 # =========================================================
 # DECODE REFRESH TOKEN
@@ -179,9 +230,7 @@ def decode_refresh_token(
     token: str
 ):
 
-    return decode_access_token(
-        token
-    )
+    return verify_token(token)
 
 # =========================================================
 # GET CURRENT USER
@@ -193,25 +242,18 @@ async def get_current_user(
         security
     ),
 
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(
+        get_db
+    )
 ):
 
     token = credentials.credentials
 
-    payload = decode_access_token(
-        token
+    payload = verify_token(token)
+
+    user_id = payload.get(
+        "user_id"
     )
-
-    if not payload:
-
-        raise HTTPException(
-            status_code=
-            status.HTTP_401_UNAUTHORIZED,
-
-            detail="Invalid token"
-        )
-
-    user_id = payload.get("user_id")
 
     if not user_id:
 
@@ -219,7 +261,8 @@ async def get_current_user(
             status_code=
             status.HTTP_401_UNAUTHORIZED,
 
-            detail="Invalid token payload"
+            detail=
+            "Invalid token payload"
         )
 
     result = await db.execute(
@@ -228,7 +271,7 @@ async def get_current_user(
         )
     )
 
-    user = result.scalars().first()
+    user = result.scalar_one_or_none()
 
     if not user:
 
@@ -240,6 +283,83 @@ async def get_current_user(
         )
 
     return user
+
+# =========================================================
+# GET CURRENT ADMIN
+# =========================================================
+
+async def get_current_admin(
+    credentials:
+    HTTPAuthorizationCredentials = Depends(
+        security
+    ),
+
+    db: AsyncSession = Depends(
+        get_db
+    )
+):
+
+    user = await get_current_user(
+        credentials,
+        db
+    )
+
+    if user.role != UserRole.ADMIN:
+
+        raise HTTPException(
+            status_code=
+            status.HTTP_403_FORBIDDEN,
+
+            detail=
+            "Admin access required"
+        )
+
+    return user
+
+# =========================================================
+# OPTIONAL USER
+# =========================================================
+
+async def get_optional_user(
+    credentials:
+    HTTPAuthorizationCredentials = Depends(
+        optional_security
+    ),
+
+    db: AsyncSession = Depends(
+        get_db
+    )
+):
+
+    if not credentials:
+        return None
+
+    try:
+
+        token = credentials.credentials
+
+        payload = verify_token(token)
+
+        user_id = payload.get(
+            "user_id"
+        )
+
+        if not user_id:
+            return None
+
+        result = await db.execute(
+            select(User).where(
+                User.id == user_id
+            )
+        )
+
+        user = result.scalar_one_or_none()
+
+        return user
+
+    except Exception:
+
+        return None
 
 # =========================================================
 # EMAIL VALIDATION

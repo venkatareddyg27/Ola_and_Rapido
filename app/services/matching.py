@@ -9,10 +9,11 @@ from typing import List, Dict, Optional
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user_models import DriverProfile, User,DriverLocation
+from app.models.user_models import DriverProfile, User
 from app.models.vehicles import Vehicle
 from app.models.trips import Trip
-from app.core.enums import DriverStatus, DriverOnTripStatus, TripStatus
+from app.models.user_models import DriverLocation
+from app.core.enums import DriverStatus, TripStatus
 
 
 # =========================================================
