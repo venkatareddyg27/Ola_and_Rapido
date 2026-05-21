@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from typing import Optional, List
+from typing import Optional
 
 from pydantic import (
     BaseModel,
@@ -13,7 +13,8 @@ from pydantic import (
 from app.core.enums import (
     ServiceType,
     TripStatus,
-    PackageType
+    PackageType,
+    VehicleCategory
 )
 
 # =========================================================
@@ -22,31 +23,32 @@ from app.core.enums import (
 
 class TripEstimateRequest(BaseModel):
 
-    vehicle_category: str
+    pickup_lat: Decimal
 
-    distance_km: Decimal
+    pickup_lng: Decimal
+
+    drop_lat: Decimal
+
+    drop_lng: Decimal
+
+    vehicle_category: VehicleCategory
 
 
 class TripEstimateResponse(BaseModel):
 
-    vehicle_category: str
+    vehicle_category: VehicleCategory
 
     distance_km: Decimal
 
     estimated_fare: Decimal
 
+    fare_breakdown: dict
 
 # =========================================================
-# TRIP SCHEMAS
+# TRIP BASE
 # =========================================================
 
 class TripBase(BaseModel):
-
-    customer_id: uuid.UUID
-
-    driver_id: Optional[
-        uuid.UUID
-    ] = None
 
     pickup_address: Optional[
         str
@@ -74,39 +76,19 @@ class TripBase(BaseModel):
 
     service_type: ServiceType
 
-    fare: Optional[
-        Decimal
-    ] = None
-
-
 # =========================================================
 # CREATE TRIP
 # =========================================================
 
 class TripCreate(TripBase):
 
-    estimated_distance: Optional[
-        Decimal
-    ] = None
-
-    estimated_fare: Optional[
-        Decimal
-    ] = None
-
-    vehicle_category: Optional[
-        str
-    ] = None
-
+    vehicle_category: VehicleCategory
 
 # =========================================================
 # UPDATE TRIP
 # =========================================================
 
 class TripUpdate(BaseModel):
-
-    driver_id: Optional[
-        uuid.UUID
-    ] = None
 
     pickup_address: Optional[
         str
@@ -140,11 +122,6 @@ class TripUpdate(BaseModel):
         TripStatus
     ] = None
 
-    fare: Optional[
-        Decimal
-    ] = None
-
-
 # =========================================================
 # TRIP RESPONSE
 # =========================================================
@@ -153,7 +130,17 @@ class TripResponse(TripBase):
 
     id: uuid.UUID
 
+    customer_id: uuid.UUID
+
+    driver_id: Optional[
+        uuid.UUID
+    ] = None
+
     status: TripStatus
+
+    fare: Optional[
+        Decimal
+    ] = None
 
     estimated_distance: Optional[
         Decimal
@@ -164,7 +151,7 @@ class TripResponse(TripBase):
     ] = None
 
     vehicle_category: Optional[
-        str
+        VehicleCategory
     ] = None
 
     ride_otp: Optional[
@@ -176,6 +163,14 @@ class TripResponse(TripBase):
     ] = None
 
     cancelled_at: Optional[
+        datetime
+    ] = None
+
+    started_at: Optional[
+        datetime
+    ] = None
+
+    completed_at: Optional[
         datetime
     ] = None
 
@@ -191,22 +186,20 @@ class TripResponse(TripBase):
         from_attributes=True
     )
 
-
 # =========================================================
 # TRIP RATING REQUEST
 # =========================================================
 
 class TripRatingRequest(BaseModel):
 
-    stars: int
+    score: int
 
-    feedback: Optional[
+    comment: Optional[
         str
     ] = None
 
-
 # =========================================================
-# TRIP LOCATION SCHEMAS
+# TRIP LOCATION BASE
 # =========================================================
 
 class TripLocationBase(BaseModel):
@@ -221,12 +214,18 @@ class TripLocationBase(BaseModel):
         Decimal
     ] = None
 
+# =========================================================
+# CREATE TRIP LOCATION
+# =========================================================
 
 class TripLocationCreate(
     TripLocationBase
 ):
     pass
 
+# =========================================================
+# UPDATE TRIP LOCATION
+# =========================================================
 
 class TripLocationUpdate(BaseModel):
 
@@ -238,6 +237,9 @@ class TripLocationUpdate(BaseModel):
         Decimal
     ] = None
 
+# =========================================================
+# TRIP LOCATION RESPONSE
+# =========================================================
 
 class TripLocationResponse(
     TripLocationBase
@@ -253,9 +255,8 @@ class TripLocationResponse(
         from_attributes=True
     )
 
-
 # =========================================================
-# PARCEL SCHEMAS
+# PARCEL BASE
 # =========================================================
 
 class ParcelBase(BaseModel):
@@ -296,14 +297,12 @@ class ParcelBase(BaseModel):
 
     status: str = "pending"
 
-
 # =========================================================
 # CREATE PARCEL
 # =========================================================
 
 class ParcelCreate(ParcelBase):
     pass
-
 
 # =========================================================
 # UPDATE PARCEL
@@ -358,7 +357,6 @@ class ParcelUpdate(BaseModel):
     status: Optional[
         str
     ] = None
-
 
 # =========================================================
 # PARCEL RESPONSE

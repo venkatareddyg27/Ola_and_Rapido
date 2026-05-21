@@ -1,47 +1,11 @@
-# =========================================================
-# FILE: app/services/fare.py
-# =========================================================
-
 from app.core.enums import VehicleCategory
+
+from app.utils.fare_config import (
+    VEHICLE_PRICING
+)
 
 
 class FareCalculatorService:
-
-    # =====================================================
-    # VEHICLE CATEGORY PRICING
-    # =====================================================
-
-    VEHICLE_PRICING = {
-        VehicleCategory.BIKE: {
-            "base_fare": 30,
-            "per_km_rate": 8
-        },
-
-        VehicleCategory.AUTO: {
-            "base_fare": 50,
-            "per_km_rate": 12
-        },
-
-        VehicleCategory.HATCHBACK: {
-            "base_fare": 80,
-            "per_km_rate": 15
-        },
-
-        VehicleCategory.SEDAN: {
-            "base_fare": 100,
-            "per_km_rate": 18
-        },
-
-        VehicleCategory.SUV: {
-            "base_fare": 150,
-            "per_km_rate": 22
-        },
-
-        VehicleCategory.LUXURY: {
-            "base_fare": 300,
-            "per_km_rate": 40
-        }
-    }
 
     # =====================================================
     # CALCULATE FARE
@@ -52,37 +16,101 @@ class FareCalculatorService:
         cls,
         vehicle_category: VehicleCategory,
         distance_km: float,
-        surge_multiplier: float = 1.0
-    ) -> float:
+        surge_multiplier: float = 1.0,
+        waiting_charge: float = 0,
+        toll_charge: float = 0
+    ) -> dict:
 
         # =================================================
-        # VALIDATE VEHICLE CATEGORY
+        # VALIDATE CATEGORY
         # =================================================
 
-        if vehicle_category not in cls.VEHICLE_PRICING:
-            raise ValueError("Invalid vehicle category")
+        if vehicle_category not in VEHICLE_PRICING:
+
+            raise ValueError(
+                "Invalid vehicle category"
+            )
 
         # =================================================
         # GET PRICING
         # =================================================
 
-        pricing = cls.VEHICLE_PRICING[vehicle_category]
+        pricing = VEHICLE_PRICING[
+            vehicle_category
+        ]
 
         base_fare = pricing["base_fare"]
 
         per_km_rate = pricing["per_km_rate"]
 
+        minimum_fare = pricing[
+            "minimum_fare"
+        ]
+
         # =================================================
-        # CALCULATE TOTAL FARE
+        # DISTANCE FARE
+        # =================================================
+
+        distance_fare = (
+            distance_km *
+            per_km_rate
+        )
+
+        # =================================================
+        # TOTAL BEFORE SURGE
+        # =================================================
+
+        subtotal = (
+            base_fare +
+            distance_fare +
+            waiting_charge +
+            toll_charge
+        )
+
+        # =================================================
+        # APPLY SURGE
         # =================================================
 
         total_fare = (
-            base_fare +
-            (distance_km * per_km_rate)
-        ) * surge_multiplier
+            subtotal *
+            surge_multiplier
+        )
 
         # =================================================
-        # RETURN ROUNDED FARE
+        # APPLY MINIMUM FARE
         # =================================================
 
-        return round(total_fare, 2)
+        if total_fare < minimum_fare:
+
+            total_fare = minimum_fare
+
+        # =================================================
+        # RETURN RESPONSE
+        # =================================================
+
+        return {
+
+            "vehicle_category":
+            vehicle_category.value,
+
+            "distance_km":
+            round(distance_km, 2),
+
+            "base_fare":
+            round(base_fare, 2),
+
+            "distance_fare":
+            round(distance_fare, 2),
+
+            "waiting_charge":
+            round(waiting_charge, 2),
+
+            "toll_charge":
+            round(toll_charge, 2),
+
+            "surge_multiplier":
+            surge_multiplier,
+
+            "total_fare":
+            round(total_fare, 2)
+        }

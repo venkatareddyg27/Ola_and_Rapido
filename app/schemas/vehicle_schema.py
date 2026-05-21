@@ -17,12 +17,12 @@ from app.core.enums import (
 # =========================================================
 
 class VehicleBase(BaseModel):
-    owner_id: UUID
+    driver_id: UUID
     make: str
     model: str
     year: int
 
-    registration_number: str
+    vehicle_number: str
 
     category: VehicleCategory
 
