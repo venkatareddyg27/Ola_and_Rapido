@@ -2,14 +2,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.services.user_service import otp_service
-from app.schemas.user_schema import SendOTPRequest, VerifyOTPRequest
+from app.services.user_services import otp_service
+from app.schemas.user_schemas import SendOTPRequest, VerifyOTPRequest
 
 router = APIRouter(
     prefix="/otp",
     tags=["mobile auth"],
 )
-
 
 @router.post("/send")
 async def send_otp(

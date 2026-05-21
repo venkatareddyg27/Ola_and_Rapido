@@ -292,7 +292,7 @@ class RideEmergencyAlert(Base):
 
     status: Mapped[EmergencyAlertStatus] = mapped_column(
         SqlEnum(EmergencyAlertStatus, name="emergency_alert_status_enum"),
-        default=EmergencyAlertStatus.ACTIVE,
+       default=EmergencyAlertStatus.TRIGGERED,
         nullable=False,
     )
 

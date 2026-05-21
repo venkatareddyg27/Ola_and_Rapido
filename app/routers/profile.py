@@ -22,6 +22,7 @@ async def create_profile(
         user=current_user,
         full_name=request.full_name,
         email=request.email,
+        gender=request.gender,
         profile_photo_url=request.profile_photo_url,
     )
 
@@ -34,5 +35,5 @@ async def create_profile(
         "full_name": user.full_name,
         "email": user.email,
         "profile_photo_url": user.profile_photo_url,
-        
+        "gender": user.gender,
     }

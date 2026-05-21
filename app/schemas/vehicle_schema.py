@@ -1,106 +1,150 @@
+
 from datetime import datetime
-from decimal import Decimal
-from typing import Optional, List
+from uuid import UUID
+from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from app.models.vehicle import (
-    VehicleType,
-    FuelType,
-    TransmissionType,
-    VehicleVerificationStatus
+from app.core.enums import (
+    VehicleCategory,
+    VehicleStatus,
+    VehiclePhotoAngle
 )
 
 
 # =========================================================
-# VEHICLE CREATE
+# VEHICLE BASE
 # =========================================================
 
-class VehicleCreateSchema(BaseModel):
-
-    owner_id: int
-
-    vehicle_type: VehicleType
-
-    brand: str
-
+class VehicleBase(BaseModel):
+    owner_id: UUID
+    make: str
     model: str
-
     year: int
 
     registration_number: str
 
-    color: Optional[str] = None
+    category: VehicleCategory
 
-    fuel_type: FuelType
+    sitting_capacity: Optional[int] = None
 
-    transmission_type: TransmissionType
+    fuel_type: Optional[str] = None
 
-    seating_capacity: Optional[int] = None
-
-    description: Optional[str] = None
-
-    price_per_day: Decimal
+    colour: Optional[str] = None
 
 
 # =========================================================
-# VEHICLE UPDATE
+# CREATE VEHICLE
 # =========================================================
 
-class VehicleUpdateSchema(BaseModel):
+class VehicleCreate(VehicleBase):
+    pass
 
-    color: Optional[str] = None
 
-    description: Optional[str] = None
+# =========================================================
+# UPDATE VEHICLE
+# =========================================================
 
-    price_per_day: Optional[Decimal] = None
+class VehicleUpdate(BaseModel):
+    make: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = None
 
-    is_available: Optional[bool] = None
+    category: Optional[VehicleCategory] = None
 
-    verification_status: Optional[
-        VehicleVerificationStatus
+    sitting_capacity: Optional[int] = None
+
+    fuel_type: Optional[str] = None
+
+    colour: Optional[str] = None
+
+    status: Optional[VehicleStatus] = None
+
+class VehicleUpdateStatus(
+    BaseModel
+):
+
+    status: str
+
+
+# =========================================================
+# VEHICLE DOCUMENT RESPONSE
+# =========================================================
+
+class VehicleDocumentResponse(
+    BaseModel
+):
+
+    id: UUID
+
+    vehicle_id: UUID
+
+    document_type: str
+
+    document_url: str
+
+    verification_status: str
+
+    created_at: Optional[
+        datetime
     ] = None
 
-
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 # =========================================================
 # VEHICLE RESPONSE
 # =========================================================
 
-class VehicleResponseSchema(BaseModel):
+class VehicleResponse(VehicleBase):
+    id: UUID
 
-    id: int
-
-    owner_id: int
-
-    vehicle_type: VehicleType
-
-    brand: str
-
-    model: str
-
-    year: int
-
-    registration_number: str
-
-    color: Optional[str]
-
-    fuel_type: FuelType
-
-    transmission_type: TransmissionType
-
-    seating_capacity: Optional[int]
-
-    description: Optional[str]
-
-    price_per_day: Decimal
-
-    is_available: bool
-
-    verification_status: VehicleVerificationStatus
+    status: VehicleStatus
 
     created_at: datetime
 
-    updated_at: datetime
+    class Config:
+        from_attributes = True
+
+
+# =========================================================
+# VEHICLE PHOTO BASE
+# =========================================================
+
+class VehiclePhotoBase(BaseModel):
+    vehicle_id: UUID
+
+    photo_url: str
+
+    angle: VehiclePhotoAngle
+
+
+# =========================================================
+# CREATE VEHICLE PHOTO
+# =========================================================
+
+class VehiclePhotoCreate(VehiclePhotoBase):
+    pass
+
+
+# =========================================================
+# UPDATE VEHICLE PHOTO
+# =========================================================
+
+class VehiclePhotoUpdate(BaseModel):
+    photo_url: Optional[str] = None
+
+    angle: Optional[VehiclePhotoAngle] = None
+
+
+# =========================================================
+# VEHICLE PHOTO RESPONSE
+# =========================================================
+
+class VehiclePhotoResponse(VehiclePhotoBase):
+    id: UUID
+
+    uploaded_at: datetime
 
     class Config:
         from_attributes = True

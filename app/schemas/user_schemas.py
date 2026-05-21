@@ -1,26 +1,24 @@
-# =========================================================
-# app/schemas/auth_schema.py
-# =========================================================
 
+
+from uuid import UUID
+from decimal import Decimal
+from datetime import datetime
+from typing import Optional, List
+from pydantic import Field
 from pydantic import (
     BaseModel,
     EmailStr,
     ConfigDict
 )
 
-from typing import Optional
-from datetime import datetime
-
 from app.core.enums import (
-    UserRoleEnum,
-    GenderEnum,
-    DeviceTypeEnum,
+    UserRole,
+    UserStatus,
+    DriverStatus,
+    SubscriptionPlan,
     OTPPurposeEnum,
-    LoginStatusEnum,
-    BlockStatusEnum,
-    PermissionEnum,
-    RoleNameEnum,
 )
+
 
 
 # =========================================================
@@ -28,235 +26,280 @@ from app.core.enums import (
 # =========================================================
 
 class UserBase(BaseModel):
-    full_name: str
-    email: EmailStr
-    mobile_number: str
-    gender: Optional[GenderEnum] = None
+    phone: str
 
-
-class UserCreate(UserBase):
-    password: str
-
-
-class UserUpdate(BaseModel):
-    full_name: Optional[str] = None
     email: Optional[EmailStr] = None
-    mobile_number: Optional[str] = None
-    gender: Optional[GenderEnum] = None
+
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    full_name: Optional[str] = None
+
     profile_photo_url: Optional[str] = None
 
 
+class UserCreate(UserBase):
+    role: UserRole = UserRole.CUSTOMER
+
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    full_name: Optional[str] = None
+
+    profile_photo_url: Optional[str] = None
+
+    status: Optional[UserStatus] = None
+
+
 class UserResponse(UserBase):
-    id: int
-    role: UserRoleEnum
-    profile_photo_url: Optional[str]
-    is_active: bool
-    is_verified: bool
+    id: UUID
+
+    role: UserRole
+    status: UserStatus
+
     created_at: datetime
+    updated_at: datetime
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
-
-# =========================================================
-# LOGIN SCHEMAS
-# =========================================================
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class LoginResponse(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =========================================================
-# USER SESSION SCHEMAS
+# DRIVER LOCATION SCHEMAS
 # =========================================================
 
-class UserSessionCreate(BaseModel):
-    user_id: int
-    access_token: str
-    refresh_token: str
-    device_info: Optional[str]
-    ip_address: Optional[str]
+class DriverLocationBase(BaseModel):
+    latitude: Decimal
+    longitude: Decimal
+
+    heading: Optional[Decimal] = None
+    speed: Optional[Decimal] = None
+
+    is_active: bool = True
+
+
+class DriverLocationCreate(DriverLocationBase):
+    driver_id: UUID
+
+
+class DriverLocationUpdate(BaseModel):
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
+
+    heading: Optional[Decimal] = None
+    speed: Optional[Decimal] = None
+
+    is_active: Optional[bool] = None
+
+
+class DriverLocationResponse(DriverLocationBase):
+    id: UUID
+
+    driver_id: UUID
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# =========================================================
+# DRIVER PROFILE SCHEMAS
+# =========================================================
+
+class DriverProfileBase(BaseModel):
+    subscription_plan: SubscriptionPlan = SubscriptionPlan.BASIC
+
+    commission_rate: Optional[Decimal] = None
+
+    status: DriverStatus = DriverStatus.INACTIVE
+
+    rating: Optional[Decimal] = Decimal("5.0")
+
+    total_trips: int = 0
+
+
+class DriverProfileCreate(DriverProfileBase):
+    user_id: UUID
+
+    vehicle_id: Optional[UUID] = None
+
+
+class DriverProfileUpdate(BaseModel):
+    subscription_plan: Optional[SubscriptionPlan] = None
+
+    commission_rate: Optional[Decimal] = None
+
+    status: Optional[DriverStatus] = None
+
+    rating: Optional[Decimal] = None
+
+    total_trips: Optional[int] = None
+
+    vehicle_id: Optional[UUID] = None
+
+
+class DriverProfileResponse(DriverProfileBase):
+    id: UUID
+
+    user_id: UUID
+
+    vehicle_id: Optional[UUID] = None
+
+    locations: List[DriverLocationResponse] = []
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# =========================================================
+# KYC DOCUMENT SCHEMAS
+# =========================================================
+
+class KYCDocumentCreate(BaseModel):
+    user_id: UUID
+
+    doc_url: str
+
+
+class KYCDocumentResponse(BaseModel):
+    id: UUID
+
+    user_id: UUID
+
+    doc_url: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# =========================================================
+# OTP LOG SCHEMAS
+# =========================================================
+
+class OTPLogCreate(BaseModel):
+    user_id: Optional[UUID] = None
+
+    phone: str
+
+    otp_hash: str
+
+    purpose: OTPPurposeEnum 
+
     expires_at: datetime
 
 
-class UserSessionResponse(UserSessionCreate):
-    id: int
-    created_at: datetime
+class OTPLogResponse(BaseModel):
+    id: UUID
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    user_id: Optional[UUID] = None
 
+    phone: str
 
-# =========================================================
-# USER DEVICE SCHEMAS
-# =========================================================
-
-class UserDeviceCreate(BaseModel):
-    user_id: int
-    device_id: str
-    device_type: DeviceTypeEnum
-    fcm_token: Optional[str] = None
-    app_version: Optional[str] = None
-
-
-class UserDeviceResponse(UserDeviceCreate):
-    id: int
-    created_at: datetime
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
-
-# =========================================================
-# USER ROLE SCHEMAS
-# =========================================================
-
-class UserRoleCreate(BaseModel):
-    user_id: int
-    role_name: RoleNameEnum
-
-
-class UserRoleResponse(UserRoleCreate):
-    id: int
-    assigned_at: datetime
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
-
-# =========================================================
-# USER PERMISSION SCHEMAS
-# =========================================================
-
-class UserPermissionCreate(BaseModel):
-    permission_name: PermissionEnum
-    description: Optional[str] = None
-
-
-class UserPermissionResponse(UserPermissionCreate):
-    id: int
-    created_at: datetime
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
-
-# =========================================================
-# ROLE PERMISSION SCHEMAS
-# =========================================================
-
-class RolePermissionCreate(BaseModel):
-    role_name: RoleNameEnum
-    permission_id: int
-
-
-class RolePermissionResponse(RolePermissionCreate):
-    id: int
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
-
-# =========================================================
-# OTP VERIFICATION SCHEMAS
-# =========================================================
-
-class OTPRequest(BaseModel):
-    mobile_number: str
     purpose: OTPPurposeEnum
 
-
-class OTPVerifyRequest(BaseModel):
-    mobile_number: str
-    otp_code: str
-
-
-class OTPVerificationResponse(BaseModel):
-    id: int
-    mobile_number: str
-    purpose: OTPPurposeEnum
-    is_verified: bool
     expires_at: datetime
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    used_at: Optional[datetime] = None
 
+    attempts: int
 
-# =========================================================
-# PASSWORD RESET SCHEMAS
-# =========================================================
-
-class PasswordResetRequest(BaseModel):
-    email: EmailStr
-
-
-class PasswordResetConfirm(BaseModel):
-    token: str
-    new_password: str
-
-
-class PasswordResetTokenResponse(BaseModel):
-    id: int
-    user_id: int
-    reset_token: str
-    expires_at: datetime
-    is_used: bool
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
-
-# =========================================================
-# LOGIN HISTORY SCHEMAS
-# =========================================================
-
-class LoginHistoryResponse(BaseModel):
-    id: int
-    user_id: int
-    ip_address: Optional[str]
-    device_info: Optional[str]
-    login_status: LoginStatusEnum
-    logged_in_at: datetime
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
-
-# =========================================================
-# BLOCKED USER SCHEMAS
-# =========================================================
-
-class BlockUserRequest(BaseModel):
-    user_id: int
-    blocked_reason: str
-    blocked_by_admin_id: int
-    blocked_until: Optional[datetime] = None
-
-
-class BlockedUserResponse(BaseModel):
-    id: int
-    user_id: int
-    blocked_reason: Optional[str]
-    blocked_by_admin_id: Optional[int]
-    blocked_until: Optional[datetime]
     created_at: datetime
 
-    model_config = ConfigDict(
-        from_attributes=True
+    model_config = ConfigDict(from_attributes=True)
+
+
+# =========================================================
+# DRIVER SUBSCRIPTION SCHEMAS
+# =========================================================
+
+class DriverSubscriptionBase(BaseModel):
+    plan: SubscriptionPlan
+
+    commission_rate: Optional[Decimal] = None
+
+    start_date: datetime
+
+    end_date: Optional[datetime] = None
+
+    auto_renew: bool = True
+
+    status: str = "active"
+
+
+class DriverSubscriptionCreate(
+    DriverSubscriptionBase
+):
+    driver_id: UUID
+
+
+class DriverSubscriptionUpdate(BaseModel):
+    plan: Optional[SubscriptionPlan] = None
+
+    commission_rate: Optional[Decimal] = None
+
+    end_date: Optional[datetime] = None
+
+    auto_renew: Optional[bool] = None
+
+    status: Optional[str] = None
+
+
+class DriverSubscriptionResponse(
+    DriverSubscriptionBase
+):
+    id: UUID
+
+    driver_id: UUID
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+    # =========================================================
+# AUTH SCHEMAS
+# =========================================================
+
+class SendOTPRequest(BaseModel):
+    mobile_number: str
+
+
+class VerifyOTPRequest(BaseModel):
+    mobile_number: str
+    otp: str
+
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: str
+
+
+class RegisterRequest(BaseModel):
+
+    phone: str
+
+    first_name: str
+
+    last_name: str
+
+    full_name: str
+
+    email: EmailStr
+
+    profile_photo_url: str | None = None
+
+    role: UserRole = Field(
+        ...,
+        description="""
+The registration system supports three user roles:
+- CUSTOMER: Regular riders who book trips and rentals
+- DRIVER: Service providers who complete trips
+- OWNER: Vehicle owners who list vehicles for rental
+""",
+        example="customer"
     )

@@ -45,7 +45,7 @@ class Parcel(Base):
 
     parcel_type: Mapped[ParcelType] = mapped_column(
         SqlEnum(ParcelType, name="parcel_type_enum"),
-        default=ParcelType.PACKAGE,
+       default=ParcelType.SMALL,
         nullable=False,
     )
 

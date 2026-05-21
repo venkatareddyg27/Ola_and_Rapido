@@ -15,9 +15,14 @@ from app.routers import profile,mobile,login
 # IMPORT ALL MODELS
 # =========================================================
 
-from app.models.payment_models import *
-from app.models.escrow_models import *
-from app.models.ride_models import *
+import app.models.user_models
+
+import app.models.parcel_models
+import app.models.operations
+import app.models.vehicle_models
+import app.models.base
+import app.models.rentals
+import app.models.ride_models
 
 # =========================================================
 # LIFESPAN
@@ -33,6 +38,10 @@ async def lifespan(app: FastAPI):
 
     yield
 
+# =========================================================
+#endpoints
+# =========================================================
+from app.routers import profile,mobile,login
 
 # =========================================================
 # FASTAPI APP
@@ -57,12 +66,11 @@ app.add_middleware(
 )
 
 
+
+
 # =========================================================
-#endpoints
+# INCLUDE ROUTERS
 # =========================================================
-
-
-
 app.include_router(login.router)
 app.include_router(mobile.router)
 app.include_router(profile.router)

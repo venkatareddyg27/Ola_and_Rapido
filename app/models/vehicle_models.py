@@ -17,7 +17,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 
 from app.core.database import Base
-from app.core.enums import vehicletype, FuelType, TransmissionType, VehicleVerificationStatus
+from app.core.enums import VehicleType, FuelType, TransmissionType, VehicleVerificationStatus
 
 
 # =========================================================
@@ -35,7 +35,7 @@ class Vehicle(Base):
     )
 
     vehicle_type = Column(
-        SqlEnum(vehicletype),
+        SqlEnum(VehicleType),
         nullable=False
     )
 
