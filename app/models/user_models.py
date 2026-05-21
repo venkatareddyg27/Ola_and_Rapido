@@ -174,92 +174,204 @@ class User(Base):
         back_populates="actor",
         cascade="all, delete-orphan"
     )
+    
+    
+    
 
 class DriverProfile(Base):
+
     __tablename__ = "driver_profiles"
- 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
- 
+
+    # =====================================================
+    # PRIMARY KEY
+    # =====================================================
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    # =====================================================
+    # FOREIGN KEYS
+    # =====================================================
+
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
-        unique=True
+        unique=True,
+        nullable=False
     )
- 
+
     vehicle_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("vehicles.id")
+        ForeignKey("vehicles.id"),
+        nullable=True
     )
- 
+
+    # =====================================================
+    # DRIVER DETAILS
+    # =====================================================
+
     subscription_plan = Column(
         Enum(SubscriptionPlan),
         default=SubscriptionPlan.BASIC
     )
- 
-    commission_rate = Column(Numeric(5, 2))
- 
+
+    commission_rate = Column(
+        Numeric(5, 2),
+        default=10.00
+    )
+
+    # =====================================================
+    # BANK DETAILS
+    # =====================================================
+
+    bank_account_number = Column(
+        String(100),
+        nullable=True
+    )
+
+    ifsc_code = Column(
+        String(50),
+        nullable=True
+    )
+
+    upi_id = Column(
+        String(100),
+        nullable=True
+    )
+
+    # =====================================================
+    # PROFILE
+    # =====================================================
+
+    selfie_url = Column(
+        String(255),
+        nullable=True
+    )
+
+    # =====================================================
+    # DRIVER STATUS
+    # =====================================================
+
     status = Column(
         Enum(DriverStatus),
         default=DriverStatus.OFFLINE
     )
- 
-    rating = Column(Numeric(3, 2), default=5.0)
- 
-    total_trips = Column(Integer, default=0)
- 
+
+    is_verified = Column(
+        Boolean,
+        default=False
+    )
+
+    rating = Column(
+        Numeric(3, 2),
+        default=5.0
+    )
+
+    total_trips = Column(
+        Integer,
+        default=0
+    )
+
+    # =====================================================
+    # TIMESTAMPS
+    # =====================================================
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # =====================================================
     # RELATIONSHIPS
- 
+    # =====================================================
+
     user = relationship(
         "User",
         back_populates="driver_profile"
     )
- 
+
     vehicle = relationship(
         "Vehicle",
         back_populates="drivers"
     )
- 
+
     trips = relationship(
         "Trip",
         back_populates="driver"
     )
- 
+
     subscriptions = relationship(
         "DriverSubscription",
         back_populates="driver",
         cascade="all, delete-orphan"
     )
-   
+
     payouts = relationship(
-    "DriverPayout",
-    back_populates="driver",
-    cascade="all, delete-orphan")
-   
+        "DriverPayout",
+        back_populates="driver",
+        cascade="all, delete-orphan"
+    )
+
     locations = relationship(
-    "DriverLocation",
-    back_populates="driver",
-    cascade="all, delete-orphan")
+        "DriverLocation",
+        back_populates="driver",
+        cascade="all, delete-orphan"
+    )
  
+ ## kyc documents
  
 class KYCDocument(Base):
     __tablename__ = "kyc_documents"
- 
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
- 
+
     user_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("users.id")
+        ForeignKey("users.id"),
+        nullable=False
     )
- 
-    doc_url = Column(String(255), nullable=False)
- 
-    # RELATIONSHIPS
- 
+
+    # LICENSE DOCUMENTS
+    license_number = Column(String(100), nullable=True)
+    license_front_url = Column(String(255), nullable=True)
+    license_back_url = Column(String(255), nullable=True)
+
+    # AADHAAR DOCUMENTS
+    aadhaar_number = Column(String(20), nullable=True)
+    aadhaar_front_url = Column(String(255), nullable=True)
+    aadhaar_back_url = Column(String(255), nullable=True)
+
+    # PAN DOCUMENTS
+    pan_number = Column(String(20), nullable=True)
+    pan_front_url = Column(String(255), nullable=True)
+
+    # VEHICLE DOCUMENTS
+    rc_number = Column(String(100), nullable=True)
+    rc_front_url = Column(String(255), nullable=True)
+    rc_back_url = Column(String(255), nullable=True)
+
+    insurance_url = Column(String(255), nullable=True)
+    pollution_certificate_url = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    verification_status = Column(String(50), default="pending")
+    # RELATIONSHIP
     user = relationship(
         "User",
         back_populates="kyc_documents"
     )
  
+ 
+ ## kyc otp logs
 class OTPLog(Base):
     __tablename__ = "otp_logs"
  

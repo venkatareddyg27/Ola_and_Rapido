@@ -1,4 +1,4 @@
-# trips.py
+
 
 import uuid
 
@@ -10,7 +10,8 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
-    Numeric
+    Numeric,
+    Boolean
 )
 
 from sqlalchemy.dialects.postgresql import (
@@ -25,7 +26,8 @@ from app.core.database import Base
 
 from app.core.enums import (
     ServiceType,
-    TripStatus
+    TripStatus,
+    VehicleCategory
 )
 
 # =========================================================
@@ -36,11 +38,19 @@ class Trip(Base):
 
     __tablename__ = "trips"
 
+    # =====================================================
+    # PRIMARY KEY
+    # =====================================================
+
     id = Column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4
     )
+
+    # =====================================================
+    # USER RELATIONS
+    # =====================================================
 
     customer_id = Column(
         UUID(as_uuid=True),
@@ -54,41 +64,81 @@ class Trip(Base):
         nullable=True
     )
 
+    # =====================================================
+    # ADDRESS DETAILS
+    # =====================================================
+
     pickup_address = Column(
-        String(255)
+        String(255),
+        nullable=False
     )
 
     drop_address = Column(
-        String(255)
+        String(255),
+        nullable=False
     )
 
+    # =====================================================
+    # LOCATION COORDINATES
+    # =====================================================
+
     pickup_lat = Column(
-        Numeric(10, 7)
+        Numeric(10, 7),
+        nullable=False
     )
 
     pickup_lng = Column(
-        Numeric(10, 7)
+        Numeric(10, 7),
+        nullable=False
     )
 
     drop_lat = Column(
-        Numeric(10, 7)
+        Numeric(10, 7),
+        nullable=False
     )
 
     drop_lng = Column(
-        Numeric(10, 7)
+        Numeric(10, 7),
+        nullable=False
     )
 
+    # =====================================================
+    # SERVICE DETAILS
+    # =====================================================
+
     service_type = Column(
-        Enum(ServiceType)
+        Enum(ServiceType),
+        nullable=False
+    )
+
+    vehicle_category = Column(
+        Enum(VehicleCategory),
+        nullable=True
     )
 
     status = Column(
         Enum(TripStatus),
-        default=TripStatus.SEARCHING_DRIVER
+        default=TripStatus.SEARCHING_DRIVER,
+        nullable=False
     )
 
+    # =====================================================
+    # FARE DETAILS
+    # =====================================================
+
     fare = Column(
-        Numeric(10, 2)
+        Numeric(10, 2),
+        nullable=True
+    )
+
+    estimated_fare = Column(
+        Numeric(10, 2),
+        nullable=True
+    )
+
+    estimated_distance = Column(
+        Numeric(10, 2),
+        nullable=True
     )
 
     surge_multiplier = Column(
@@ -96,28 +146,51 @@ class Trip(Base):
         default=1.0
     )
 
-    otp = Column(
-        String(6)
+    waiting_charge = Column(
+        Numeric(10, 2),
+        default=0
     )
+
+    toll_charge = Column(
+        Numeric(10, 2),
+        default=0
+    )
+
+    # =====================================================
+    # OTP
+    # =====================================================
+
+    ride_otp = Column(
+        String(6),
+        nullable=True
+    )
+
+    # =====================================================
+    # SCHEDULE
+    # =====================================================
 
     scheduled_time = Column(
-        DateTime
+        DateTime,
+        nullable=True
     )
 
+    # =====================================================
+    # TIMESTAMPS
+    # =====================================================
+
     started_at = Column(
-        DateTime
+        DateTime,
+        nullable=True
     )
 
     completed_at = Column(
-        DateTime
+        DateTime,
+        nullable=True
     )
 
     cancelled_at = Column(
-        DateTime
-    )
-
-    cancellation_reason = Column(
-        String(255)
+        DateTime,
+        nullable=True
     )
 
     created_at = Column(
@@ -129,6 +202,34 @@ class Trip(Base):
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
+    )
+
+    # =====================================================
+    # CANCELLATION
+    # =====================================================
+
+    cancel_reason = Column(
+        String(255),
+        nullable=True
+    )
+
+    # =====================================================
+    # FLAGS
+    # =====================================================
+
+    payment_completed = Column(
+        Boolean,
+        default=False
+    )
+
+    is_customer_rated = Column(
+        Boolean,
+        default=False
+    )
+
+    is_driver_rated = Column(
+        Boolean,
+        default=False
     )
 
     # =====================================================
@@ -169,10 +270,13 @@ class Trip(Base):
         back_populates="trip",
         cascade="all, delete-orphan"
     )
+
     disputes = relationship(
-    "Dispute",
-    back_populates="trip",
-    cascade="all, delete-orphan")
+        "Dispute",
+        back_populates="trip",
+        cascade="all, delete-orphan"
+    )
+
 # =========================================================
 # TRIP LOCATION MODEL
 # =========================================================
@@ -194,11 +298,13 @@ class TripLocation(Base):
     )
 
     lat = Column(
-        Numeric(10, 7)
+        Numeric(10, 7),
+        nullable=False
     )
 
     lng = Column(
-        Numeric(10, 7)
+        Numeric(10, 7),
+        nullable=False
     )
 
     recorded_at = Column(
@@ -207,14 +313,13 @@ class TripLocation(Base):
     )
 
     # =====================================================
-    # RELATIONSHIPS
+    # RELATIONSHIP
     # =====================================================
 
     trip = relationship(
         "Trip",
         back_populates="locations"
     )
-
 
 # =========================================================
 # PARCEL MODEL
@@ -304,7 +409,7 @@ class TripParcel(Base):
     )
 
     # =====================================================
-    # RELATIONSHIPS
+    # RELATIONSHIP
     # =====================================================
 
     trip = relationship(

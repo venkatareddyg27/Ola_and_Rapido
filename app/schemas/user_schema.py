@@ -1,7 +1,12 @@
 from uuid import UUID
+
 from decimal import Decimal
 from datetime import datetime
-from typing import Optional, List
+
+from typing import (
+    Optional,
+    List
+)
 
 from pydantic import (
     BaseModel,
@@ -15,7 +20,7 @@ from app.core.enums import (
     UserStatus,
     DriverStatus,
     SubscriptionPlan,
-    OTPPurpose,
+    OTPPurpose
 )
 
 # =========================================================
@@ -24,7 +29,7 @@ from app.core.enums import (
 
 class UserBase(BaseModel):
 
-    phone: str
+    mobile_number: str
 
     email: Optional[
         EmailStr
@@ -163,7 +168,7 @@ class DriverLocationResponse(
     )
 
 # =========================================================
-# DRIVER PROFILE SCHEMAS
+# DRIVER PROFILE BASE
 # =========================================================
 
 class DriverProfileBase(BaseModel):
@@ -172,64 +177,92 @@ class DriverProfileBase(BaseModel):
         SubscriptionPlan
     ) = SubscriptionPlan.BASIC
 
-    commission_rate: Optional[
-        Decimal
-    ] = None
+    experience_years: int = 0
 
-    status: DriverStatus = (
-        DriverStatus.INACTIVE
-    )
+# =========================================================
+# DRIVER REGISTRATION
+# =========================================================
 
-    rating: Optional[
-        Decimal
-    ] = Decimal("5.0")
+class DriverProfileCreate(BaseModel):
 
-    total_trips: int = 0
+    # DRIVER DETAILS
+
+    subscription_plan: SubscriptionPlan
+
+    # BANK DETAILS
+    bank_account_number: Optional[str] = None
+
+    ifsc_code: Optional[str] = None
+
+    upi_id: Optional[str] = None
+
+    selfie_url: Optional[str] = None
+
+    # =================================================
+    # LICENSE DOCUMENTS
+    # =================================================
+
+    license_number: str
+
+    license_front_url: str
+
+    license_back_url: str
+
+    # =================================================
+    # AADHAAR DOCUMENTS
+    # =================================================
+
+    aadhaar_number: str
+
+    aadhaar_front_url: str
+
+    aadhaar_back_url: str
+
+    # =================================================
+    # RC DOCUMENTS
+    # =================================================
+
+    rc_number: str
+
+    rc_front_url: str
+
+    rc_back_url: str
+
+    # =================================================
+    # INSURANCE
+    # =================================================
+
+    insurance_url: str
+
+    # =================================================
+    # POLLUTION CERTIFICATE
+    # =================================================
+
+    pollution_certificate_url: str
+
+# =========================================================
+# DRIVER PROFILE UPDATE
+# =========================================================
+
+class DriverProfileUpdate(BaseModel):
 
 
-class DriverProfileCreate(
-    DriverProfileBase
-):
+    subscription_plan: SubscriptionPlan
 
-    user_id: UUID
+    # BANK DETAILS
+    bank_account_number: Optional[str] = None
 
-    vehicle_id: Optional[
-        UUID
-    ] = None
+    ifsc_code: Optional[str] = None
 
+    upi_id: Optional[str] = None
 
-class DriverProfileUpdate(
-    BaseModel
-):
+    selfie_url: Optional[str] = None
 
-    subscription_plan: Optional[
-        SubscriptionPlan
-    ] = None
+# =========================================================
+# DRIVER PROFILE RESPONSE
+# =========================================================
 
-    commission_rate: Optional[
-        Decimal
-    ] = None
-
-    status: Optional[
-        DriverStatus
-    ] = None
-
-    rating: Optional[
-        Decimal
-    ] = None
-
-    total_trips: Optional[
-        int
-    ] = None
-
-    vehicle_id: Optional[
-        UUID
-    ] = None
-
-
-class DriverProfileResponse(
-    DriverProfileBase
-):
+class DriverProfileResponse(BaseModel):
 
     id: UUID
 
@@ -239,9 +272,51 @@ class DriverProfileResponse(
         UUID
     ] = None
 
-    locations: List[
-        DriverLocationResponse
-    ] = []
+    # =================================================
+    # DRIVER DETAILS
+    # =================================================
+
+    subscription_plan: (
+        SubscriptionPlan
+    )
+
+    # =================================================
+    # BANK DETAILS
+    # =================================================
+
+    bank_account_number: Optional[
+        str
+    ] = None
+
+    ifsc_code: Optional[
+        str
+    ] = None
+
+    upi_id: Optional[
+        str
+    ] = None
+
+    # =================================================
+    # PROFILE
+    # =================================================
+
+    selfie_url: Optional[
+        str
+    ] = None
+
+    # =================================================
+    # BACKEND MANAGED
+    # =================================================
+
+    status: DriverStatus
+
+    rating: Decimal
+
+    total_trips: int
+
+    commission_rate: Decimal
+
+    is_verified: bool
 
     created_at: datetime
 
@@ -250,6 +325,90 @@ class DriverProfileResponse(
     model_config = ConfigDict(
         from_attributes=True
     )
+
+# =========================================================
+# DRIVER STATUS UPDATE
+# =========================================================
+
+class DriverStatusUpdate(
+    BaseModel
+):
+
+    status: DriverStatus
+
+    latitude: Decimal
+
+    longitude: Decimal
+
+    heading: Optional[
+        Decimal
+    ] = None
+
+    speed: Optional[
+        Decimal
+    ] = None
+
+# =========================================================
+# DRIVER PERFORMANCE RESPONSE
+# =========================================================
+
+class DriverPerformanceResponse(
+    BaseModel
+):
+
+    driver_id: UUID
+
+    rating: Decimal
+
+    total_trips: int
+
+    completed_trips: int
+
+    cancelled_trips: int
+
+    acceptance_rate: Decimal
+
+    online_hours: Decimal
+
+    status: DriverStatus
+
+# =========================================================
+# DRIVER EARNINGS RESPONSE
+# =========================================================
+
+class DriverEarningsResponse(
+    BaseModel
+):
+
+    total_earnings: Decimal
+
+    total_trips: int
+
+    today_earnings: Decimal
+
+    weekly_earnings: Decimal
+
+# =========================================================
+# DRIVER DOCUMENT VERIFICATION
+# =========================================================
+
+class DriverDocumentResponse(
+    BaseModel
+):
+
+    license_verified: bool
+
+    aadhaar_verified: bool
+
+    bank_verified: bool
+
+    vehicle_verified: bool
+
+    selfie_verified: bool
+
+    admin_remark: Optional[
+        str
+    ] = None
 
 # =========================================================
 # KYC DOCUMENT SCHEMAS
@@ -288,7 +447,7 @@ class OTPLogCreate(BaseModel):
         UUID
     ] = None
 
-    phone: str
+    mobile_number: str
 
     otp_hash: str
 
@@ -307,7 +466,7 @@ class OTPLogResponse(
         UUID
     ] = None
 
-    phone: str
+    mobile_number: str
 
     purpose: OTPPurpose
 
@@ -326,7 +485,7 @@ class OTPLogResponse(
     )
 
 # =========================================================
-# DRIVER SUBSCRIPTION SCHEMAS
+# DRIVER SUBSCRIPTION
 # =========================================================
 
 class DriverSubscriptionBase(
@@ -436,7 +595,7 @@ class RegisterRequest(
     BaseModel
 ):
 
-    phone: str
+    mobile_number: str
 
     first_name: str
 
@@ -453,10 +612,11 @@ class RegisterRequest(
     role: UserRole = Field(
         ...,
         description="""
-The registration system supports:
+Supported roles:
 - CUSTOMER
 - DRIVER
 - OWNER
+- ADMIN
 """,
         example="customer"
     )

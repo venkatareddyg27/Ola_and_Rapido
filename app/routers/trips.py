@@ -1,24 +1,29 @@
+import random
+
 from uuid import UUID
+
 from datetime import datetime
 
 from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
-    Query,
-    status
+    Query
 )
 
 from sqlalchemy import (
     select,
-    desc
+    desc,
+    and_
 )
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession
 )
 
-from app.core.database import get_db
+from app.core.database import (
+    get_db
+)
 
 from app.models.trips import (
     Trip
@@ -34,7 +39,6 @@ from app.models.support import (
 
 from app.schemas.trips import (
     TripCreate,
-    TripUpdate,
     TripResponse,
     TripEstimateRequest,
     TripEstimateResponse,
@@ -53,6 +57,14 @@ from app.services.matching import (
     DriverMatchingService
 )
 
+from app.services.fare import (
+    FareCalculatorService
+)
+
+from app.services.distance_service import (
+    DistanceService
+)
+
 from app.core.websocket_manager import (
     websocket_manager
 )
@@ -62,29 +74,14 @@ from app.core.redis import (
 )
 
 router = APIRouter(
+
     prefix="/trips",
-    tags=["Trips"]
+
+    tags=["Customer Trips"]
 )
 
 # =========================================================
-# FARE CONFIG
-# =========================================================
-
-BASE_FARE = {
-    "bike": 40,
-    "auto": 80,
-    "cab": 120
-}
-
-PER_KM_RATE = {
-    "bike": 8,
-    "auto": 12,
-    "cab": 18
-}
-
-
-# =========================================================
-# ESTIMATE TRIP
+# ESTIMATE RIDE
 # =========================================================
 
 @router.post(
@@ -92,49 +89,61 @@ PER_KM_RATE = {
     response_model=TripEstimateResponse
 )
 async def estimate_trip(
+
     payload: TripEstimateRequest
 ):
-    """
-    Calculate estimated fare.
-    """
 
-    category = (
-        payload.vehicle_category
-        .lower()
-    )
+    # =====================================================
+    # CALCULATE DISTANCE
+    # =====================================================
 
-    if category not in BASE_FARE:
+    distance_km = (
+        DistanceService.calculate_distance(
 
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid category"
+            float(payload.pickup_lat),
+            float(payload.pickup_lng),
+
+            float(payload.drop_lat),
+            float(payload.drop_lng)
         )
-
-    base_fare = BASE_FARE[category]
-
-    distance_charge = (
-        payload.distance_km *
-        PER_KM_RATE[category]
     )
 
-    estimated_fare = (
-        base_fare +
-        distance_charge
+    # =====================================================
+    # CALCULATE FARE
+    # =====================================================
+
+    fare_details = (
+        FareCalculatorService.calculate_fare(
+
+            vehicle_category=
+            payload.vehicle_category,
+
+            distance_km=
+            distance_km
+        )
     )
+
+    # =====================================================
+    # RESPONSE
+    # =====================================================
 
     return {
-        "vehicle_category": category,
+
+        "vehicle_category":
+        payload.vehicle_category,
 
         "distance_km":
-        payload.distance_km,
+        distance_km,
 
         "estimated_fare":
-        round(estimated_fare, 2)
+        fare_details["total_fare"],
+
+        "fare_breakdown":
+        fare_details
     }
 
-
 # =========================================================
-# BOOK TRIP
+# BOOK RIDE
 # =========================================================
 
 @router.post(
@@ -142,6 +151,7 @@ async def estimate_trip(
     response_model=TripResponse
 )
 async def book_trip(
+
     payload: TripCreate,
 
     db: AsyncSession = Depends(get_db),
@@ -150,9 +160,44 @@ async def book_trip(
         get_current_user
     )
 ):
-    """
-    Book ride with driver matching.
-    """
+
+    # =====================================================
+    # CALCULATE DISTANCE
+    # =====================================================
+
+    distance_km = (
+        DistanceService.calculate_distance(
+
+            float(payload.pickup_lat),
+            float(payload.pickup_lng),
+
+            float(payload.drop_lat),
+            float(payload.drop_lng)
+        )
+    )
+
+    # =====================================================
+    # CALCULATE FARE
+    # =====================================================
+
+    fare_details = (
+        FareCalculatorService.calculate_fare(
+
+            vehicle_category=
+            payload.vehicle_category,
+
+            distance_km=
+            distance_km
+        )
+    )
+
+    # =====================================================
+    # GENERATE OTP
+    # =====================================================
+
+    ride_otp = str(
+        random.randint(1000, 9999)
+    )
 
     # =====================================================
     # CREATE TRIP
@@ -183,12 +228,23 @@ async def book_trip(
         service_type=
         payload.service_type,
 
-        fare=payload.fare,
+        fare=
+        fare_details["total_fare"],
+
+        estimated_distance=
+        distance_km,
+
+        estimated_fare=
+        fare_details["total_fare"],
+
+        vehicle_category=
+        payload.vehicle_category,
+
+        ride_otp=
+        ride_otp,
 
         status=
-        TripStatus.SEARCHING_DRIVER,
-
-        ride_otp="1234"
+        TripStatus.SEARCHING_DRIVER
     )
 
     db.add(trip)
@@ -203,8 +259,12 @@ async def book_trip(
 
     matching_service = (
         DriverMatchingService(
+
             db=db,
-            redis_client=redis_client,
+
+            redis_client=
+            redis_client,
+
             websocket_manager=
             websocket_manager
         )
@@ -212,17 +272,19 @@ async def book_trip(
 
     accepted_driver = (
         await matching_service.match_driver(
+
             trip_id=trip.id,
 
             pickup_lat=float(
-                payload.pickup_lat or 0
+                payload.pickup_lat
             ),
 
             pickup_lng=float(
-                payload.pickup_lng or 0
+                payload.pickup_lng
             ),
 
-            vehicle_category="bike"
+            vehicle_category=
+            payload.vehicle_category.value
         )
     )
 
@@ -239,10 +301,11 @@ async def book_trip(
         await db.commit()
 
         raise HTTPException(
+
             status_code=404,
-            detail=(
-                "No nearby drivers found"
-            )
+
+            detail=
+            "No nearby drivers found"
         )
 
     # =====================================================
@@ -260,13 +323,15 @@ async def book_trip(
     await db.refresh(trip)
 
     # =====================================================
-    # REALTIME EVENT
+    # SEND REALTIME EVENT
     # =====================================================
 
     await websocket_manager.send_to_user(
+
         user_id=str(current_user.id),
 
         message={
+
             "event":
             "DRIVER_ASSIGNED",
 
@@ -274,22 +339,24 @@ async def book_trip(
             str(trip.id),
 
             "driver_id":
-            str(accepted_driver)
+            str(accepted_driver),
+
+            "ride_otp":
+            ride_otp
         }
     )
 
     return trip
 
-
 # =========================================================
-# TRIP HISTORY
+# GET ACTIVE TRIP
 # =========================================================
 
-@router.get("/history")
-async def trip_history(
-    page: int = Query(1, ge=1),
-
-    limit: int = Query(10, le=100),
+@router.get(
+    "/active",
+    response_model=TripResponse
+)
+async def get_active_trip(
 
     db: AsyncSession = Depends(get_db),
 
@@ -297,11 +364,113 @@ async def trip_history(
         get_current_user
     )
 ):
-    """
-    Get trip history.
-    """
 
-    offset = (page - 1) * limit
+    result = await db.execute(
+
+        select(Trip).where(
+
+            and_(
+
+                Trip.customer_id ==
+                current_user.id,
+
+                Trip.status.in_([
+
+                    TripStatus.SEARCHING_DRIVER,
+
+                    TripStatus.DRIVER_ASSIGNED,
+
+                    TripStatus.DRIVER_ARRIVED,
+
+                    TripStatus.IN_PROGRESS
+                ])
+            )
+        )
+    )
+
+    trip = result.scalars().first()
+
+    if not trip:
+
+        raise HTTPException(
+
+            status_code=404,
+
+            detail="No active trip"
+        )
+
+    return trip
+
+# =========================================================
+# GET TRIP DETAILS
+# =========================================================
+
+@router.get(
+    "/{trip_id}",
+    response_model=TripResponse
+)
+async def get_trip(
+
+    trip_id: UUID,
+
+    db: AsyncSession = Depends(get_db),
+
+    current_user: User = Depends(
+        get_current_user
+    )
+):
+
+    result = await db.execute(
+
+        select(Trip).where(
+
+            Trip.id == trip_id,
+
+            Trip.customer_id ==
+            current_user.id
+        )
+    )
+
+    trip = result.scalars().first()
+
+    if not trip:
+
+        raise HTTPException(
+
+            status_code=404,
+
+            detail="Trip not found"
+        )
+
+    return trip
+
+# =========================================================
+# GET TRIP HISTORY
+# =========================================================
+
+@router.get("/history")
+async def get_trip_history(
+
+    page: int = Query(
+        1,
+        ge=1
+    ),
+
+    limit: int = Query(
+        10,
+        le=100
+    ),
+
+    db: AsyncSession = Depends(get_db),
+
+    current_user: User = Depends(
+        get_current_user
+    )
+):
+
+    offset = (
+        (page - 1) * limit
+    )
 
     result = await db.execute(
 
@@ -324,50 +493,19 @@ async def trip_history(
     trips = result.scalars().all()
 
     return {
-        "page": page,
-        "limit": limit,
-        "data": trips
+
+        "page":
+        page,
+
+        "limit":
+        limit,
+
+        "total":
+        len(trips),
+
+        "data":
+        trips
     }
-
-
-# =========================================================
-# GET TRIP DETAILS
-# =========================================================
-
-@router.get(
-    "/{trip_id}",
-    response_model=TripResponse
-)
-async def get_trip(
-    trip_id: UUID,
-
-    db: AsyncSession = Depends(get_db),
-
-    current_user: User = Depends(
-        get_current_user
-    )
-):
-    """
-    Get trip details.
-    """
-
-    result = await db.execute(
-        select(Trip).where(
-            Trip.id == trip_id
-        )
-    )
-
-    trip = result.scalars().first()
-
-    if not trip:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Trip not found"
-        )
-
-    return trip
-
 
 # =========================================================
 # CANCEL TRIP
@@ -375,6 +513,7 @@ async def get_trip(
 
 @router.put("/{trip_id}/cancel")
 async def cancel_trip(
+
     trip_id: UUID,
 
     reason: str,
@@ -385,12 +524,11 @@ async def cancel_trip(
         get_current_user
     )
 ):
-    """
-    Cancel trip.
-    """
 
     result = await db.execute(
+
         select(Trip).where(
+
             Trip.id == trip_id,
 
             Trip.customer_id ==
@@ -403,29 +541,33 @@ async def cancel_trip(
     if not trip:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Trip not found"
         )
 
     if trip.status in [
+
         TripStatus.COMPLETED,
+
         TripStatus.CANCELLED
     ]:
 
         raise HTTPException(
+
             status_code=400,
+
             detail="Trip already ended"
         )
-
-    # =====================================================
-    # UPDATE STATUS
-    # =====================================================
 
     trip.status = (
         TripStatus.CANCELLED
     )
 
-    trip.cancel_reason = reason
+    trip.cancel_reason = (
+        reason
+    )
 
     trip.cancelled_at = (
         datetime.utcnow()
@@ -433,52 +575,19 @@ async def cancel_trip(
 
     await db.commit()
 
-    # =====================================================
-    # CLEAR REDIS
-    # =====================================================
-
-    await redis_client.delete(
-        f"trip_matching:{trip_id}"
-    )
-
-    await redis_client.delete(
-        f"trip_accepted:{trip_id}"
-    )
-
-    # =====================================================
-    # NOTIFY DRIVER
-    # =====================================================
-
-    if trip.driver_id:
-
-        await (
-            websocket_manager
-            .send_to_user(
-                user_id=str(
-                    trip.driver_id
-                ),
-                message={
-                    "event":
-                    "TRIP_CANCELLED",
-
-                    "trip_id":
-                    str(trip.id)
-                }
-            )
-        )
-
     return {
+
         "message":
         "Trip cancelled successfully"
     }
 
-
 # =========================================================
-# RATE TRIP
+# RATE DRIVER
 # =========================================================
 
-@router.put("/{trip_id}/rate")
+@router.post("/{trip_id}/rate")
 async def rate_trip(
+
     trip_id: UUID,
 
     payload: TripRatingRequest,
@@ -489,12 +598,11 @@ async def rate_trip(
         get_current_user
     )
 ):
-    """
-    Rate completed trip.
-    """
 
     result = await db.execute(
+
         select(Trip).where(
+
             Trip.id == trip_id,
 
             Trip.customer_id ==
@@ -507,7 +615,9 @@ async def rate_trip(
     if not trip:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Trip not found"
         )
 
@@ -516,33 +626,33 @@ async def rate_trip(
     ):
 
         raise HTTPException(
+
             status_code=400,
+
             detail="Trip not completed"
         )
 
-    # =====================================================
-    # CREATE RATING
-    # =====================================================
-
     rating = Rating(
+
         trip_id=trip.id,
 
         rater_id=current_user.id,
 
         ratee_id=trip.driver_id,
 
-        stars=payload.stars,
+        score=payload.score,
 
-        feedback=payload.feedback
+        comment=payload.comment
     )
 
     db.add(rating)
 
-    trip.is_rated = True
+    trip.is_customer_rated = True
 
     await db.commit()
 
     return {
+
         "message":
-        "Trip rated successfully"
+        "Driver rated successfully"
     }
