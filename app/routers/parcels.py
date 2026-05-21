@@ -22,7 +22,7 @@ from app.models.trips import (
     TripLocation
 )
 from app.models.trips import (
-    Parcel
+    TripParcel
 )
 
 
@@ -108,7 +108,7 @@ async def create_parcel(
     # CREATE PARCEL
     # =====================================================
 
-    parcel = Parcel(
+    parcel = TripParcel(
         trip_id=trip.id,
 
         sender_name=payload.sender_name,
@@ -206,8 +206,8 @@ async def track_parcel(
     # =====================================================
 
     result = await db.execute(
-        select(Parcel).where(
-            Parcel.id == parcel_id
+        select(TripParcel).where(
+            TripParcel.id == parcel_id
         )
     )
 
@@ -304,8 +304,8 @@ async def accept_parcel(
 ):
 
     result = await db.execute(
-        select(Parcel).where(
-            Parcel.id == parcel_id
+        select(TripParcel).where(
+            TripParcel.id == parcel_id
         )
     )
 
@@ -356,8 +356,8 @@ async def pickup_parcel(
 ):
 
     result = await db.execute(
-        select(Parcel).where(
-            Parcel.id == parcel_id
+        select(TripParcel).where(
+            TripParcel.id == parcel_id
         )
     )
 
@@ -421,8 +421,8 @@ async def drop_parcel(
 ):
 
     result = await db.execute(
-        select(Parcel).where(
-            Parcel.id == parcel_id
+        select(TripParcel).where(
+            TripParcel.id == parcel_id
         )
     )
 

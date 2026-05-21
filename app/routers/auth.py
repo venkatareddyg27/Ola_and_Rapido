@@ -197,6 +197,6 @@ async def get_me(
     return {
         "message": "Authorized Successfully",
         "user_id": str(current_user.id),
-        "phone": current_user.phone,
+        "mobile_number": current_user.mobile_number,
         "role": str(current_user.role)
     }

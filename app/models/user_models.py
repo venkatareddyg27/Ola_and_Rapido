@@ -1,371 +1,461 @@
-# =========================================================
-# app/models/user_models.py
-# =========================================================
-
+# users.py
+ 
 import uuid
 from datetime import datetime
-
+ 
 from sqlalchemy import (
     Column,
     String,
-    Boolean,
     DateTime,
+    Enum,
     ForeignKey,
-    Text,
-    Integer,
     Numeric,
-    Enum as SqlEnum,
+    Integer,
+    Boolean
 )
+ 
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-
+ 
 from app.core.database import Base
-from app.core.enums import SubscriptionPlan, DriverStatus, OTPPurpose
-
-
-# =========================================================
-# USERS
-# =========================================================
-
+from app.core.enums import (
+    UserRole,
+    UserStatus,
+    DriverStatus,
+    SubscriptionPlan,
+    OTPPurpose,
+)
+ 
+ 
 class User(Base):
     __tablename__ = "users"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-
-    full_name = Column(String(255), nullable=True)
-    email = Column(String(255), unique=True, nullable=True, index=True)
-    mobile_number = Column(String(20), unique=True, nullable=True, index=True)
-
-    role = Column(String(50), default="USER")
-    gender = Column(String(20), nullable=True)
-    profile_photo_url = Column(Text, nullable=True)
-
+ 
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+ 
+    mobile_number = Column(String(20), unique=True, nullable=False, index=True)
+    email = Column(String(100), unique=True)
+ 
+    first_name = Column(String(60))
+    last_name = Column(String(60))
+    full_name = Column(String(100))
+ 
+    profile_photo_url = Column(String(255))
+ 
+    role = Column(Enum(UserRole), default=UserRole.CUSTOMER)
+    status = Column(Enum(UserStatus), default=UserStatus.PENDING)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+ 
+    # RELATIONSHIPS
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-
-    sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
-    devices = relationship("UserDevice", back_populates="user", cascade="all, delete-orphan")
-    roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
-    password_reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")
-    login_history = relationship("LoginHistory", back_populates="user", cascade="all, delete-orphan")
-    blocked_users = relationship(
-        "BlockedUser",
-        foreign_keys="BlockedUser.user_id",
+    driver_profile = relationship(
+        "DriverProfile",
         back_populates="user",
-        cascade="all, delete-orphan",
+        uselist=False
     )
 
-    driver_profile = relationship("DriverProfile", back_populates="user", uselist=False)
-    kyc_documents = relationship("KYCDocument", back_populates="user", cascade="all, delete-orphan")
-    otp_logs = relationship("OTPLog", back_populates="user", cascade="all, delete-orphan")
+    owned_vehicles = relationship(
+        "Vehicle",
+        back_populates="owner",
+        cascade="all, delete-orphan"
+    )
+
+    kyc_documents = relationship(
+        "KYCDocument",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    otp_logs = relationship(
+        "OTPLog",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
     customer_trips = relationship(
-    "Trip",
-    back_populates="customer"
-)
-
-# =========================================================
-# USER SESSIONS
-# =========================================================
-
-class UserSession(Base):
-    __tablename__ = "user_sessions"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-
-    access_token = Column(Text, nullable=False)
-    refresh_token = Column(Text, nullable=False)
-    device_info = Column(String(255), nullable=True)
-    ip_address = Column(String(100), nullable=True)
-    expires_at = Column(DateTime(timezone=True), nullable=True)
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    user = relationship("User", back_populates="sessions")
-
-
-# =========================================================
-# USER DEVICES
-# =========================================================
-
-class UserDevice(Base):
-    __tablename__ = "user_devices"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-
-    device_id = Column(String(255), nullable=False)
-    device_type = Column(String(50), nullable=False)
-    fcm_token = Column(Text, nullable=True)
-    app_version = Column(String(20), nullable=True)
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    user = relationship("User", back_populates="devices")
-
-
-# =========================================================
-# USER ROLES
-# =========================================================
-
-class UserRole(Base):
-    __tablename__ = "user_roles"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-
-    role_name = Column(String(100), nullable=False)
-    assigned_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    user = relationship("User", back_populates="roles")
-
-
-# =========================================================
-# USER PERMISSIONS
-# =========================================================
-
-class UserPermission(Base):
-    __tablename__ = "user_permissions"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    permission_name = Column(String(100), unique=True, nullable=False)
-    description = Column(Text, nullable=True)
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    role_permissions = relationship("RolePermission", back_populates="permission", cascade="all, delete-orphan")
-
-
-# =========================================================
-# ROLE PERMISSIONS
-# =========================================================
-
-class RolePermission(Base):
-    __tablename__ = "role_permissions"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    role_name = Column(String(100), nullable=False)
-
-    permission_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("user_permissions.id", ondelete="CASCADE"),
-        nullable=False,
+        "Trip",
+        back_populates="customer"
     )
 
-    permission = relationship("UserPermission", back_populates="role_permissions")
+    payments = relationship(
+        "Payment",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
+    wallet = relationship(
+        "Wallet",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
 
-# =========================================================
-# OTP VERIFICATIONS
-# =========================================================
+    rentals_as_renter = relationship(
+    "Rental",
+    foreign_keys="Rental.renter_id",
+    back_populates="renter",
+    cascade="all, delete-orphan"
+    )
 
-class OTPVerification(Base):
-    __tablename__ = "otp_verifications"
+    rentals_as_owner = relationship(
+        "Rental",
+        foreign_keys="Rental.owner_id",
+        back_populates="owner",
+        cascade="all, delete-orphan"
+    )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    rental_inspections = relationship(
+        "RentalInspection",
+        foreign_keys="RentalInspection.inspector_user_id",
+        back_populates="inspector",
+        cascade="all, delete-orphan"
+    )
+    
+    ratings_given = relationship(
+    "Rating",
+    foreign_keys="Rating.rater_id",
+    back_populates="rater",
+    cascade="all, delete-orphan"
+    )
 
-    mobile_number = Column(String(20), nullable=False)
-    otp_code = Column(String(10), nullable=False)
-    purpose = Column(String(100), nullable=False)
-    is_verified = Column(Boolean, default=False)
-    expires_at = Column(DateTime(timezone=True), nullable=False)
+    ratings_received = relationship(
+        "Rating",
+        foreign_keys="Rating.ratee_id",
+        back_populates="ratee",
+        cascade="all, delete-orphan"
+    )
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    notifications = relationship(
+        "Notification",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
+    disputes = relationship(
+        "Dispute",
+        foreign_keys="Dispute.user_id",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
-# =========================================================
-# PASSWORD RESET TOKENS
-# =========================================================
+    resolved_disputes = relationship(
+        "Dispute",
+        foreign_keys="Dispute.resolved_by",
+        back_populates="resolver"
+    )
+    promo_codes = relationship(
+    "PromoCode",
+    back_populates="user",
+    cascade="all, delete-orphan")
+    
+    promo_codes = relationship(
+    "PromoCode",
+    foreign_keys="PromoCode.created_by",
+    back_populates="creator",
+    cascade="all, delete-orphan"
+    )
 
-class PasswordResetToken(Base):
-    __tablename__ = "password_reset_tokens"
+    surge_zones = relationship(
+        "SurgeZone",
+        foreign_keys="SurgeZone.created_by",
+        back_populates="creator",
+        cascade="all, delete-orphan"
+    )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-
-    reset_token = Column(Text, nullable=False)
-    expires_at = Column(DateTime(timezone=True), nullable=False)
-    is_used = Column(Boolean, default=False)
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    user = relationship("User", back_populates="password_reset_tokens")
-
-
-# =========================================================
-# LOGIN HISTORY
-# =========================================================
-
-class LoginHistory(Base):
-    __tablename__ = "login_history"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-
-    ip_address = Column(String(100), nullable=True)
-    device_info = Column(String(255), nullable=True)
-    login_status = Column(String(50), nullable=True)
-
-    logged_in_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    user = relationship("User", back_populates="login_history")
-
-
-# =========================================================
-# BLOCKED USERS
-# =========================================================
-
-class BlockedUser(Base):
-    __tablename__ = "blocked_users"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    blocked_by_admin_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-
-    blocked_reason = Column(Text, nullable=True)
-    blocked_until = Column(DateTime(timezone=True), nullable=True)
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    user = relationship("User", foreign_keys=[user_id], back_populates="blocked_users")
-    blocked_by_admin = relationship("User", foreign_keys=[blocked_by_admin_id])
-
-
-# =========================================================
-# DRIVER PROFILE
-# =========================================================
+    audit_logs = relationship(
+        "AuditLog",
+        foreign_keys="AuditLog.actor_id",
+        back_populates="actor",
+        cascade="all, delete-orphan"
+    )
 
 class DriverProfile(Base):
     __tablename__ = "driver_profiles"
-
+ 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
-    vehicle_id = Column(UUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=True)
-
-    subscription_plan = Column(SqlEnum(SubscriptionPlan), default=SubscriptionPlan.BASIC)
-    commission_rate = Column(Numeric(5, 2), nullable=True)
-    status = Column(SqlEnum(DriverStatus), default=DriverStatus.OFFLINE)
-
+ 
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        unique=True
+    )
+ 
+    vehicle_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("vehicles.id")
+    )
+ 
+    subscription_plan = Column(
+        Enum(SubscriptionPlan),
+        default=SubscriptionPlan.BASIC
+    )
+ 
+    commission_rate = Column(Numeric(5, 2))
+ 
+    status = Column(
+        Enum(DriverStatus),
+        default=DriverStatus.OFFLINE
+    )
+ 
     rating = Column(Numeric(3, 2), default=5.0)
+ 
     total_trips = Column(Integer, default=0)
-
-    user = relationship("User", back_populates="driver_profile")
-    vehicle = relationship("Vehicle", back_populates="drivers")  # ✅ already exists
-    trips = relationship("Trip", back_populates="driver")
-    subscriptions = relationship("DriverSubscription", back_populates="driver", cascade="all, delete-orphan")
-  
-    locations = relationship("DriverLocation", back_populates="driver", cascade="all, delete-orphan")
-
-
-# =========================================================
-# KYC DOCUMENT
-# =========================================================
-
+ 
+    # RELATIONSHIPS
+ 
+    user = relationship(
+        "User",
+        back_populates="driver_profile"
+    )
+ 
+    vehicle = relationship(
+        "Vehicle",
+        back_populates="drivers"
+    )
+ 
+    trips = relationship(
+        "Trip",
+        back_populates="driver"
+    )
+ 
+    subscriptions = relationship(
+        "DriverSubscription",
+        back_populates="driver",
+        cascade="all, delete-orphan"
+    )
+   
+    payouts = relationship(
+    "DriverPayout",
+    back_populates="driver",
+    cascade="all, delete-orphan")
+   
+    locations = relationship(
+    "DriverLocation",
+    back_populates="driver",
+    cascade="all, delete-orphan")
+ 
+ 
 class KYCDocument(Base):
     __tablename__ = "kyc_documents"
-
+ 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-
+ 
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id")
+    )
+ 
     doc_url = Column(String(255), nullable=False)
-
-    user = relationship("User", back_populates="kyc_documents")
-
-
-# =========================================================
-# OTP LOG
-# =========================================================
-
+ 
+    # RELATIONSHIPS
+ 
+    user = relationship(
+        "User",
+        back_populates="kyc_documents"
+    )
+ 
 class OTPLog(Base):
     __tablename__ = "otp_logs"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
-
-    phone = Column(String(20), nullable=False, index=True)
-    otp_hash = Column(String(255), nullable=False)
-
-    purpose = Column(SqlEnum(OTPPurpose), nullable=False)
-
-    expires_at = Column(DateTime, nullable=False)
-    used_at = Column(DateTime, nullable=True)
-
-    attempts = Column(Integer, default=0, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    user = relationship("User", back_populates="otp_logs")
-
-
-# =========================================================
-# DRIVER SUBSCRIPTION
-# =========================================================
+ 
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+ 
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True
+    )
+ 
+    phone = Column(
+        String(20),
+        nullable=False,
+        index=True
+    )
+ 
+    otp_hash = Column(
+        String(255),
+        nullable=False
+    )
+ 
+    purpose = Column(
+        Enum(OTPPurpose),
+        nullable=False
+    )
+ 
+    expires_at = Column(
+        DateTime,
+        nullable=False
+    )
+ 
+    used_at = Column(
+        DateTime,
+        nullable=True
+    )
+ 
+    attempts = Column(
+        Integer,
+        default=0,
+        nullable=False
+    )
+ 
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+ 
+    # =====================================================
+    # RELATIONSHIPS
+    # =====================================================
+ 
+    user = relationship(
+        "User",
+        back_populates="otp_logs"
+    )
+   
 
 class DriverSubscription(Base):
     __tablename__ = "driver_subscriptions"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
+ 
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+ 
     driver_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("driver_profiles.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("driver_profiles.id"),
+        nullable=False
     )
-
-    plan = Column(SqlEnum(SubscriptionPlan), nullable=False)
-    commission_rate = Column(Numeric(5, 2), nullable=True)
-
-    start_date = Column(DateTime, nullable=False)
-    end_date = Column(DateTime, nullable=True)
-
-    auto_renew = Column(Boolean, default=True)
-    status = Column(String(20), default="active")
-
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    driver = relationship("DriverProfile", back_populates="subscriptions")
-
-
-# =========================================================
-# DRIVER LOCATION
-# =========================================================
-
+ 
+    plan = Column(
+        Enum(SubscriptionPlan),
+        nullable=False
+    )
+ 
+    commission_rate = Column(
+        Numeric(5, 2)
+    )
+ 
+    start_date = Column(
+        DateTime,
+        nullable=False
+    )
+ 
+    end_date = Column(
+        DateTime,
+        nullable=True
+    )
+ 
+    auto_renew = Column(
+        Boolean,
+        default=True
+    )
+ 
+    status = Column(
+        String(20),
+        default="active"
+    )
+ 
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+ 
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+ 
+    # =====================================================
+    # RELATIONSHIPS
+    # =====================================================
+ 
+    driver = relationship(
+        "DriverProfile",
+        back_populates="subscriptions"
+    )
+ 
+ 
 class DriverLocation(Base):
     __tablename__ = "driver_locations"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
+ 
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+ 
+    # =====================================================
+    # FOREIGN KEYS
+    # =====================================================
+ 
     driver_id = Column(
         UUID(as_uuid=True),
         ForeignKey("driver_profiles.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
+        index=True
     )
-
-    latitude = Column(Numeric(10, 7), nullable=False)
-    longitude = Column(Numeric(10, 7), nullable=False)
-
-    heading = Column(Numeric(6, 2), nullable=True)
-    speed = Column(Numeric(6, 2), nullable=True)
-
-    is_active = Column(Boolean, default=True)
-
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    driver = relationship("DriverProfile", back_populates="locations")
+ 
+    # =====================================================
+    # LOCATION DATA
+    # =====================================================
+ 
+    latitude = Column(
+        Numeric(10, 7),
+        nullable=False
+    )
+ 
+    longitude = Column(
+        Numeric(10, 7),
+        nullable=False
+    )
+ 
+    heading = Column(
+        Numeric(6, 2),
+        nullable=True
+    )
+ 
+    speed = Column(
+        Numeric(6, 2),
+        nullable=True
+    )
+ 
+    is_active = Column(
+        Boolean,
+        default=True
+    )
+ 
+    # =====================================================
+    # TIMESTAMPS
+    # =====================================================
+ 
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+ 
+    updated_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+ 
+    # =====================================================
+    # RELATIONSHIPS
+    # =====================================================
+ 
+    driver = relationship(
+        "DriverProfile",
+        back_populates="locations"
+    )

@@ -17,7 +17,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from app.core.enums import InspectionType
-from app.models.base import Base
+from app.core.database import Base
 
 
 # =========================================================

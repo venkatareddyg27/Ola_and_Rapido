@@ -158,7 +158,21 @@ class Trip(Base):
         cascade="all, delete-orphan"
     )
 
+    payments = relationship(
+        "Payment",
+        back_populates="trip",
+        cascade="all, delete-orphan"
+    )
 
+    ratings = relationship(
+        "Rating",
+        back_populates="trip",
+        cascade="all, delete-orphan"
+    )
+    disputes = relationship(
+    "Dispute",
+    back_populates="trip",
+    cascade="all, delete-orphan")
 # =========================================================
 # TRIP LOCATION MODEL
 # =========================================================
@@ -206,7 +220,7 @@ class TripLocation(Base):
 # PARCEL MODEL
 # =========================================================
 
-class Parcel(Base):
+class TripParcel(Base):
 
     __tablename__ = "parcels"
 

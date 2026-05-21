@@ -1,5 +1,3 @@
-# payments.py
-
 import uuid
 from datetime import datetime
 
@@ -15,7 +13,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app.models.base import Base
+from app.core.database import Base
+
 from app.core.enums import (
     PaymentMethod,
     PaymentStatus,
@@ -25,40 +24,76 @@ from app.core.enums import (
 )
 
 
+# =========================================================
+# PAYMENT MODEL
+# =========================================================
+
 class Payment(Base):
+
     __tablename__ = "payments"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
 
     user_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("users.id")
+        ForeignKey("users.id"),
+        nullable=False
     )
 
     trip_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("trips.id")
+        ForeignKey("trips.id"),
+        nullable=True
     )
 
     rental_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("rentals.id")
+        ForeignKey("rentals.id"),
+        nullable=True
     )
 
-    amount = Column(Numeric(10, 2))
+    amount = Column(
+        Numeric(10, 2),
+        nullable=False
+    )
 
-    method = Column(Enum(PaymentMethod))
+    method = Column(
+        Enum(PaymentMethod),
+        nullable=False
+    )
 
     status = Column(
         Enum(PaymentStatus),
         default=PaymentStatus.PENDING
     )
-    gateway_reference = Column(String(255))
-    gst_amount = Column(Numeric(10, 2))
-    invoice_url = Column(String(255))
-    created_at = Column(DateTime, default=datetime.utcnow)
 
+    gateway_reference = Column(
+        String(255),
+        nullable=True
+    )
+
+    gst_amount = Column(
+        Numeric(10, 2),
+        nullable=True
+    )
+
+    invoice_url = Column(
+        String(255),
+        nullable=True
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    # =====================================================
     # RELATIONSHIPS
+    # =====================================================
 
     user = relationship(
         "User",
@@ -76,20 +111,45 @@ class Payment(Base):
     )
 
 
+# =========================================================
+# WALLET MODEL
+# =========================================================
+
 class Wallet(Base):
+
     __tablename__ = "wallets"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
 
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
-        unique=True
+        unique=True,
+        nullable=False
     )
 
-    balance = Column(Numeric(10, 2), default=0.0)
-    currency = Column(String(10), default="INR")
+    balance = Column(
+        Numeric(10, 2),
+        default=0.0
+    )
+
+    currency = Column(
+        String(10),
+        default="INR"
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    # =====================================================
     # RELATIONSHIPS
+    # =====================================================
 
     user = relationship(
         "User",
@@ -98,15 +158,17 @@ class Wallet(Base):
 
     transactions = relationship(
         "WalletTransaction",
-        back_populates="wallet"
+        back_populates="wallet",
+        cascade="all, delete-orphan"
     )
-   # Relationships 
-    transactions = relationship(
-    "WalletTransaction",
-    back_populates="wallet",
-    cascade="all, delete-orphan")
-    
+
+
+# =========================================================
+# WALLET TRANSACTION MODEL
+# =========================================================
+
 class WalletTransaction(Base):
+
     __tablename__ = "wallet_transactions"
 
     id = Column(
@@ -157,8 +219,12 @@ class WalletTransaction(Base):
     )
 
 
+# =========================================================
+# DRIVER PAYOUT MODEL
+# =========================================================
 
 class DriverPayout(Base):
+
     __tablename__ = "driver_payouts"
 
     id = Column(
@@ -246,4 +312,3 @@ class DriverPayout(Base):
         "DriverProfile",
         back_populates="payouts"
     )
-

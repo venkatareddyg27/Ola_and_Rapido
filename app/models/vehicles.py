@@ -13,7 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app.models.base import Base
+from app.core.database import Base
 from app.core.enums import (
     VehicleCategory,
     VehicleStatus,
@@ -71,15 +71,18 @@ class Vehicle(Base):
     )
 
     drivers = relationship(
-        "DriverProfile",
-        back_populates="vehicle"
-    )
+    "DriverProfile",
+    back_populates="vehicle",
+    foreign_keys="DriverProfile.vehicle_id")
     
     documents = relationship(
     "VehicleDocument",
     back_populates="vehicle",
     cascade="all, delete-orphan")
 
+    owner = relationship(
+    "User",
+    back_populates="owned_vehicles")
 
 class VehiclePhoto(Base):
     __tablename__ = "vehicle_photos"

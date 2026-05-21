@@ -1,5 +1,4 @@
 
-
 import uuid
 from datetime import datetime
 
@@ -14,11 +13,19 @@ from sqlalchemy import (
     Enum
 )
 
-from sqlalchemy.dialects.postgresql import UUID, ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import (
+    UUID,
+    ARRAY,
+    JSONB
+)
+
 from sqlalchemy.orm import relationship
 
-from app.models.base import Base
-from app.core.enums import DiscountType
+from app.core.database import Base
+
+from app.core.enums import (
+    DiscountType
+)
 
 
 # =========================================================
@@ -26,6 +33,7 @@ from app.core.enums import DiscountType
 # =========================================================
 
 class PromoCode(Base):
+
     __tablename__ = "promo_codes"
 
     id = Column(
@@ -50,23 +58,41 @@ class PromoCode(Base):
         nullable=False
     )
 
-    max_discount = Column(Numeric(10, 2))
+    max_discount = Column(
+        Numeric(10, 2)
+    )
 
-    min_order = Column(Numeric(10, 2))
+    min_order = Column(
+        Numeric(10, 2)
+    )
 
-    usage_limit = Column(Integer)
+    usage_limit = Column(
+        Integer
+    )
 
-    used_count = Column(Integer, default=0)
+    used_count = Column(
+        Integer,
+        default=0
+    )
 
-    valid_from = Column(DateTime, nullable=False)
+    valid_from = Column(
+        DateTime,
+        nullable=False
+    )
 
-    valid_until = Column(DateTime, nullable=False)
+    valid_until = Column(
+        DateTime,
+        nullable=False
+    )
 
     service_types = Column(
         ARRAY(String)
     )
 
-    active = Column(Boolean, default=True)
+    active = Column(
+        Boolean,
+        default=True
+    )
 
     created_by = Column(
         UUID(as_uuid=True),
@@ -90,6 +116,7 @@ class PromoCode(Base):
 
     creator = relationship(
         "User",
+        foreign_keys=[created_by],
         back_populates="promo_codes"
     )
 
@@ -99,6 +126,7 @@ class PromoCode(Base):
 # =========================================================
 
 class SurgeZone(Base):
+
     __tablename__ = "surge_zones"
 
     id = Column(
@@ -155,6 +183,7 @@ class SurgeZone(Base):
 
     creator = relationship(
         "User",
+        foreign_keys=[created_by],
         back_populates="surge_zones"
     )
 
@@ -164,6 +193,7 @@ class SurgeZone(Base):
 # =========================================================
 
 class AuditLog(Base):
+
     __tablename__ = "audit_logs"
 
     id = Column(
@@ -193,15 +223,18 @@ class AuditLog(Base):
         nullable=False
     )
 
-    old_value = Column(JSONB)
+    old_value = Column(
+        JSONB
+    )
 
-    new_value = Column(JSONB)
+    new_value = Column(
+        JSONB
+    )
 
     ip_address = Column(
         String(50)
     )
-    new_value = Column(JSONB)
-    old_value = Column(JSONB)
+
     created_at = Column(
         DateTime,
         default=datetime.utcnow
@@ -213,5 +246,6 @@ class AuditLog(Base):
 
     actor = relationship(
         "User",
+        foreign_keys=[actor_id],
         back_populates="audit_logs"
     )
