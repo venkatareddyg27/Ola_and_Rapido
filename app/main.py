@@ -1,49 +1,84 @@
+ 
 from contextlib import asynccontextmanager
-
+ 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
+ 
 from app.core.database import engine, Base
-
-# Routers
-from app.routers import profile, mobile, login
-
-# Import all models before create_all
-import app.models.user_models
-import app.models.vehicle_models
-import app.models.parcel_models
-import app.models.operations
-import app.models.rentals
-import app.models.ride_models
-import app.models.trips
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    print("Database tables created successfully")
-
-    yield
-
-
+ 
+# MODELS
+from app.models.user_models import *
+from app.models.vehicles import *
+from app.models.trips import *
+from app.models.rentals import *
+from app.models.payments import *
+from app.models.support import *
+from app.models.operations import *
+ 
+ 
+# ROUTERS
+from app.routers import login as login_router
+from app.routers import mobile as mobile_router
+from app.routers import profile as profile_router
+from app.routers import auth as auth_router
+from app.routers import admin as admin_router
+from app.routers import trips as trips_router
+from app.routers import ratings as ratings_router
+from app.routers import rentals as rentals_router
+from app.routers import parcels as parcels_router
+from app.routers import promo as promo_router
+from app.routers import notifications as notifications_router
+from app.routers import vehicles as vehicles_router
+from app.routers import dispute as dispute_router
+from app.routers import drivers as drivers_router
+from app.routers import payments as payments_router
+ 
+ 
+ 
+# =========================================================
+# FASTAPI APP
+# =========================================================
+ 
 app = FastAPI(
-    title="Ola and Rapido Backend API",
+    title="Rapido & Ola Backend",
+ 
     version="1.0.0",
-    lifespan=lifespan,
+   
 )
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-app.include_router(login.router)
-app.include_router(mobile.router)
-app.include_router(profile.router)
+ 
+version="1.0.0"
+app.include_router(login_router.router)
+app.include_router(mobile_router.router)
+app.include_router(profile_router.router)
+app.include_router(auth_router.router)
+app.include_router(admin_router.router)
+app.include_router(trips_router.router)
+app.include_router(ratings_router.router)
+app.include_router(parcels_router.router)
+app.include_router(promo_router.router)
+app.include_router(notifications_router.router)
+app.include_router(vehicles_router.router)
+app.include_router(dispute_router.router)
+app.include_router(drivers_router.router)
+app.include_router(payments_router.router)
+app.include_router(rentals_router.router)
+ 
+ 
+ 
+# =========================================================
+# INCLUDE ROUTERS
+# =========================================================
+ 
+app.include_router(auth_router.router)
+ 
+ 
+# =========================================================
+# ROOT API
+# =========================================================
+ 
+@app.get("/")
+async def root():
+ 
+    return {
+        "message": "Backend Running Successfully"
+    }
+ 

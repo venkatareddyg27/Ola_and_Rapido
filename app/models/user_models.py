@@ -21,7 +21,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
-from app.core.enums import SubscriptionPlan, DriverStatus, OTPPurposeEnum
+from app.core.enums import SubscriptionPlan, DriverStatus, OTPPurpose
 
 
 # =========================================================
@@ -300,7 +300,7 @@ class OTPLog(Base):
     phone = Column(String(20), nullable=False, index=True)
     otp_hash = Column(String(255), nullable=False)
 
-    purpose = Column(SqlEnum(OTPPurposeEnum), nullable=False)
+    purpose = Column(SqlEnum(OTPPurpose), nullable=False)
 
     expires_at = Column(DateTime, nullable=False)
     used_at = Column(DateTime, nullable=True)

@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.schemas.auth_schema import LoginRequest
-from app.models.users import User, OTPLog
+from app.models.user_models import User, OTPLog
 
 from app.core.enums import (
     OTPPurpose,

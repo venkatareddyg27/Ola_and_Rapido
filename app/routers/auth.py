@@ -21,7 +21,7 @@ from app.schemas.auth_schema import (
     RegisterRequest
 )
 
-from app.services.auth_service import (
+from app.services.auth_services import (
     send_otp_service,
     verify_otp_service,
     refresh_token_service,
@@ -30,7 +30,7 @@ from app.services.auth_service import (
     login_service
 )
 
-from app.models.users import User
+from app.models.user_models import User
 
 
 # =========================================================

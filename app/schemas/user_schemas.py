@@ -16,7 +16,7 @@ from app.core.enums import (
     UserStatus,
     DriverStatus,
     SubscriptionPlan,
-    OTPPurposeEnum,
+    OTPPurpose,
 )
 
 
@@ -183,7 +183,7 @@ class OTPLogCreate(BaseModel):
 
     otp_hash: str
 
-    purpose: OTPPurposeEnum 
+    purpose: OTPPurpose 
 
     expires_at: datetime
 
@@ -195,7 +195,7 @@ class OTPLogResponse(BaseModel):
 
     phone: str
 
-    purpose: OTPPurposeEnum
+    purpose: OTPPurpose
 
     expires_at: datetime
 

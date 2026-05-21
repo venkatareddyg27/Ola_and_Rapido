@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import (
 
 from app.core.database import get_db
 
-from app.models.users import (
+from app.models.user_models import (
     User,
     DriverProfile
 )
@@ -31,7 +31,7 @@ from app.models.vehicles import (
     VehicleDocument
 )
 
-from app.schemas.vehicle import (
+from app.schemas.vehicle_schema import (
     VehicleCreate,
     VehicleResponse,
     VehicleUpdateStatus,
