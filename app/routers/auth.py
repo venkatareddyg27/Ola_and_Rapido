@@ -5,36 +5,35 @@ from fastapi import (
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.auth_schema import LoginRequest
+
+from fastapi.security import HTTPAuthorizationCredentials
+
+from app.core.token_blacklist import BLACKLISTED_TOKENS
+
 from app.core.database import get_db
 
 from app.core.security import (
-    security,
-    get_current_user
+    get_current_user,
+    security
 )
 
 from app.schemas.auth_schema import (
-    SendOTPRequest,
     VerifyOTPRequest,
-    RefreshTokenRequest,
-    LogoutRequest,
+    LoginRequest,
     RegisterRequest
 )
 
 from app.services.auth_services import (
-    send_otp_service,
     verify_otp_service,
-    refresh_token_service,
-    logout_service,
-    register_service,
-    login_service
+    login_service,
+    register_service
 )
 
 from app.models.user_models import User
 
 
 # =========================================================
-# ROUTER
+# AUTH ROUTER
 # =========================================================
 
 router = APIRouter(
@@ -44,18 +43,28 @@ router = APIRouter(
 
 
 # =========================================================
-# SEND OTP
+# PROFILE ROUTER
 # =========================================================
 
-@router.post("/send-otp")
-async def send_otp(
-    data: SendOTPRequest,
+profile_router = APIRouter(
+    prefix="/profile",
+    tags=["Update Profile"]
+)
+
+
+# =========================================================
+# LOGIN
+# =========================================================
+
+@router.post("/login")
+async def login(
+    data: LoginRequest,
     db: AsyncSession = Depends(get_db)
 ):
 
     try:
 
-        return await send_otp_service(
+        return await login_service(
             data=data,
             db=db
         )
@@ -72,44 +81,73 @@ async def send_otp(
 # VERIFY OTP
 # =========================================================
 
-@router.post(
-    "/verify-otp",
-    summary="Verify OTP"
-)
+@router.post("/verify-otp")
 async def verify_otp(
     data: VerifyOTPRequest,
     db: AsyncSession = Depends(get_db)
 ):
+
     try:
-        response = await verify_otp_service(
+
+        return await verify_otp_service(
             data=data,
             db=db
         )
-        return {
-            "success": True,
-            "message": "OTP verified successfully",
-            "verified": True
-        }
-    except HTTPException as e:
-        raise e
+
     except Exception as e:
+
         raise HTTPException(
             status_code=400,
             detail=str(e)
         )
 
-@router.post(
-    "/register",
-    summary="Register User",
-    description="""
-AVAILABLE ROLES:
 
-- CUSTOMER → Regular riders who book trips and rentals
-- DRIVER → Service providers who complete trips
-- OWNER → Vehicle owners who list vehicles for rental
-    """
-)
-async def register(
+# =========================================================
+# LOGOUT
+# =========================================================
+
+@router.post("/logout")
+async def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+
+    token = credentials.credentials
+
+    BLACKLISTED_TOKENS.add(token)
+
+    return {
+        "success": True,
+        "message": "Logged out successfully. Please login again."
+    }
+
+
+# =========================================================
+# CURRENT USER
+# =========================================================
+
+@router.get("/me")
+async def get_me(
+    current_user: User = Depends(get_current_user)
+):
+
+    return {
+
+        "message": "Authorized Successfully",
+
+        "user_id": str(current_user.id),
+
+        "mobile_number": current_user.mobile_number,
+
+        "role": str(current_user.role)
+    }
+
+
+# =========================================================
+# UPDATE PROFILE
+# =========================================================
+
+@profile_router.post("/update")
+async def update_profile(
     data: RegisterRequest,
     db: AsyncSession = Depends(get_db)
 ):
@@ -127,76 +165,3 @@ async def register(
             status_code=400,
             detail=str(e)
         )
-
-@router.post("/login")
-async def login(
-    data: LoginRequest,
-    db: AsyncSession = Depends(get_db)
-):
-
-    return await login_service(
-        data=data,
-        db=db
-    )
-# =========================================================
-# REFRESH TOKEN
-# =========================================================
-
-@router.post("/refresh")
-async def refresh_token(
-    data: RefreshTokenRequest
-):
-
-    try:
-
-        return await refresh_token_service(
-            refresh_token=data.refresh_token
-        )
-
-    except Exception as e:
-
-        raise HTTPException(
-            status_code=401,
-            detail=str(e)
-        )
-
-
-# =========================================================
-# LOGOUT
-# =========================================================
-
-@router.post("/logout")
-async def logout(
-    data: LogoutRequest
-):
-
-    try:
-
-        return await logout_service(
-            refresh_token=data.refresh_token
-        )
-
-    except Exception as e:
-
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
-
-
-
-# =========================================================
-# CURRENT USER
-# =========================================================
-
-@router.get("/me")
-async def get_me(
-    current_user: User = Depends(get_current_user)
-):
-
-    return {
-        "message": "Authorized Successfully",
-        "user_id": str(current_user.id),
-        "mobile_number": current_user.mobile_number,
-        "role": str(current_user.role)
-    }

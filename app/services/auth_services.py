@@ -1,7 +1,3 @@
-# =========================================================
-# app/services/auth_service.py
-# =========================================================
-
 import random
 
 from datetime import (
@@ -27,16 +23,14 @@ from app.models.user_models import (
 )
 
 from app.schemas.auth_schema import (
-    SendOTPRequest,
     VerifyOTPRequest,
-    RefreshTokenRequest,
-    LogoutRequest,
     RegisterRequest,
     LoginRequest
 )
 
 from app.core.enums import (
-    OTPPurpose
+    OTPPurpose,
+    UserRole
 )
 
 from app.services.otp import (
@@ -52,11 +46,11 @@ from app.services.jwt import (
 
 
 # =========================================================
-# SEND OTP
+# LOGIN -> SEND OTP
 # =========================================================
 
-async def send_otp_service(
-    data: SendOTPRequest,
+async def login_service(
+    data: LoginRequest,
     db: AsyncSession
 ):
 
@@ -70,9 +64,13 @@ async def send_otp_service(
     print("===================================\n")
 
     otp_log = OTPLog(
+
         phone=data.phone,
+
         otp_hash=hash_otp(otp),
+
         purpose=OTPPurpose.LOGIN,
+
         expires_at=datetime.utcnow() + timedelta(minutes=5)
     )
 
@@ -83,7 +81,12 @@ async def send_otp_service(
     await db.refresh(otp_log)
 
     return {
-        "message": "OTP sent successfully"
+
+        "success": True,
+
+        "message": "OTP sent successfully",
+
+        "phone": data.phone
     }
 
 
@@ -95,10 +98,6 @@ async def verify_otp_service(
     data: VerifyOTPRequest,
     db: AsyncSession
 ):
-
-    # =====================================================
-    # GET OTP
-    # =====================================================
 
     query = select(OTPLog).where(
         OTPLog.phone == data.phone
@@ -145,7 +144,7 @@ async def verify_otp_service(
         )
 
     # =====================================================
-    # MARK USED
+    # MARK OTP USED
     # =====================================================
 
     otp_log.used_at = datetime.utcnow()
@@ -165,14 +164,19 @@ async def verify_otp_service(
     user = user_result.scalars().first()
 
     # =====================================================
-    # CREATE USER IF NOT EXISTS
+    # AUTO CREATE USER
     # =====================================================
 
     if not user:
 
         user = User(
+
             mobile_number=data.phone,
+
+            role=UserRole.CUSTOMER,
+
             is_active=True,
+
             is_verified=True
         )
 
@@ -187,12 +191,10 @@ async def verify_otp_service(
     # =====================================================
 
     access_token = create_access_token({
-        "sub": str(user.id),
-        "role": user.role
-    })
 
-    refresh_token = create_refresh_token({
-        "sub": str(user.id)
+        "sub": str(user.id),
+
+        "role": str(user.role)
     })
 
     # =====================================================
@@ -207,8 +209,6 @@ async def verify_otp_service(
 
         "access_token": access_token,
 
-        "refresh_token": refresh_token,
-
         "token_type": "bearer",
 
         "user": {
@@ -217,45 +217,8 @@ async def verify_otp_service(
 
             "phone": user.mobile_number,
 
-            "role": user.role
+            "role": str(user.role)
         }
-    }
-
-
-# =========================================================
-# REFRESH TOKEN
-# =========================================================
-
-async def refresh_token_service(
-    refresh_token: str
-):
-
-    payload = verify_token(refresh_token)
-
-    if payload.get("type") != "refresh":
-
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid refresh token"
-        )
-
-    user_id = payload.get("sub")
-
-    new_access_token = create_access_token({
-        "sub": user_id
-    })
-
-    new_refresh_token = create_refresh_token({
-        "sub": user_id
-    })
-
-    return {
-
-        "access_token": new_access_token,
-
-        "refresh_token": new_refresh_token,
-
-        "token_type": "bearer"
     }
 
 
@@ -282,97 +245,6 @@ async def register_service(
 ):
 
     # =====================================================
-    # CHECK EXISTING USER
-    # =====================================================
-
-    existing_user_query = select(User).where(
-        User.mobile_number == data.phone
-    )
-
-    existing_user_result = await db.execute(
-        existing_user_query
-    )
-
-    existing_user = (
-        existing_user_result.scalars().first()
-    )
-
-    # =====================================================
-    # UPDATE EXISTING USER
-    # =====================================================
-
-    if existing_user:
-
-        existing_user.full_name = data.full_name
-
-        existing_user.email = data.email
-
-        existing_user.profile_photo_url = (
-            data.profile_photo_url
-        )
-
-        existing_user.role = data.role
-
-        existing_user.is_active = True
-
-        existing_user.is_verified = True
-
-        await db.commit()
-
-        await db.refresh(existing_user)
-
-        return {
-
-            "message": "User updated successfully",
-
-            "user_id": str(existing_user.id)
-        }
-
-    # =====================================================
-    # CREATE USER
-    # =====================================================
-
-    user = User(
-
-        mobile_number=data.phone,
-
-        full_name=data.full_name,
-
-        email=data.email,
-
-        profile_photo_url=data.profile_photo_url,
-
-        role=data.role,
-
-        is_active=True,
-
-        is_verified=True
-    )
-
-    db.add(user)
-
-    await db.commit()
-
-    await db.refresh(user)
-
-    return {
-
-        "message": "User registered successfully",
-
-        "user_id": str(user.id)
-    }
-
-
-# =========================================================
-# LOGIN
-# =========================================================
-
-async def login_service(
-    data: LoginRequest,
-    db: AsyncSession
-):
-
-    # =====================================================
     # FIND USER
     # =====================================================
 
@@ -385,28 +257,42 @@ async def login_service(
 
     user = result.scalar_one_or_none()
 
+    # =====================================================
+    # USER NOT FOUND
+    # =====================================================
+
     if not user:
 
         raise HTTPException(
             status_code=404,
-            detail="User not found"
+            detail="User not found. Please login first."
         )
 
     # =====================================================
-    # CREATE TOKENS
+    # UPDATE USER DETAILS
     # =====================================================
 
-    access_token = create_access_token({
+    user.first_name = data.first_name
 
-        "sub": str(user.id),
+    user.last_name = data.last_name
 
-        "role": user.role
-    })
+    user.full_name = data.full_name
 
-    refresh_token = create_refresh_token({
+    user.email = data.email
 
-        "sub": str(user.id)
-    })
+    user.profile_photo_url = (
+        data.profile_photo_url
+    )
+
+    user.role = data.role
+
+    user.is_active = True
+
+    user.is_verified = True
+
+    await db.commit()
+
+    await db.refresh(user)
 
     # =====================================================
     # RESPONSE
@@ -414,17 +300,23 @@ async def login_service(
 
     return {
 
-        "access_token": access_token,
-
-        "refresh_token": refresh_token,
-
-        "token_type": "bearer",
+        "message": "User registered successfully",
 
         "user": {
 
             "id": str(user.id),
 
             "phone": user.mobile_number,
+
+            "first_name": user.first_name,
+
+            "last_name": user.last_name,
+
+            "full_name": user.full_name,
+
+            "email": user.email,
+
+            "profile_photo_url": user.profile_photo_url,
 
             "role": user.role
         }

@@ -40,7 +40,7 @@ app = FastAPI(
 # IMPORT ROUTERS
 # =========================================================
 
-from app.routers.auth import router as auth_router
+from app.routers.auth import router as auth_router,profile_router
 from app.routers.admin import router as admin_router
 from app.routers.trips import router as trips_router
 from app.routers.ratings import router as ratings_router
@@ -58,6 +58,7 @@ from app.routers.admin_drivers import router as admin_drivers_router
 # =========================================================
 
 app.include_router(auth_router)
+app.include_router(profile_router)
 app.include_router(admin_router)
 app.include_router(trips_router)
 app.include_router(drivers_router)
