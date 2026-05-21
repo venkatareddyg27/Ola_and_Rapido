@@ -629,3 +629,26 @@ class EmergencyAlertStatus(str, Enum):
     IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"
     CLOSED = "closed"
+
+    from enum import Enum
+
+
+class ServiceType(str, Enum):
+    BIKE = "bike"
+    AUTO = "auto"
+    MINI = "mini"
+    SEDAN = "sedan"
+    SUV = "suv"
+    PARCEL = "parcel"
+    RENTAL = "rental"
+
+
+class TripStatus(str, Enum):
+    SEARCHING = "searching"
+    DRIVER_ASSIGNED = "driver_assigned"
+    ACCEPTED = "accepted"
+    ARRIVED = "arrived"
+    STARTED = "started"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    FAILED = "failed"

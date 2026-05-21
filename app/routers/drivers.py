@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.enums import DriverStatus
-from app.models.users import DriverProfile, DriverLocation
-from app.schemas.user_schema import (
+from app.models.user_models import DriverProfile, DriverLocation
+from app.schemas.user_schemas import (
     DriverLocationCreate,
     DriverProfileResponse,
 )

@@ -14,7 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app.models.base import Base
+from app.core.database import Base
 from app.core.enums import (
     ServiceType,
     TripStatus
@@ -65,41 +65,27 @@ class Trip(Base):
     # RELATIONSHIPS
 
     customer = relationship(
-        "User",
-        foreign_keys=[customer_id],
-        back_populates="customer_trips"
-    )
+    "User",
+    back_populates="customer_trips"
+)
 
     driver = relationship(
-        "DriverProfile",
-        back_populates="trips"
-    )
+    "DriverProfile",
+    back_populates="trips"
+)
 
+    parcel = relationship(
+    "TripParcel",
+    back_populates="trip",
+    uselist=False
+)
     locations = relationship(
         "TripLocation",
         back_populates="trip",
         cascade="all, delete-orphan"
     )
 
-    payments = relationship(
-        "Payment",
-        back_populates="trip"
-    )
-
-    ratings = relationship(
-        "Rating",
-        back_populates="trip"
-    )
-
-    parcel = relationship(
-        "Parcel",
-        back_populates="trip",
-        uselist=False
-    )
-    disputes = relationship(
-    "Dispute",
-    back_populates="trip")
-
+   
 
 class TripLocation(Base):
     __tablename__ = "trip_locations"
@@ -122,8 +108,8 @@ class TripLocation(Base):
     )
     
     
-class Parcel(Base):
-    __tablename__ = "parcels"
+class TripParcel(Base):
+    __tablename__ = "trip_parcels"
 
     id = Column(
         UUID(as_uuid=True),
