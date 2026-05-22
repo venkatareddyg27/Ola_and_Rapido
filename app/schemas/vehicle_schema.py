@@ -22,7 +22,7 @@ class VehicleBase(BaseModel):
     model: str
     year: int
 
-    vehicle_number: str
+    registration_number: str
 
     category: VehicleCategory
 

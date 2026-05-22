@@ -82,6 +82,16 @@ class TripBase(BaseModel):
 
 class TripCreate(TripBase):
 
+    # REQUIRED FOR BOOKING
+
+    pickup_lat: Decimal
+
+    pickup_lng: Decimal
+
+    drop_lat: Decimal
+
+    drop_lng: Decimal
+
     vehicle_category: VehicleCategory
 
 # =========================================================

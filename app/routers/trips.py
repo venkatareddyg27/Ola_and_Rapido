@@ -46,7 +46,8 @@ from app.schemas.trips import (
 )
 
 from app.core.enums import (
-    TripStatus
+    TripStatus,
+    UserRole
 )
 
 from app.core.security import (
@@ -65,20 +66,30 @@ from app.services.distance_service import (
     DistanceService
 )
 
-from app.core.websocket_manager import (
-    websocket_manager
-)
-
-from app.core.redis import (
-    redis_client
-)
-
 router = APIRouter(
 
     prefix="/trips",
 
     tags=["Customer Trips"]
 )
+
+# =========================================================
+# CUSTOMER ROLE CHECK
+# =========================================================
+
+def require_customer_role(
+    current_user: User
+):
+
+    if current_user.role != UserRole.CUSTOMER:
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail=
+            "Only customers can access this API"
+        )
 
 # =========================================================
 # ESTIMATE RIDE
@@ -90,8 +101,20 @@ router = APIRouter(
 )
 async def estimate_trip(
 
-    payload: TripEstimateRequest
+    payload: TripEstimateRequest,
+
+    current_user: User = Depends(
+        get_current_user
+    )
 ):
+
+    # =====================================================
+    # CUSTOMER CHECK
+    # =====================================================
+
+    require_customer_role(
+        current_user
+    )
 
     # =====================================================
     # CALCULATE DISTANCE
@@ -160,6 +183,35 @@ async def book_trip(
         get_current_user
     )
 ):
+
+    # =====================================================
+    # CUSTOMER CHECK
+    # =====================================================
+
+    require_customer_role(
+        current_user
+    )
+
+    # =====================================================
+    # VALIDATE COORDINATES
+    # =====================================================
+
+    if not all([
+
+        payload.pickup_lat,
+        payload.pickup_lng,
+
+        payload.drop_lat,
+        payload.drop_lng
+    ]):
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+            "Coordinates are required"
+        )
 
     # =====================================================
     # CALCULATE DISTANCE
@@ -259,14 +311,7 @@ async def book_trip(
 
     matching_service = (
         DriverMatchingService(
-
-            db=db,
-
-            redis_client=
-            redis_client,
-
-            websocket_manager=
-            websocket_manager
+            db=db
         )
     )
 
@@ -312,7 +357,9 @@ async def book_trip(
     # ASSIGN DRIVER
     # =====================================================
 
-    trip.driver_id = accepted_driver
+    trip.driver_id = UUID(
+        accepted_driver
+    )
 
     trip.status = (
         TripStatus.DRIVER_ASSIGNED
@@ -321,30 +368,6 @@ async def book_trip(
     await db.commit()
 
     await db.refresh(trip)
-
-    # =====================================================
-    # SEND REALTIME EVENT
-    # =====================================================
-
-    await websocket_manager.send_to_user(
-
-        user_id=str(current_user.id),
-
-        message={
-
-            "event":
-            "DRIVER_ASSIGNED",
-
-            "trip_id":
-            str(trip.id),
-
-            "driver_id":
-            str(accepted_driver),
-
-            "ride_otp":
-            ride_otp
-        }
-    )
 
     return trip
 
@@ -364,6 +387,14 @@ async def get_active_trip(
         get_current_user
     )
 ):
+
+    # =====================================================
+    # CUSTOMER CHECK
+    # =====================================================
+
+    require_customer_role(
+        current_user
+    )
 
     result = await db.execute(
 
@@ -420,6 +451,14 @@ async def get_trip(
     )
 ):
 
+    # =====================================================
+    # CUSTOMER CHECK
+    # =====================================================
+
+    require_customer_role(
+        current_user
+    )
+
     result = await db.execute(
 
         select(Trip).where(
@@ -467,6 +506,14 @@ async def get_trip_history(
         get_current_user
     )
 ):
+
+    # =====================================================
+    # CUSTOMER CHECK
+    # =====================================================
+
+    require_customer_role(
+        current_user
+    )
 
     offset = (
         (page - 1) * limit
@@ -524,6 +571,14 @@ async def cancel_trip(
         get_current_user
     )
 ):
+
+    # =====================================================
+    # CUSTOMER CHECK
+    # =====================================================
+
+    require_customer_role(
+        current_user
+    )
 
     result = await db.execute(
 
@@ -598,6 +653,14 @@ async def rate_trip(
         get_current_user
     )
 ):
+
+    # =====================================================
+    # CUSTOMER CHECK
+    # =====================================================
+
+    require_customer_role(
+        current_user
+    )
 
     result = await db.execute(
 

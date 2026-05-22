@@ -1,9 +1,5 @@
 import enum
 
-# =========================================================
-# USER & AUTHENTICATION ENUMS
-# =========================================================
-
 class UserRole(str, enum.Enum):
 
     CUSTOMER = "customer"
@@ -13,7 +9,6 @@ class UserRole(str, enum.Enum):
     OWNER = "owner"
 
     ADMIN = "admin"
-
 
 class UserStatus(str, enum.Enum):
 
@@ -31,10 +26,6 @@ class OTPPurpose(str, enum.Enum):
     KYC = "kyc"
 
     TRIP = "trip"
-
-# =========================================================
-# KYC & DOCUMENT ENUMS
-# =========================================================
 
 class KYCDocType(str, enum.Enum):
 
@@ -59,9 +50,6 @@ class KYCStatus(str, enum.Enum):
 
     REJECTED = "rejected"
 
-# =========================================================
-# DRIVER & VEHICLE ENUMS
-# =========================================================
 
 class SubscriptionPlan(str, enum.Enum):
 
@@ -83,6 +71,7 @@ class DriverStatus(str, enum.Enum):
     ON_TRIP = "on_trip"
 
     BREAK = "break"
+    BLOCKED = "BLOCKED"
 
 
 class DriverOnTripStatus(str, enum.Enum):
@@ -134,9 +123,6 @@ class VehiclePhotoAngle(str, enum.Enum):
 
     DASHBOARD = "dashboard"
 
-# =========================================================
-# TRIP & SERVICE ENUMS
-# =========================================================
 
 class ServiceType(str, enum.Enum):
 
@@ -171,9 +157,6 @@ class TripStatus(str, enum.Enum):
 
     NO_DRIVER_FOUND = "no_driver_found"
 
-# =========================================================
-# PACKAGE ENUMS
-# =========================================================
 
 class PackageType(str, enum.Enum):
 
@@ -185,9 +168,6 @@ class PackageType(str, enum.Enum):
 
     FOOD = "food"
 
-# =========================================================
-# RENTAL ENUMS
-# =========================================================
 
 class RentalStatus(str, enum.Enum):
 
@@ -225,9 +205,6 @@ class InspectionType(str, enum.Enum):
 
     POST = "post"
 
-# =========================================================
-# PAYMENT ENUMS
-# =========================================================
 
 class PaymentMethod(str, enum.Enum):
 
@@ -275,9 +252,6 @@ class PayoutStatus(str, enum.Enum):
 
     FAILED = "failed"
 
-# =========================================================
-# SUPPORT & OPERATIONS ENUMS
-# =========================================================
 
 class DisputeCategory(str, enum.Enum):
 
@@ -322,9 +296,6 @@ class DiscountType(str, enum.Enum):
 
     PERCENT = "percent"
 
-# =========================================================
-# OTP PURPOSE ENUMS
-# =========================================================
 
 class OTPPurposeEnum(str, enum.Enum):
 
@@ -360,9 +331,6 @@ class OTPPurposeEnum(str, enum.Enum):
         "account_delete"
     )
 
-# =========================================================
-# PARCEL ENUMS
-# =========================================================
 
 class ParcelStatus(str, enum.Enum):
 
@@ -428,10 +396,7 @@ class ProofType(str, enum.Enum):
     SIGNATURE = "signature"
 
 
-class DeliveryAttemptStatus(
-    str,
-    enum.Enum
-):
+class DeliveryAttemptStatus(str,enum.Enum):
 
     SUCCESS = "success"
 
