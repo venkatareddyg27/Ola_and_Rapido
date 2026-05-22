@@ -25,7 +25,6 @@ from app.schemas.trips import ParcelCreate, ParcelResponse
 from app.services.fare import FareCalculatorService
 from app.services.matching import DriverMatchingService
 from app.services.distance_service import DistanceService
-
 from app.core.redis import redis_client
 from app.core.websocket_manager import websocket_manager
 
@@ -116,29 +115,27 @@ async def book_parcel(
     weight_kg = float(payload.weight_kg)
     vehicle_category = select_vehicle_by_weight(weight_kg)
 
+    # 1. Check active parcel trip
     active_result = await db.execute(
         select(Trip).where(
             Trip.customer_id == current_user.id,
             Trip.service_type == ServiceType.PARCEL,
-            Trip.status.in_(
-                [
-                    TripStatus.SEARCHING_DRIVER,
-                    TripStatus.DRIVER_ASSIGNED,
-                    TripStatus.DRIVER_ARRIVED,
-                    TripStatus.IN_PROGRESS,
-                ]
-            ),
+            Trip.status.in_([
+                TripStatus.SEARCHING_DRIVER,
+                TripStatus.DRIVER_ASSIGNED,
+                TripStatus.DRIVER_ARRIVED,
+                TripStatus.IN_PROGRESS,
+            ]),
         )
     )
 
-    active_trip = active_result.scalar_one_or_none()
-
-    if active_trip:
+    if active_result.scalar_one_or_none():
         raise HTTPException(
             status_code=409,
             detail="You already have an active parcel booking",
         )
 
+    # 2. Calculate distance
     distance_km = DistanceService.calculate_distance(
         float(payload.pickup_lat),
         float(payload.pickup_lng),
@@ -146,6 +143,7 @@ async def book_parcel(
         float(payload.drop_lng),
     )
 
+    # 3. Calculate fare
     fare_data = FareCalculatorService.calculate_fare(
         vehicle_category=vehicle_category,
         distance_km=distance_km,
@@ -157,6 +155,7 @@ async def book_parcel(
     parcel_weight_charge = Decimal(str(weight_kg * 5))
     final_fare = Decimal(str(fare_data["total_fare"])) + parcel_weight_charge
 
+    # 4. Create trip first
     trip = Trip(
         customer_id=current_user.id,
         pickup_address=payload.pickup_address,
@@ -175,6 +174,7 @@ async def book_parcel(
     db.add(trip)
     await db.flush()
 
+    # 5. Create parcel linked to trip
     parcel = TripParcel(
         trip_id=trip.id,
         sender_name=payload.sender_name,
@@ -190,9 +190,9 @@ async def book_parcel(
     )
 
     db.add(parcel)
-    await db.commit()
-    await db.refresh(parcel)
+    await db.flush()
 
+    # 6. Match driver
     matching_service = DriverMatchingService(
         db=db,
         redis_client=redis_client,
@@ -206,26 +206,8 @@ async def book_parcel(
         vehicle_category=vehicle_category.value,
     )
 
-    if accepted_driver:
-        trip.driver_id = accepted_driver
-        trip.status = TripStatus.DRIVER_ASSIGNED
-        parcel.status = ParcelStatus.DRIVER_ASSIGNED.value
-
-        await db.commit()
-
-        await websocket_manager.send_to_user(
-            user_id=str(current_user.id),
-            message={
-                "event": "PARCEL_DRIVER_ASSIGNED",
-                "trip_id": str(trip.id),
-                "parcel_id": str(parcel.id),
-                "driver_id": str(accepted_driver),
-                "vehicle_category": vehicle_category.value,
-                "distance_km": round(distance_km, 2),
-                "fare": str(final_fare),
-            },
-        )
-    else:
+    # 7. Update status based on driver availability
+    if not accepted_driver:
         trip.status = TripStatus.NO_DRIVER_FOUND
         parcel.status = ParcelStatus.FAILED.value
 
@@ -236,8 +218,28 @@ async def book_parcel(
             detail="No driver available for parcel booking",
         )
 
-    return parcel
+    trip.driver_id = accepted_driver
+    trip.status = TripStatus.DRIVER_ASSIGNED
+    parcel.status = ParcelStatus.DRIVER_ASSIGNED.value
 
+    await db.commit()
+    await db.refresh(parcel)
+
+    # 8. Notify customer
+    await websocket_manager.send_to_user(
+        user_id=str(current_user.id),
+        message={
+            "event": "PARCEL_DRIVER_ASSIGNED",
+            "trip_id": str(trip.id),
+            "parcel_id": str(parcel.id),
+            "driver_id": str(accepted_driver),
+            "vehicle_category": vehicle_category.value,
+            "distance_km": round(distance_km, 2),
+            "fare": str(final_fare),
+        },
+    )
+
+    return parcel
 
 @router.get("/active")
 async def get_active_parcel(
