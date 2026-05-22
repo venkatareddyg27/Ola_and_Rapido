@@ -25,7 +25,6 @@ from app.schemas.trips import ParcelCreate, ParcelResponse
 from app.services.fare import FareCalculatorService
 from app.services.matching import DriverMatchingService
 from app.services.distance_service import DistanceService
-
 from app.core.redis import redis_client
 from app.core.websocket_manager import websocket_manager
 

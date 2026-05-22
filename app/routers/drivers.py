@@ -19,7 +19,8 @@ from app.core.database import get_db
 
 from app.core.enums import (
     DriverStatus,
-    TripStatus
+    TripStatus,
+    UserRole
 )
 
 from app.core.security import get_current_user
@@ -50,6 +51,24 @@ router = APIRouter(
 )
 
 # =========================================================
+# CHECK DRIVER ROLE
+# =========================================================
+
+def require_driver_role(
+    current_user: User
+):
+
+    if current_user.role != UserRole.DRIVER:
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail=
+            "Only drivers can access this API"
+        )
+
+# =========================================================
 # REGISTER DRIVER
 # =========================================================
 
@@ -68,7 +87,29 @@ async def register_driver(
     )
 ):
 
+    # =====================================================
+    # CHECK ROLE
+    # =====================================================
+
+    if current_user.role == UserRole.ADMIN:
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail=
+            "Admin cannot register as driver"
+        )
+
+    # CONVERT CUSTOMER TO DRIVER
+
+    current_user.role = (
+        UserRole.DRIVER
+    )
+
+    # =====================================================
     # CHECK EXISTING DRIVER
+    # =====================================================
 
     existing_driver = await db.execute(
 
@@ -81,11 +122,16 @@ async def register_driver(
     if existing_driver.scalar_one_or_none():
 
         raise HTTPException(
+
             status_code=400,
-            detail="Driver already registered"
+
+            detail=
+            "Driver already registered"
         )
 
+    # =====================================================
     # CREATE DRIVER PROFILE
+    # =====================================================
 
     driver = DriverProfile(
 
@@ -106,7 +152,8 @@ async def register_driver(
         selfie_url=
         payload.selfie_url,
 
-        status=DriverStatus.OFFLINE,
+        status=
+        DriverStatus.OFFLINE,
 
         rating=5.0,
 
@@ -164,7 +211,10 @@ async def register_driver(
         payload.insurance_url,
 
         pollution_certificate_url=
-        payload.pollution_certificate_url
+        payload.pollution_certificate_url,
+
+        verification_status=
+        "PENDING"
     )
 
     db.add(kyc)
@@ -174,7 +224,6 @@ async def register_driver(
     await db.refresh(driver)
 
     return driver
-
 
 # =========================================================
 # ADD VEHICLE
@@ -192,7 +241,15 @@ async def add_vehicle(
     )
 ):
 
+    # =====================================================
+    # CHECK ROLE
+    # =====================================================
+
+    require_driver_role(current_user)
+
+    # =====================================================
     # GET DRIVER PROFILE
+    # =====================================================
 
     driver_result = await db.execute(
 
@@ -207,11 +264,16 @@ async def add_vehicle(
     if not driver:
 
         raise HTTPException(
+
             status_code=404,
-            detail="Driver profile not found"
+
+            detail=
+            "Driver profile not found"
         )
 
+    # =====================================================
     # CREATE VEHICLE
+    # =====================================================
 
     vehicle = Vehicle(
 
@@ -224,7 +286,7 @@ async def add_vehicle(
         year=payload.year,
 
         registration_number=
-        payload.vehicle_number,
+        payload.registration_number,
 
         category=payload.category,
 
@@ -241,7 +303,7 @@ async def add_vehicle(
 
     await db.flush()
 
-    # LINK VEHICLE TO DRIVER
+    # LINK VEHICLE
 
     driver.vehicle_id = vehicle.id
 
@@ -255,7 +317,6 @@ async def add_vehicle(
         "vehicle_id":
         str(vehicle.id)
     }
-
 
 # =========================================================
 # GO ONLINE/OFFLINE
@@ -281,6 +342,8 @@ async def update_driver_status(
     )
 ):
 
+    require_driver_role(current_user)
+
     result = await db.execute(
 
         select(DriverProfile).where(
@@ -294,22 +357,39 @@ async def update_driver_status(
     if not driver:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Driver not found"
         )
 
-    # DRIVER MUST BE APPROVED
+    # DRIVER MUST BE VERIFIED
 
     if not driver.is_verified:
 
         raise HTTPException(
+
             status_code=400,
-            detail="Admin approval pending"
+
+            detail=
+            "Admin approval pending"
+        )
+
+    # BLOCKED DRIVER CHECK
+
+    if driver.status == DriverStatus.BLOCKED:
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail=
+            "Driver account blocked"
         )
 
     driver.status = status
 
-    # SAVE DRIVER LOCATION
+    # SAVE LOCATION
 
     location = DriverLocation(
 
@@ -331,10 +411,10 @@ async def update_driver_status(
     await db.commit()
 
     return {
+
         "message":
         "Driver status updated"
     }
-
 
 # =========================================================
 # ACCEPT RIDE
@@ -352,6 +432,8 @@ async def accept_trip(
     )
 ):
 
+    require_driver_role(current_user)
+
     # GET DRIVER
 
     driver_result = await db.execute(
@@ -367,7 +449,9 @@ async def accept_trip(
     if not driver:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Driver not found"
         )
 
@@ -385,7 +469,9 @@ async def accept_trip(
     if not trip:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Trip not found"
         )
 
@@ -404,10 +490,10 @@ async def accept_trip(
     await db.commit()
 
     return {
+
         "message":
         "Ride accepted"
     }
-
 
 # =========================================================
 # DRIVER ARRIVED
@@ -418,8 +504,14 @@ async def arrived_trip(
 
     trip_id: UUID,
 
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+
+    current_user: User = Depends(
+        get_current_user
+    )
 ):
+
+    require_driver_role(current_user)
 
     result = await db.execute(
 
@@ -433,7 +525,9 @@ async def arrived_trip(
     if not trip:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Trip not found"
         )
 
@@ -444,10 +538,10 @@ async def arrived_trip(
     await db.commit()
 
     return {
+
         "message":
         "Driver reached pickup"
     }
-
 
 # =========================================================
 # START RIDE WITH OTP
@@ -460,8 +554,14 @@ async def start_trip(
 
     ride_otp: str,
 
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+
+    current_user: User = Depends(
+        get_current_user
+    )
 ):
+
+    require_driver_role(current_user)
 
     result = await db.execute(
 
@@ -475,14 +575,18 @@ async def start_trip(
     if not trip:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Trip not found"
         )
 
     if trip.ride_otp != ride_otp:
 
         raise HTTPException(
+
             status_code=400,
+
             detail="Invalid OTP"
         )
 
@@ -497,10 +601,10 @@ async def start_trip(
     await db.commit()
 
     return {
+
         "message":
         "Ride started"
     }
-
 
 # =========================================================
 # COMPLETE RIDE
@@ -518,6 +622,8 @@ async def complete_trip(
     )
 ):
 
+    require_driver_role(current_user)
+
     # GET DRIVER
 
     driver_result = await db.execute(
@@ -533,7 +639,9 @@ async def complete_trip(
     if not driver:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Driver not found"
         )
 
@@ -551,7 +659,9 @@ async def complete_trip(
     if not trip:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Trip not found"
         )
 
@@ -574,10 +684,10 @@ async def complete_trip(
     await db.commit()
 
     return {
+
         "message":
         "Ride completed"
     }
-
 
 # =========================================================
 # CANCEL RIDE
@@ -590,8 +700,14 @@ async def cancel_trip(
 
     reason: str,
 
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+
+    current_user: User = Depends(
+        get_current_user
+    )
 ):
+
+    require_driver_role(current_user)
 
     result = await db.execute(
 
@@ -605,7 +721,9 @@ async def cancel_trip(
     if not trip:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Trip not found"
         )
 
@@ -618,10 +736,10 @@ async def cancel_trip(
     await db.commit()
 
     return {
+
         "message":
         "Ride cancelled"
     }
-
 
 # =========================================================
 # TODAY EARNINGS
@@ -636,6 +754,8 @@ async def today_earnings(
         get_current_user
     )
 ):
+
+    require_driver_role(current_user)
 
     # GET DRIVER
 
@@ -652,7 +772,9 @@ async def today_earnings(
     if not driver:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Driver not found"
         )
 
