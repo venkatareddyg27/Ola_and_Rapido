@@ -23,7 +23,8 @@ from app.models.trips import Trip, TripParcel, TripLocation
 from app.schemas.trips import ParcelCreate, ParcelResponse
 
 from app.services.fare import FareCalculatorService
-from app.services.matching import DriverMatchingService, calculate_distance
+from app.services.matching import DriverMatchingService
+from app.services.distance_service import DistanceService
 
 from app.core.redis import redis_client
 from app.core.websocket_manager import websocket_manager
@@ -60,10 +61,6 @@ def select_vehicle_by_weight(weight_kg: float) -> VehicleCategory:
     return VehicleCategory.AUTO
 
 
-# =========================================================
-# 1. ESTIMATE PARCEL FARE
-# =========================================================
-
 @router.get("/fare-estimate")
 async def estimate_parcel_fare(
     pickup_lat: Decimal = Query(...),
@@ -77,7 +74,7 @@ async def estimate_parcel_fare(
 
     vehicle_category = select_vehicle_by_weight(weight_kg)
 
-    distance_km = calculate_distance(
+    distance_km = DistanceService.calculate_distance(
         float(pickup_lat),
         float(pickup_lng),
         float(drop_lat),
@@ -93,11 +90,7 @@ async def estimate_parcel_fare(
     )
 
     parcel_weight_charge = Decimal(str(weight_kg * 5))
-
-    total_fare = (
-        Decimal(str(fare_data["total_fare"]))
-        + parcel_weight_charge
-    )
+    total_fare = Decimal(str(fare_data["total_fare"])) + parcel_weight_charge
 
     return {
         "service_type": ServiceType.PARCEL.value,
@@ -111,10 +104,6 @@ async def estimate_parcel_fare(
         "rule": "Bike supports up to 4kg. Above 4kg auto is assigned.",
     }
 
-
-# =========================================================
-# 2. BOOK PARCEL
-# =========================================================
 
 @router.post("/book", response_model=ParcelResponse)
 async def book_parcel(
@@ -150,7 +139,7 @@ async def book_parcel(
             detail="You already have an active parcel booking",
         )
 
-    distance_km = calculate_distance(
+    distance_km = DistanceService.calculate_distance(
         float(payload.pickup_lat),
         float(payload.pickup_lng),
         float(payload.drop_lat),
@@ -166,11 +155,7 @@ async def book_parcel(
     )
 
     parcel_weight_charge = Decimal(str(weight_kg * 5))
-
-    final_fare = (
-        Decimal(str(fare_data["total_fare"]))
-        + parcel_weight_charge
-    )
+    final_fare = Decimal(str(fare_data["total_fare"])) + parcel_weight_charge
 
     trip = Trip(
         customer_id=current_user.id,
@@ -254,10 +239,6 @@ async def book_parcel(
     return parcel
 
 
-# =========================================================
-# 3. ACTIVE PARCEL
-# =========================================================
-
 @router.get("/active")
 async def get_active_parcel(
     db: AsyncSession = Depends(get_db),
@@ -291,9 +272,7 @@ async def get_active_parcel(
         }
 
     parcel_result = await db.execute(
-        select(TripParcel).where(
-            TripParcel.trip_id == trip.id
-        )
+        select(TripParcel).where(TripParcel.trip_id == trip.id)
     )
 
     parcel = parcel_result.scalar_one_or_none()
@@ -310,10 +289,6 @@ async def get_active_parcel(
         "created_at": trip.created_at,
     }
 
-
-# =========================================================
-# 4. TRACK PARCEL
-# =========================================================
 
 @router.get("/{parcel_id}/track")
 async def track_parcel(
@@ -335,10 +310,7 @@ async def track_parcel(
     row = result.first()
 
     if not row:
-        raise HTTPException(
-            status_code=404,
-            detail="Parcel not found",
-        )
+        raise HTTPException(status_code=404, detail="Parcel not found")
 
     parcel, trip = row
 
@@ -368,10 +340,6 @@ async def track_parcel(
         "locations": locations,
     }
 
-
-# =========================================================
-# 5. HISTORY
-# =========================================================
 
 @router.get("/history/list")
 async def parcel_history(
@@ -408,10 +376,6 @@ async def parcel_history(
     ]
 
 
-# =========================================================
-# 6. CANCEL PARCEL
-# =========================================================
-
 @router.put("/{parcel_id}/cancel")
 async def cancel_parcel(
     parcel_id: UUID,
@@ -433,17 +397,11 @@ async def cancel_parcel(
     row = result.first()
 
     if not row:
-        raise HTTPException(
-            status_code=404,
-            detail="Parcel not found",
-        )
+        raise HTTPException(status_code=404, detail="Parcel not found")
 
     parcel, trip = row
 
-    if trip.status in [
-        TripStatus.IN_PROGRESS,
-        TripStatus.COMPLETED,
-    ]:
+    if trip.status in [TripStatus.IN_PROGRESS, TripStatus.COMPLETED]:
         raise HTTPException(
             status_code=400,
             detail="Parcel cannot be cancelled after pickup",
