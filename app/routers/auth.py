@@ -8,8 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi.security import HTTPAuthorizationCredentials
 
-from app.core.token_blacklist import BLACKLISTED_TOKENS
-
 from app.core.database import get_db
 
 from app.core.security import (

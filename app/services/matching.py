@@ -1,5 +1,9 @@
-
 import asyncio
+
+from math import (
+    cos,
+    radians
+)
 
 from uuid import UUID
 
@@ -33,8 +37,7 @@ from app.models.trips import (
 
 from app.core.enums import (
     DriverStatus,
-    TripStatus,
-    VehicleCategory
+    TripStatus
 )
 
 from app.services.distance_service import (
@@ -49,12 +52,11 @@ DEFAULT_RADIUS_KM = 5
 
 MAX_DRIVER_REQUESTS = 3
 
-REQUEST_TIMEOUT = 30
-
 RADIUS_EXPANSION_STEPS = [
     5,
     10,
-    15
+    15,
+    20
 ]
 
 RATING_WEIGHT = 0.3
@@ -101,10 +103,14 @@ def bounding_box(
     )
 
     lng_delta = (
+
         radius_km /
+
         (
-            111.0 *
-            max(0.1, abs(lat))
+            111.320 *
+            cos(
+                radians(lat)
+            )
         )
     )
 
@@ -133,12 +139,6 @@ class DriverMatchingService:
     ):
 
         self.db = db
-
-        self.redis = redis_client
-
-        self.websocket_manager = (
-            websocket_manager
-        )
 
     # =====================================================
     # FIND NEARBY DRIVERS
@@ -170,7 +170,7 @@ class DriverMatchingService:
         )
 
         # =================================================
-        # LATEST DRIVER LOCATION SUBQUERY
+        # LATEST LOCATION SUBQUERY
         # =================================================
 
         latest_location_subquery = (
@@ -194,7 +194,7 @@ class DriverMatchingService:
         )
 
         # =================================================
-        # QUERY DRIVERS
+        # QUERY
         # =================================================
 
         result = await self.db.execute(
@@ -229,10 +229,12 @@ class DriverMatchingService:
                 DriverProfile.status ==
                 DriverStatus.ONLINE,
 
+                DriverProfile.is_verified == True,
+
+                DriverLocation.is_active == True,
+
                 Vehicle.category ==
-                VehicleCategory(
-                    vehicle_category
-                ),
+                vehicle_category.upper(),
 
                 DriverLocation.latitude.between(
                     min_lat,
@@ -248,8 +250,12 @@ class DriverMatchingService:
 
         rows = result.all()
 
+        print(
+            f"Found {len(rows)} nearby drivers"
+        )
+
         # =================================================
-        # DISTANCE FILTER
+        # FILTER DISTANCE
         # =================================================
 
         for (
@@ -259,24 +265,8 @@ class DriverMatchingService:
             location
         ) in rows:
 
-            # =============================================
-            # SKIP REJECTED DRIVERS
-            # =============================================
-
-            if self.redis:
-
-                rejected = await self.redis.get(
-                    f"trip_rejected:{user.id}"
-                )
-
-                if rejected:
-                    continue
-
-            # =============================================
-            # CALCULATE DISTANCE
-            # =============================================
-
             distance = (
+
                 DistanceService
                 .calculate_distance(
 
@@ -286,6 +276,10 @@ class DriverMatchingService:
                     float(location.latitude),
                     float(location.longitude)
                 )
+            )
+
+            print(
+                f"Driver {driver.id} distance: {distance}"
             )
 
             if distance > radius_km:
@@ -330,17 +324,21 @@ class DriverMatchingService:
             })
 
         # =================================================
-        # SORT BY SCORE
+        # SORT
         # =================================================
 
         matched_drivers.sort(
             key=lambda x: x["score"]
         )
 
+        print(
+            f"Matched Drivers: {matched_drivers}"
+        )
+
         return matched_drivers
 
     # =====================================================
-    # SEND RIDE REQUESTS
+    # AUTO ASSIGN DRIVER
     # =====================================================
 
     async def send_ride_requests(
@@ -357,179 +355,16 @@ class DriverMatchingService:
             return None
 
         # =================================================
-        # GET TRIP
+        # AUTO ASSIGN FIRST DRIVER
         # =================================================
 
-        trip_result = await self.db.execute(
+        first_driver = drivers[0]
 
-            select(Trip).where(
-                Trip.id == trip_id
-            )
+        print(
+            f"Auto assigned driver: {first_driver['driver_id']}"
         )
 
-        trip = trip_result.scalars().first()
-
-        if not trip:
-            return None
-
-        # =================================================
-        # SELECT DRIVERS
-        # =================================================
-
-        selected_drivers = (
-            drivers[:MAX_DRIVER_REQUESTS]
-        )
-
-        notified_user_ids = [
-
-            d["user_id"]
-
-            for d in selected_drivers
-        ]
-
-        # =================================================
-        # REDIS MATCH STATE
-        # =================================================
-
-        if self.redis:
-
-            await self.redis.set(
-
-                f"trip_matching:{trip_id}",
-
-                "SEARCHING",
-
-                ex=60
-            )
-
-        # =================================================
-        # SEND REQUESTS
-        # =================================================
-
-        for driver in selected_drivers:
-
-            payload = {
-
-                "event":
-                "NEW_RIDE_REQUEST",
-
-                "trip_id":
-                str(trip.id),
-
-                "pickup_address":
-                trip.pickup_address,
-
-                "drop_address":
-                trip.drop_address,
-
-                "pickup_distance_km":
-                driver["distance"],
-
-                "estimated_fare":
-                float(
-                    trip.estimated_fare
-                ),
-
-                "vehicle_category":
-                trip.vehicle_category.value
-            }
-
-            if self.websocket_manager:
-
-                await (
-                    self.websocket_manager
-                    .send_to_user(
-
-                        user_id=
-                        driver["user_id"],
-
-                        message=
-                        payload
-                    )
-                )
-
-        # =================================================
-        # WAIT FOR ACCEPTANCE
-        # =================================================
-
-        accepted_driver = (
-
-            await self.wait_for_acceptance(
-                trip_id=trip_id
-            )
-        )
-
-        # =================================================
-        # CANCEL OTHER REQUESTS
-        # =================================================
-
-        if accepted_driver:
-
-            await self.cancel_other_requests(
-
-                trip_id=trip_id,
-
-                accepted_driver_id=
-                accepted_driver,
-
-                notified_user_ids=
-                notified_user_ids
-            )
-
-        return accepted_driver
-
-    # =====================================================
-    # WAIT FOR ACCEPTANCE
-    # =====================================================
-
-    async def wait_for_acceptance(
-
-        self,
-
-        trip_id: UUID
-
-    ) -> Optional[str]:
-
-        channel = (
-            f"trip_accept_ch:{trip_id}"
-        )
-
-        if self.redis:
-
-            result = await self.redis.blpop(
-                channel,
-                timeout=REQUEST_TIMEOUT
-            )
-
-            if result:
-
-                _, value = result
-
-                return (
-
-                    value.decode()
-
-                    if isinstance(
-                        value,
-                        bytes
-                    )
-
-                    else value
-                )
-
-            return None
-
-        # =================================================
-        # FALLBACK POLLING
-        # =================================================
-
-        for _ in range(
-            REQUEST_TIMEOUT
-        ):
-
-            await asyncio.sleep(1)
-
-        return None
+        return first_driver["driver_id"]
 
     # =====================================================
     # ACCEPT RIDE
@@ -545,42 +380,6 @@ class DriverMatchingService:
 
     ) -> bool:
 
-        if not self.redis:
-
-            raise RuntimeError(
-                "Redis required"
-            )
-
-        redis_key = (
-            f"trip_accepted:{trip_id}"
-        )
-
-        accept_channel = (
-            f"trip_accept_ch:{trip_id}"
-        )
-
-        # =================================================
-        # LOCK ACCEPTANCE
-        # =================================================
-
-        claimed = await self.redis.set(
-
-            redis_key,
-
-            str(driver_id),
-
-            ex=300,
-
-            nx=True
-        )
-
-        if not claimed:
-            return False
-
-        # =================================================
-        # GET TRIP
-        # =================================================
-
         result = await self.db.execute(
 
             select(Trip).where(
@@ -591,36 +390,16 @@ class DriverMatchingService:
         trip = result.scalars().first()
 
         if not trip:
-
-            await self.redis.delete(
-                redis_key
-            )
-
             return False
 
-        # =================================================
-        # VALIDATE STATUS
-        # =================================================
-
-        if trip.status != (
-            TripStatus.SEARCHING_DRIVER
-        ):
-
+        if trip.driver_id:
             return False
-
-        # =================================================
-        # ASSIGN DRIVER
-        # =================================================
 
         trip.driver_id = driver_id
 
         trip.status = (
             TripStatus.DRIVER_ASSIGNED
         )
-
-        # =================================================
-        # UPDATE DRIVER STATUS
-        # =================================================
 
         driver_result = await self.db.execute(
 
@@ -640,32 +419,10 @@ class DriverMatchingService:
                 DriverStatus.ON_TRIP
             )
 
-        # =================================================
-        # COMMIT
-        # =================================================
+        await self.db.commit()
 
-        try:
-
-            await self.db.commit()
-
-        except Exception:
-
-            await self.db.rollback()
-
-            raise
-
-        # =================================================
-        # NOTIFY ACCEPTANCE
-        # =================================================
-
-        await self.redis.lpush(
-            accept_channel,
-            str(driver_id)
-        )
-
-        await self.redis.expire(
-            accept_channel,
-            60
+        print(
+            f"Trip assigned to driver {driver_id}"
         )
 
         return True
@@ -684,59 +441,11 @@ class DriverMatchingService:
 
     ):
 
-        if self.redis:
+        print(
+            f"Driver rejected trip: {driver_id}"
+        )
 
-            await self.redis.set(
-
-                f"trip_rejected:{driver_id}",
-
-                "REJECTED",
-
-                ex=300
-            )
-
-    # =====================================================
-    # CANCEL OTHER REQUESTS
-    # =====================================================
-
-    async def cancel_other_requests(
-
-        self,
-
-        trip_id: UUID,
-
-        accepted_driver_id: str,
-
-        notified_user_ids: List[str]
-
-    ):
-
-        if not self.websocket_manager:
-            return
-
-        payload = {
-
-            "event":
-            "RIDE_REQUEST_CANCELLED",
-
-            "trip_id":
-            str(trip_id)
-        }
-
-        for user_id in notified_user_ids:
-
-            if user_id == accepted_driver_id:
-                continue
-
-            await (
-                self.websocket_manager
-                .send_to_user(
-
-                    user_id=user_id,
-
-                    message=payload
-                )
-            )
+        return True
 
     # =====================================================
     # MATCH DRIVER
@@ -756,9 +465,17 @@ class DriverMatchingService:
 
     ) -> Optional[str]:
 
+        print(
+            f"Searching drivers for {vehicle_category}"
+        )
+
         for radius_km in (
             RADIUS_EXPANSION_STEPS
         ):
+
+            print(
+                f"Searching in radius {radius_km} KM"
+            )
 
             nearby_drivers = (
 
@@ -779,16 +496,13 @@ class DriverMatchingService:
                 )
             )
 
-            # =============================================
-            # NO DRIVERS
-            # =============================================
-
             if not nearby_drivers:
-                continue
 
-            # =============================================
-            # SEND REQUESTS
-            # =============================================
+                print(
+                    f"No drivers in {radius_km} KM"
+                )
+
+                continue
 
             accepted_driver = (
 
@@ -802,11 +516,23 @@ class DriverMatchingService:
                 )
             )
 
-            # =============================================
-            # DRIVER ACCEPTED
-            # =============================================
-
             if accepted_driver:
+
+                # =========================================
+                # AUTO ASSIGN TRIP
+                # =========================================
+
+                await self.accept_ride(
+
+                    trip_id=trip_id,
+
+                    driver_id=UUID(
+                        accepted_driver
+                    )
+                )
+
                 return accepted_driver
+
+        print("No driver accepted ride")
 
         return None
