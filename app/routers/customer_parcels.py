@@ -23,8 +23,7 @@ from app.models.trips import Trip, TripParcel, TripLocation
 from app.schemas.trips import ParcelCreate, ParcelResponse
 
 from app.services.fare import FareCalculatorService
-from app.services.matching import DriverMatchingService, calculate_distance
-
+from app.services.matching import DriverMatchingService
 from app.core.redis import redis_client
 from app.core.websocket_manager import websocket_manager
 
