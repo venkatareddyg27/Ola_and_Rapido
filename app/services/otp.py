@@ -2,10 +2,7 @@ import random
 import hashlib
 
 from datetime import datetime, timedelta
-
 from fastapi import HTTPException
-
-from app.core.redis import redis_client
 from app.core.config import settings
 from app.core.enums import OTPPurpose
 

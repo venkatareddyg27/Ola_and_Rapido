@@ -10,12 +10,17 @@ from fastapi import (
 
 from sqlalchemy import (
     select,
-    func
+    func,
+    update
 )
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import (
+    AsyncSession
+)
 
-from app.core.database import get_db
+from app.core.database import (
+    get_db
+)
 
 from app.core.enums import (
     DriverStatus,
@@ -23,7 +28,9 @@ from app.core.enums import (
     UserRole
 )
 
-from app.core.security import get_current_user
+from app.core.security import (
+    get_current_user
+)
 
 from app.models.user_models import (
     User,
@@ -32,9 +39,13 @@ from app.models.user_models import (
     KYCDocument
 )
 
-from app.models.trips import Trip
+from app.models.trips import (
+    Trip
+)
 
-from app.models.vehicles import Vehicle
+from app.models.vehicles import (
+    Vehicle
+)
 
 from app.schemas.user_schema import (
     DriverProfileCreate,
@@ -88,7 +99,7 @@ async def register_driver(
 ):
 
     # =====================================================
-    # CHECK ROLE
+    # CHECK ADMIN ROLE
     # =====================================================
 
     if current_user.role == UserRole.ADMIN:
@@ -100,12 +111,6 @@ async def register_driver(
             detail=
             "Admin cannot register as driver"
         )
-
-    # CONVERT CUSTOMER TO DRIVER
-
-    current_user.role = (
-        UserRole.DRIVER
-    )
 
     # =====================================================
     # CHECK EXISTING DRIVER
@@ -128,6 +133,80 @@ async def register_driver(
             detail=
             "Driver already registered"
         )
+
+    # =====================================================
+    # CHECK DUPLICATE LICENSE
+    # =====================================================
+
+    existing_license = await db.execute(
+
+        select(KYCDocument).where(
+            KYCDocument.license_number ==
+            payload.license_number
+        )
+    )
+
+    if existing_license.scalar_one_or_none():
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+            "License already registered"
+        )
+
+    # =====================================================
+    # CHECK DUPLICATE AADHAAR
+    # =====================================================
+
+    existing_aadhaar = await db.execute(
+
+        select(KYCDocument).where(
+            KYCDocument.aadhaar_number ==
+            payload.aadhaar_number
+        )
+    )
+
+    if existing_aadhaar.scalar_one_or_none():
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+            "Aadhaar already registered"
+        )
+
+    # =====================================================
+    # CHECK DUPLICATE RC
+    # =====================================================
+
+    existing_rc = await db.execute(
+
+        select(KYCDocument).where(
+            KYCDocument.rc_number ==
+            payload.rc_number
+        )
+    )
+
+    if existing_rc.scalar_one_or_none():
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+            "RC already registered"
+        )
+
+    # =====================================================
+    # CONVERT CUSTOMER TO DRIVER
+    # =====================================================
+
+    current_user.role = (
+        UserRole.DRIVER
+    )
 
     # =====================================================
     # CREATE DRIVER PROFILE
@@ -206,7 +285,7 @@ async def register_driver(
         rc_back_url=
         payload.rc_back_url,
 
-        # OTHER DOCS
+        # OTHER
         insurance_url=
         payload.insurance_url,
 
@@ -241,14 +320,10 @@ async def add_vehicle(
     )
 ):
 
-    # =====================================================
-    # CHECK ROLE
-    # =====================================================
-
     require_driver_role(current_user)
 
     # =====================================================
-    # GET DRIVER PROFILE
+    # GET DRIVER
     # =====================================================
 
     driver_result = await db.execute(
@@ -269,6 +344,42 @@ async def add_vehicle(
 
             detail=
             "Driver profile not found"
+        )
+
+    # =====================================================
+    # DRIVER ALREADY HAS VEHICLE
+    # =====================================================
+
+    if driver.vehicle_id:
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+            "Driver already has vehicle"
+        )
+
+    # =====================================================
+    # CHECK DUPLICATE VEHICLE
+    # =====================================================
+
+    existing_vehicle = await db.execute(
+
+        select(Vehicle).where(
+            Vehicle.registration_number ==
+            payload.registration_number
+        )
+    )
+
+    if existing_vehicle.scalar_one_or_none():
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+            "Vehicle already registered"
         )
 
     # =====================================================
@@ -296,18 +407,23 @@ async def add_vehicle(
         fuel_type=
         payload.fuel_type,
 
-        colour=payload.colour
+        colour=
+        payload.colour
     )
 
     db.add(vehicle)
 
     await db.flush()
 
+    # =====================================================
     # LINK VEHICLE
+    # =====================================================
 
     driver.vehicle_id = vehicle.id
 
     await db.commit()
+
+    await db.refresh(vehicle)
 
     return {
 
@@ -315,11 +431,14 @@ async def add_vehicle(
         "Vehicle added successfully",
 
         "vehicle_id":
-        str(vehicle.id)
+        str(vehicle.id),
+
+        "registration_number":
+        vehicle.registration_number
     }
 
 # =========================================================
-# GO ONLINE/OFFLINE
+# ONLINE / OFFLINE
 # =========================================================
 
 @router.put("/status")
@@ -363,7 +482,9 @@ async def update_driver_status(
             detail="Driver not found"
         )
 
-    # DRIVER MUST BE VERIFIED
+    # =====================================================
+    # VERIFIED
+    # =====================================================
 
     if not driver.is_verified:
 
@@ -375,7 +496,9 @@ async def update_driver_status(
             "Admin approval pending"
         )
 
-    # BLOCKED DRIVER CHECK
+    # =====================================================
+    # BLOCKED
+    # =====================================================
 
     if driver.status == DriverStatus.BLOCKED:
 
@@ -387,9 +510,41 @@ async def update_driver_status(
             "Driver account blocked"
         )
 
+    # =====================================================
+    # UPDATE STATUS
+    # =====================================================
+
     driver.status = status
 
+    # =====================================================
+    # DEACTIVATE OLD LOCATIONS
+    # =====================================================
+
+    await db.execute(
+
+        update(DriverLocation)
+
+        .where(
+            DriverLocation.driver_id ==
+            driver.id
+        )
+
+        .values(
+            is_active=False
+        )
+    )
+
+    # =====================================================
+    # ACTIVE LOCATION FLAG
+    # =====================================================
+
+    is_active = (
+        status == DriverStatus.ONLINE
+    )
+
+    # =====================================================
     # SAVE LOCATION
+    # =====================================================
 
     location = DriverLocation(
 
@@ -403,7 +558,7 @@ async def update_driver_status(
 
         speed=speed,
 
-        is_active=True
+        is_active=is_active
     )
 
     db.add(location)
@@ -413,11 +568,14 @@ async def update_driver_status(
     return {
 
         "message":
-        "Driver status updated"
+        "Driver status updated",
+
+        "status":
+        status
     }
 
 # =========================================================
-# ACCEPT RIDE
+# ACCEPT TRIP
 # =========================================================
 
 @router.put("/trips/{trip_id}/accept")
@@ -434,7 +592,9 @@ async def accept_trip(
 
     require_driver_role(current_user)
 
+    # =====================================================
     # GET DRIVER
+    # =====================================================
 
     driver_result = await db.execute(
 
@@ -455,7 +615,72 @@ async def accept_trip(
             detail="Driver not found"
         )
 
+    # =====================================================
+    # VERIFIED
+    # =====================================================
+
+    if not driver.is_verified:
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail=
+            "Driver not verified"
+        )
+
+    # =====================================================
+    # ONLINE CHECK
+    # =====================================================
+
+    if driver.status != DriverStatus.ONLINE:
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+            "Driver is not online"
+        )
+
+    # =====================================================
+    # ACTIVE TRIP CHECK
+    # =====================================================
+
+    existing_trip_result = await db.execute(
+
+        select(Trip).where(
+
+            Trip.driver_id == driver.id,
+
+            Trip.status.in_([
+
+                TripStatus.DRIVER_ASSIGNED,
+
+                TripStatus.DRIVER_ARRIVED,
+
+                TripStatus.IN_PROGRESS
+            ])
+        )
+    )
+
+    active_trip = (
+        existing_trip_result.scalar_one_or_none()
+    )
+
+    if active_trip:
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+            "Driver already has active trip"
+        )
+
+    # =====================================================
     # GET TRIP
+    # =====================================================
 
     trip_result = await db.execute(
 
@@ -475,7 +700,23 @@ async def accept_trip(
             detail="Trip not found"
         )
 
+    # =====================================================
+    # ALREADY ASSIGNED
+    # =====================================================
+
+    if trip.driver_id:
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+            "Trip already assigned"
+        )
+
+    # =====================================================
     # ASSIGN DRIVER
+    # =====================================================
 
     trip.driver_id = driver.id
 
@@ -513,6 +754,24 @@ async def arrived_trip(
 
     require_driver_role(current_user)
 
+    # =====================================================
+    # DRIVER
+    # =====================================================
+
+    driver_result = await db.execute(
+
+        select(DriverProfile).where(
+            DriverProfile.user_id ==
+            current_user.id
+        )
+    )
+
+    driver = driver_result.scalar_one_or_none()
+
+    # =====================================================
+    # TRIP
+    # =====================================================
+
     result = await db.execute(
 
         select(Trip).where(
@@ -531,6 +790,20 @@ async def arrived_trip(
             detail="Trip not found"
         )
 
+    # =====================================================
+    # OWNERSHIP CHECK
+    # =====================================================
+
+    if trip.driver_id != driver.id:
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail=
+            "Trip does not belong to driver"
+        )
+
     trip.status = (
         TripStatus.DRIVER_ARRIVED
     )
@@ -544,7 +817,7 @@ async def arrived_trip(
     }
 
 # =========================================================
-# START RIDE WITH OTP
+# START TRIP
 # =========================================================
 
 @router.put("/trips/{trip_id}/start")
@@ -563,6 +836,24 @@ async def start_trip(
 
     require_driver_role(current_user)
 
+    # =====================================================
+    # DRIVER
+    # =====================================================
+
+    driver_result = await db.execute(
+
+        select(DriverProfile).where(
+            DriverProfile.user_id ==
+            current_user.id
+        )
+    )
+
+    driver = driver_result.scalar_one_or_none()
+
+    # =====================================================
+    # TRIP
+    # =====================================================
+
     result = await db.execute(
 
         select(Trip).where(
@@ -581,6 +872,38 @@ async def start_trip(
             detail="Trip not found"
         )
 
+    # =====================================================
+    # OWNERSHIP
+    # =====================================================
+
+    if trip.driver_id != driver.id:
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail=
+            "Trip does not belong to driver"
+        )
+
+    # =====================================================
+    # ARRIVED CHECK
+    # =====================================================
+
+    if trip.status != TripStatus.DRIVER_ARRIVED:
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+            "Driver has not arrived"
+        )
+
+    # =====================================================
+    # OTP CHECK
+    # =====================================================
+
     if trip.ride_otp != ride_otp:
 
         raise HTTPException(
@@ -589,6 +912,10 @@ async def start_trip(
 
             detail="Invalid OTP"
         )
+
+    # =====================================================
+    # START
+    # =====================================================
 
     trip.status = (
         TripStatus.IN_PROGRESS
@@ -607,7 +934,7 @@ async def start_trip(
     }
 
 # =========================================================
-# COMPLETE RIDE
+# COMPLETE TRIP
 # =========================================================
 
 @router.put("/trips/{trip_id}/complete")
@@ -624,7 +951,9 @@ async def complete_trip(
 
     require_driver_role(current_user)
 
-    # GET DRIVER
+    # =====================================================
+    # DRIVER
+    # =====================================================
 
     driver_result = await db.execute(
 
@@ -636,16 +965,9 @@ async def complete_trip(
 
     driver = driver_result.scalar_one_or_none()
 
-    if not driver:
-
-        raise HTTPException(
-
-            status_code=404,
-
-            detail="Driver not found"
-        )
-
-    # GET TRIP
+    # =====================================================
+    # TRIP
+    # =====================================================
 
     trip_result = await db.execute(
 
@@ -665,7 +987,37 @@ async def complete_trip(
             detail="Trip not found"
         )
 
-    # COMPLETE TRIP
+    # =====================================================
+    # OWNERSHIP
+    # =====================================================
+
+    if trip.driver_id != driver.id:
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail=
+            "Trip does not belong to driver"
+        )
+
+    # =====================================================
+    # ALREADY COMPLETED
+    # =====================================================
+
+    if trip.status == TripStatus.COMPLETED:
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=
+            "Trip already completed"
+        )
+
+    # =====================================================
+    # COMPLETE
+    # =====================================================
 
     trip.status = (
         TripStatus.COMPLETED
@@ -690,7 +1042,7 @@ async def complete_trip(
     }
 
 # =========================================================
-# CANCEL RIDE
+# CANCEL TRIP
 # =========================================================
 
 @router.put("/trips/{trip_id}/cancel")
@@ -708,6 +1060,24 @@ async def cancel_trip(
 ):
 
     require_driver_role(current_user)
+
+    # =====================================================
+    # DRIVER
+    # =====================================================
+
+    driver_result = await db.execute(
+
+        select(DriverProfile).where(
+            DriverProfile.user_id ==
+            current_user.id
+        )
+    )
+
+    driver = driver_result.scalar_one_or_none()
+
+    # =====================================================
+    # TRIP
+    # =====================================================
 
     result = await db.execute(
 
@@ -727,11 +1097,33 @@ async def cancel_trip(
             detail="Trip not found"
         )
 
+    # =====================================================
+    # OWNERSHIP
+    # =====================================================
+
+    if trip.driver_id != driver.id:
+
+        raise HTTPException(
+
+            status_code=403,
+
+            detail=
+            "Trip does not belong to driver"
+        )
+
+    # =====================================================
+    # CANCEL
+    # =====================================================
+
     trip.status = (
         TripStatus.CANCELLED
     )
 
     trip.cancel_reason = reason
+
+    driver.status = (
+        DriverStatus.ONLINE
+    )
 
     await db.commit()
 
@@ -740,6 +1132,69 @@ async def cancel_trip(
         "message":
         "Ride cancelled"
     }
+
+# =========================================================
+# CURRENT TRIP
+# =========================================================
+
+@router.get("/current-trip")
+async def current_trip(
+
+    db: AsyncSession = Depends(get_db),
+
+    current_user: User = Depends(
+        get_current_user
+    )
+):
+
+    require_driver_role(current_user)
+
+    # =====================================================
+    # DRIVER
+    # =====================================================
+
+    driver_result = await db.execute(
+
+        select(DriverProfile).where(
+            DriverProfile.user_id ==
+            current_user.id
+        )
+    )
+
+    driver = driver_result.scalar_one_or_none()
+
+    # =====================================================
+    # ACTIVE TRIP
+    # =====================================================
+
+    trip_result = await db.execute(
+
+        select(Trip).where(
+
+            Trip.driver_id == driver.id,
+
+            Trip.status.in_([
+
+                TripStatus.DRIVER_ASSIGNED,
+
+                TripStatus.DRIVER_ARRIVED,
+
+                TripStatus.IN_PROGRESS
+            ])
+        )
+    )
+
+    trip = trip_result.scalar_one_or_none()
+
+    if not trip:
+
+        return {
+
+            "message":
+            "No active trip"
+        }
+
+    return trip
 
 # =========================================================
 # TODAY EARNINGS
@@ -757,7 +1212,9 @@ async def today_earnings(
 
     require_driver_role(current_user)
 
-    # GET DRIVER
+    # =====================================================
+    # DRIVER
+    # =====================================================
 
     driver_result = await db.execute(
 
@@ -779,6 +1236,10 @@ async def today_earnings(
         )
 
     today = date.today()
+
+    # =====================================================
+    # EARNINGS
+    # =====================================================
 
     result = await db.execute(
 
@@ -803,7 +1264,7 @@ async def today_earnings(
     return {
 
         "today_earnings":
-        earnings or 0,
+        float(earnings or 0),
 
         "rides_completed":
         rides or 0

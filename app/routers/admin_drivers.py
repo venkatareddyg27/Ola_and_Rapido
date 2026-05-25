@@ -1,47 +1,19 @@
 from uuid import UUID
+from fastapi import ( APIRouter, Depends, HTTPException, status )
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    status
-)
+from sqlalchemy import ( select )
 
-from sqlalchemy import (
-    select
-)
+from sqlalchemy.ext.asyncio import ( AsyncSession )
 
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
+from app.core.database import ( get_db )
 
-from app.core.database import (
-    get_db
-)
+from app.core.security import ( get_current_user )
 
-from app.core.security import (
-    get_current_user
-)
+from app.core.enums import ( DriverStatus, UserRole )
 
-from app.core.enums import (
-    DriverStatus,
-    UserRole
-)
+from app.models.user_models import ( User, DriverProfile, KYCDocument )
 
-from app.models.user_models import (
-    User,
-    DriverProfile,
-    KYCDocument
-)
-
-router = APIRouter(
-    prefix="/admin/drivers",
-    tags=["Admin Drivers"]
-)
-
-# =========================================================
-# ADMIN AUTH CHECK
-# =========================================================
+router = APIRouter( prefix="/admin/drivers", tags=["Admin Drivers"] )
 
 def require_admin(
     current_user: User
