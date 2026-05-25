@@ -76,10 +76,9 @@ class Trip(Base):
 
     customer = relationship( "User", back_populates="customer_trips")
 
-    driver = relationship( "DriverProfile", back_populates="trips"
-    )
+    driver = relationship( "DriverProfile", back_populates="trips")
 
-    parcel = relationship( "TripParcel", back_populates="trip", uselist=False, cascade="all delete-orphan" )
+    parcel = relationship( "TripParcel", back_populates="trip", uselist=False, cascade="all ,delete-orphan" )
 
     locations = relationship( "TripLocation", back_populates="trip", cascade="all, delete-orphan" )
 

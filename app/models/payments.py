@@ -1,13 +1,9 @@
 import uuid
 from datetime import datetime
-
 from sqlalchemy import ( Column, DateTime, ForeignKey, Numeric,Enum, String )
-
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-
 from app.core.database import Base
-
 from app.core.enums import ( PaymentMethod, PaymentStatus, WalletTransactionType, PayoutMethod,PayoutStatus )
 
 class Payment(Base):
@@ -57,7 +53,7 @@ class Wallet(Base):
 
     user = relationship( "User", back_populates="wallet" )
 
-    transactions = relationship( "WalletTransaction", back_populates="wallet", cascade="all delete-orphan" )
+    transactions = relationship( "WalletTransaction", back_populates="wallet", cascade="all, delete-orphan" )
 
 class WalletTransaction(Base):
 
