@@ -43,3 +43,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+print("LOADED DATABASE:", settings.DATABASE_URL)
