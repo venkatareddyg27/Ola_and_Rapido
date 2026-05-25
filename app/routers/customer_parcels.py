@@ -21,6 +21,9 @@ from app.models.trips import Trip, TripParcel, TripLocation
 from app.schemas.parcel import ParcelCreate, ParcelBookingResponse
 from app.services.fare import FareCalculatorService
 from app.services.distance_service import DistanceService
+from app.services.matching import DriverMatchingService
+
+from app.core.websocket_manager import websocket_manager
 
 
 router = APIRouter(prefix="/customer/parcels", tags=["Customer Parcels"])

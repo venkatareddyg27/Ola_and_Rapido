@@ -78,7 +78,11 @@ class Trip(Base):
 
     driver = relationship( "DriverProfile", back_populates="trips")
 
+<<<<<<< HEAD
     parcel = relationship( "TripParcel", back_populates="trip", uselist=False, cascade="all, delete-orphan" )
+=======
+    parcel = relationship( "TripParcel", back_populates="trip", uselist=False, cascade="all ,delete-orphan" )
+>>>>>>> f2ee36bfc246b6f5cc76cdb3587828f6ef82e797
 
     locations = relationship( "TripLocation", back_populates="trip", cascade="all, delete-orphan" )
 

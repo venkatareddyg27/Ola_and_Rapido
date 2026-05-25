@@ -1,7 +1,3 @@
-# =========================================================
-# SUPPORT SCHEMAS
-# =========================================================
-
 from datetime import datetime
 from typing import Optional, Dict, Any
 from uuid import UUID
@@ -11,13 +7,8 @@ from pydantic import BaseModel
 from app.core.enums import (
     DisputeCategory,
     DisputeStatus,
-    DisputePriority
-)
+    DisputePriority)
 
-
-# =========================================================
-# RATING SCHEMAS
-# =========================================================
 
 class RatingBase(BaseModel):
     trip_id: Optional[UUID] = None
@@ -45,10 +36,6 @@ class RatingResponse(RatingBase):
         from_attributes = True
 
 
-# =========================================================
-# NOTIFICATION SCHEMAS
-# =========================================================
-
 class NotificationBase(BaseModel):
     user_id: UUID
     title: str
@@ -75,10 +62,6 @@ class NotificationMarkReadRequest(BaseModel):
     class Config:
         from_attributes = True
 
-
-# =========================================================
-# DISPUTE SCHEMAS
-# =========================================================
 
 class DisputeBase(BaseModel):
     trip_id: Optional[UUID] = None

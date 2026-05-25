@@ -1,118 +1,224 @@
 from decimal import Decimal
+<<<<<<< HEAD
 
 from app.core.enums import ParcelPriority, VehicleCategory
+=======
+>>>>>>> f2ee36bfc246b6f5cc76cdb3587828f6ef82e797
 
 from app.utils.fare_config import (
-    VEHICLE_PRICING
-)
 
+    BASE_FARES,
+
+    PER_KM_RATE,
+
+    PER_MINUTE_RATE,
+
+    BOOKING_FEE,
+
+    GST_PERCENTAGE,
+
+    MAX_SURGE_MULTIPLIER,
+
+    SURGE_THRESHOLDS)
 
 class FareCalculatorService:
 
-    # =====================================================
-    # CALCULATE FARE
-    # =====================================================
+    @staticmethod
+    def calculate_surge_multiplier(
 
-    @classmethod
+        active_requests: int,
+
+        active_drivers: int) -> Decimal:
+
+        if active_drivers <= 0:
+
+            return MAX_SURGE_MULTIPLIER
+
+
+        demand_ratio = (
+
+            active_requests /
+
+            active_drivers)
+
+        if demand_ratio <= 1:
+
+            return SURGE_THRESHOLDS[1]
+
+        elif demand_ratio <= 2:
+
+            return SURGE_THRESHOLDS[2]
+
+        elif demand_ratio <= 3:
+
+            return SURGE_THRESHOLDS[3]
+
+        elif demand_ratio <= 5:
+
+            return SURGE_THRESHOLDS[5]
+
+        return MAX_SURGE_MULTIPLIER
+
+    @staticmethod
+    def calculate_tax(
+
+        amount: Decimal
+
+    ) -> Decimal:
+
+        tax = (
+
+            amount *
+
+            GST_PERCENTAGE
+
+        ) / Decimal("100")
+
+        return tax.quantize(
+            Decimal("0.01")
+        )
+
+    @staticmethod
     def calculate_fare(
-        cls,
-        vehicle_category: VehicleCategory,
+
+        vehicle_category: str,
+
         distance_km: float,
-        surge_multiplier: float = 1.0,
-        waiting_charge: float = 0,
-        toll_charge: float = 0
-    ) -> dict:
 
-        # =================================================
-        # VALIDATE CATEGORY
-        # =================================================
+        duration_minutes: int,
 
-        if vehicle_category not in VEHICLE_PRICING:
+        active_requests: int = 10,
 
-            raise ValueError(
-                "Invalid vehicle category"
+        active_drivers: int = 10):
+
+        vehicle_category = (vehicle_category.lower())
+
+        base_fare = (
+
+            BASE_FARES.get(
+
+                vehicle_category,
+
+                Decimal("50")
             )
+        )
 
-        # =================================================
-        # GET PRICING
-        # =================================================
+        distance_rate = (
 
-        pricing = VEHICLE_PRICING[
-            vehicle_category
-        ]
+            PER_KM_RATE.get(
 
-        base_fare = pricing["base_fare"]
+                vehicle_category,
 
-        per_km_rate = pricing["per_km_rate"]
-
-        minimum_fare = pricing[
-            "minimum_fare"
-        ]
-
-        # =================================================
-        # DISTANCE FARE
-        # =================================================
+                Decimal("10")
+            )
+        )
 
         distance_fare = (
-            distance_km *
-            per_km_rate
+
+            Decimal(
+                str(distance_km)
+            )
+
+            * distance_rate
         )
 
-        # =================================================
-        # TOTAL BEFORE SURGE
-        # =================================================
+        time_rate = (
+
+            PER_MINUTE_RATE.get(
+
+                vehicle_category,
+
+                Decimal("2")
+            )
+        )
+
+        time_fare = (
+
+            Decimal(
+                str(duration_minutes)
+            )
+
+            * time_rate
+        )
 
         subtotal = (
+
             base_fare +
+
             distance_fare +
-            waiting_charge +
-            toll_charge
+
+            time_fare +
+
+            BOOKING_FEE
+        )
+        surge_multiplier = (
+
+            FareCalculatorService
+            .calculate_surge_multiplier(
+
+                active_requests=active_requests,
+
+                active_drivers=active_drivers
+            )
         )
 
-        # =================================================
-        # APPLY SURGE
-        # =================================================
+        surge_amount = (
 
-        total_fare = (
             subtotal *
-            surge_multiplier
+
+            (
+                surge_multiplier -
+
+                Decimal("1.0")
+            )
         )
 
-        # =================================================
-        # APPLY MINIMUM FARE
-        # =================================================
+        surged_total = (
 
-        if total_fare < minimum_fare:
+            subtotal +
 
-            total_fare = minimum_fare
+            surge_amount
+        )
 
-        # =================================================
-        # RETURN RESPONSE
-        # =================================================
+        tax_amount = (
+
+            FareCalculatorService
+            .calculate_tax(
+
+                surged_total
+            )
+        )
+
+        final_fare = (
+
+            surged_total +
+
+            tax_amount
+        )
+
+        final_fare = (
+            final_fare.quantize(
+                Decimal("0.01")
+            )
+        )
 
         return {
 
-            "vehicle_category":
-            vehicle_category.value,
+            "vehicle_category":vehicle_category,
 
-            "distance_km":
-            round(distance_km, 2),
+            "base_fare":float(base_fare),
 
-            "base_fare":
-            round(base_fare, 2),
+            "distance_fare":float(distance_fare),
 
-            "distance_fare":
-            round(distance_fare, 2),
+            "time_fare":float(time_fare),
 
-            "waiting_charge":
-            round(waiting_charge, 2),
+            "booking_fee":float(BOOKING_FEE),
 
-            "toll_charge":
-            round(toll_charge, 2),
+            "subtotal":float(subtotal),
 
-            "surge_multiplier":
-            surge_multiplier,
+            "surge_multiplier":float(surge_multiplier),
 
+<<<<<<< HEAD
             "total_fare":
             round(total_fare, 2)
         }
@@ -148,3 +254,10 @@ class FareCalculatorService:
         return {
             "total_charge": total_charge
         }
+=======
+            "surge_amount":float(surge_amount),
+
+            "tax_amount":float(tax_amount),
+
+            "total_fare":float(final_fare)}
+>>>>>>> f2ee36bfc246b6f5cc76cdb3587828f6ef82e797

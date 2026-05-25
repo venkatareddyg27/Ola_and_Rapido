@@ -1,62 +1,31 @@
 import random
 
-from datetime import (
-    datetime,
-    timedelta
-)
+from datetime import (datetime,timedelta)
 
-from fastapi import (
-    HTTPException
-)
+from fastapi import (HTTPException)
 
-from sqlalchemy import (
-    select
-)
+from sqlalchemy import (select)
 
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
+from sqlalchemy.ext.asyncio import (AsyncSession)
 
-from app.models.user_models import (
-    User,
-    OTPLog
-)
+from app.models.user_models import (User,OTPLog)
 
-from app.schemas.auth_schema import (
-    VerifyOTPRequest,
-    RegisterRequest,
-    LoginRequest
-)
+from app.schemas.auth_schema import (VerifyOTPRequest,RegisterRequest,LoginRequest)
 
-from app.core.enums import (
-    OTPPurpose,
-    UserRole
-)
+from app.core.enums import (OTPPurpose,UserRole)
 
-from app.services.otp import (
-    hash_otp,
-    verify_otp_hash
-)
+from app.services.otp import (hash_otp,verify_otp_hash)
 
-from app.services.jwt import (
-    create_access_token,
-    create_refresh_token,
-    verify_token
-)
+from app.core.security import (create_access_token)
 
 
-# =========================================================
-# LOGIN -> SEND OTP
-# =========================================================
 
 async def login_service(
     data: LoginRequest,
-    db: AsyncSession
-):
+    db: AsyncSession):
 
     otp = str(
-        random.randint(100000, 999999)
-    )
+        random.randint(100000, 999999))
 
     print("\n===================================")
     print(f"PHONE NUMBER : {data.phone}")
@@ -71,8 +40,7 @@ async def login_service(
 
         purpose=OTPPurpose.LOGIN,
 
-        expires_at=datetime.utcnow() + timedelta(minutes=5)
-    )
+        expires_at=datetime.utcnow() + timedelta(minutes=5))
 
     db.add(otp_log)
 
@@ -86,24 +54,17 @@ async def login_service(
 
         "message": "OTP sent successfully",
 
-        "phone": data.phone
-    }
+        "phone": data.phone}
 
-
-# =========================================================
-# VERIFY OTP
-# =========================================================
 
 async def verify_otp_service(
     data: VerifyOTPRequest,
-    db: AsyncSession
-):
+    db: AsyncSession):
 
     query = select(OTPLog).where(
         OTPLog.phone == data.phone
     ).order_by(
-        OTPLog.created_at.desc()
-    )
+        OTPLog.created_at.desc())
 
     result = await db.execute(query)
 
@@ -113,59 +74,37 @@ async def verify_otp_service(
 
         raise HTTPException(
             status_code=404,
-            detail="OTP not found"
-        )
-
-    # =====================================================
-    # CHECK EXPIRY
-    # =====================================================
+            detail="OTP not found")
 
     if otp_log.expires_at < datetime.utcnow():
 
         raise HTTPException(
             status_code=400,
-            detail="OTP expired"
-        )
+            detail="OTP expired")
 
-    # =====================================================
-    # VERIFY OTP
-    # =====================================================
 
     is_valid = verify_otp_hash(
         data.otp,
-        otp_log.otp_hash
-    )
+        otp_log.otp_hash)
 
     if not is_valid:
 
         raise HTTPException(
             status_code=400,
-            detail="Invalid OTP"
-        )
+            detail="Invalid OTP")
 
-    # =====================================================
-    # MARK OTP USED
-    # =====================================================
 
     otp_log.used_at = datetime.utcnow()
 
     await db.commit()
 
-    # =====================================================
-    # FIND USER
-    # =====================================================
 
     user_query = select(User).where(
-        User.mobile_number == data.phone
-    )
+        User.mobile_number == data.phone)
 
     user_result = await db.execute(user_query)
 
     user = user_result.scalars().first()
-
-    # =====================================================
-    # AUTO CREATE USER
-    # =====================================================
 
     if not user:
 
@@ -179,8 +118,7 @@ async def verify_otp_service(
 
             is_active=True,
 
-            is_verified=True
-        )
+            is_verified=True)
 
         db.add(user)
 
@@ -188,20 +126,13 @@ async def verify_otp_service(
 
         await db.refresh(user)
 
-    # =====================================================
-    # GENERATE TOKENS
-    # =====================================================
 
     access_token = create_access_token({
 
         "sub": str(user.id),
 
-        "role": str(user.role)
-    })
+        "role": str(user.role)})
 
-    # =====================================================
-    # RESPONSE
-    # =====================================================
 
     return {
 
@@ -224,31 +155,19 @@ async def verify_otp_service(
     }
 
 
-# =========================================================
-# LOGOUT
-# =========================================================
 
 async def logout_service(
-    refresh_token: str
-):
+    refresh_token: str):
 
     return {
         "message": "Logout successful"
     }
 
 
-# =========================================================
-# REGISTER
-# =========================================================
-
 async def register_service(
     data: RegisterRequest,
-    db: AsyncSession
-):
+    db: AsyncSession):
 
-    # =====================================================
-    # FIND USER
-    # =====================================================
 
     result = await db.execute(
 
@@ -259,20 +178,12 @@ async def register_service(
 
     user = result.scalar_one_or_none()
 
-    # =====================================================
-    # USER NOT FOUND
-    # =====================================================
 
     if not user:
 
         raise HTTPException(
             status_code=404,
-            detail="User not found. Please login first."
-        )
-
-    # =====================================================
-    # UPDATE USER DETAILS
-    # =====================================================
+            detail="User not found. Please login first.")
 
     user.first_name = data.first_name
 
@@ -283,8 +194,7 @@ async def register_service(
     user.email = data.email
 
     user.profile_photo_url = (
-        data.profile_photo_url
-    )
+        data.profile_photo_url)
 
     user.role = data.role
 
@@ -295,10 +205,6 @@ async def register_service(
     await db.commit()
 
     await db.refresh(user)
-
-    # =====================================================
-    # RESPONSE
-    # =====================================================
 
     return {
 

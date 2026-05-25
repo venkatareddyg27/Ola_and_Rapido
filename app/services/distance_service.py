@@ -1,25 +1,10 @@
-# distance_service.py
-
-from math import (
-    radians,
-    sin,
-    cos,
-    sqrt,
-    atan2
-)
+from math import (radians,sin,cos,sqrt,atan2)
 
 
 class DistanceService:
 
-    # =====================================================
-    # EARTH RADIUS
-    # =====================================================
-
     EARTH_RADIUS_KM = 6371
 
-    # =====================================================
-    # CALCULATE DISTANCE
-    # =====================================================
 
     @classmethod
     def calculate_distance(
@@ -30,16 +15,7 @@ class DistanceService:
         pickup_lng: float,
 
         drop_lat: float,
-        drop_lng: float
-    ) -> float:
-
-        """
-        Calculate distance using Haversine Formula
-        """
-
-        # =================================================
-        # CONVERT TO RADIANS
-        # =================================================
+        drop_lng: float) -> float:
 
         lat1 = radians(pickup_lat)
 
@@ -49,23 +25,15 @@ class DistanceService:
 
         lon2 = radians(drop_lng)
 
-        # =================================================
-        # DIFFERENCE
-        # =================================================
-
         dlat = lat2 - lat1
 
         dlon = lon2 - lon1
-
-        # =================================================
-        # HAVERSINE FORMULA
-        # =================================================
 
         a = (
 
             sin(dlat / 2) ** 2
 
-            +
+            +                                  # HAVERSINE FORMULA
 
             cos(lat1) *
             cos(lat2) *
@@ -78,22 +46,12 @@ class DistanceService:
             atan2(
                 sqrt(a),
                 sqrt(1 - a)
-            )
-        )
+            ))
 
         distance = (
-            cls.EARTH_RADIUS_KM * c
-        )
-
-        # =================================================
-        # RETURN ROUNDED DISTANCE
-        # =================================================
+            cls.EARTH_RADIUS_KM * c)
 
         return round(distance, 2)
-
-    # =====================================================
-    # ESTIMATED DURATION
-    # =====================================================
 
     @classmethod
     def estimate_duration(
@@ -102,12 +60,8 @@ class DistanceService:
 
         distance_km: float,
 
-        average_speed_kmph: float = 35
-    ) -> int:
+        average_speed_kmph: float = 35) -> int:
 
-        """
-        Estimate trip duration in minutes
-        """
 
         if average_speed_kmph <= 0:
 
@@ -115,18 +69,13 @@ class DistanceService:
 
         duration_hours = (
             distance_km /
-            average_speed_kmph
-        )
+            average_speed_kmph)
 
         duration_minutes = (
-            duration_hours * 60
-        )
+            duration_hours * 60)
 
         return round(duration_minutes)
 
-    # =====================================================
-    # CHECK SERVICEABLE AREA
-    # =====================================================
 
     @classmethod
     def is_serviceable_distance(
@@ -135,14 +84,8 @@ class DistanceService:
 
         distance_km: float,
 
-        max_distance_km: float = 100
-    ) -> bool:
-
-        """
-        Validate trip distance
-        """
+        max_distance_km: float = 100) -> bool:
 
         return (
             distance_km <=
-            max_distance_km
-        )
+            max_distance_km)

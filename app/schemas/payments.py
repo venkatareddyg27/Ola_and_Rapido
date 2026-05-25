@@ -32,10 +32,6 @@ class UserResponse(UserBase):
         from_attributes = True
 
 
-# =========================================================
-# OTP LOG SCHEMAS
-# =========================================================
-
 class OTPLogCreate(BaseModel):
     phone: str
     otp_hash: str
@@ -54,10 +50,6 @@ class OTPLogResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
-# =========================================================
-# DRIVER PROFILE SCHEMAS
-# =========================================================
 
 class DriverProfileCreate(BaseModel):
     user_id: UUID
@@ -79,9 +71,6 @@ class DriverProfileResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# DRIVER SUBSCRIPTION SCHEMAS
-# =========================================================
 
 class DriverSubscriptionCreate(BaseModel):
     driver_id: UUID
@@ -103,9 +92,6 @@ class DriverSubscriptionResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# KYC DOCUMENT SCHEMAS
-# =========================================================
 
 class KYCDocumentCreate(BaseModel):
     user_id: UUID
@@ -123,10 +109,6 @@ class KYCDocumentResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
-# =========================================================
-# VEHICLE SCHEMAS
-# =========================================================
 
 class VehicleCreate(BaseModel):
     owner_id: UUID
@@ -151,9 +133,6 @@ class VehicleResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# VEHICLE PHOTO SCHEMAS
-# =========================================================
 
 class VehiclePhotoCreate(BaseModel):
     vehicle_id: UUID
@@ -170,10 +149,6 @@ class VehiclePhotoResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
-# =========================================================
-# TRIP SCHEMAS
-# =========================================================
 
 class TripCreate(BaseModel):
     customer_id: UUID
@@ -198,9 +173,6 @@ class TripResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# TRIP LOCATION SCHEMAS
-# =========================================================
 
 class TripLocationCreate(BaseModel):
     trip_id: UUID
@@ -218,9 +190,6 @@ class TripLocationResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# PARCEL SCHEMAS
-# =========================================================
 
 class ParcelCreate(BaseModel):
     trip_id: UUID
@@ -243,9 +212,6 @@ class ParcelResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# RENTAL SCHEMAS
-# =========================================================
 
 class RentalCreate(BaseModel):
     vehicle_id: UUID
@@ -269,9 +235,6 @@ class RentalResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# RENTAL INSPECTION SCHEMAS
-# =========================================================
 
 class RentalInspectionCreate(BaseModel):
     rental_id: UUID
@@ -289,9 +252,6 @@ class RentalInspectionResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# PAYMENT SCHEMAS
-# =========================================================
 
 class PaymentCreate(BaseModel):
     user_id: UUID
@@ -312,9 +272,6 @@ class PaymentResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# WALLET SCHEMAS
-# =========================================================
 
 class WalletResponse(BaseModel):
     id: UUID
@@ -326,9 +283,7 @@ class WalletResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# WALLET TRANSACTION SCHEMAS
-# =========================================================
+
 
 class WalletTransactionCreate(BaseModel):
     wallet_id: UUID
@@ -349,9 +304,7 @@ class WalletTransactionResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# DRIVER PAYOUT SCHEMAS
-# =========================================================
+
 
 class DriverPayoutCreate(BaseModel):
     driver_id: UUID
@@ -370,9 +323,6 @@ class DriverPayoutResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# RATING SCHEMAS
-# =========================================================
 
 class RatingCreate(BaseModel):
     trip_id: Optional[UUID]
@@ -392,9 +342,6 @@ class RatingResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# DISPUTE SCHEMAS
-# =========================================================
 
 class DisputeCreate(BaseModel):
     user_id: UUID
@@ -415,9 +362,6 @@ class DisputeResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# NOTIFICATION SCHEMAS
-# =========================================================
 
 class NotificationCreate(BaseModel):
     user_id: UUID
@@ -436,9 +380,6 @@ class NotificationResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# PROMO CODE SCHEMAS
-# =========================================================
 
 class PromoCodeCreate(BaseModel):
     code: str
@@ -459,9 +400,7 @@ class PromoCodeResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# SURGE ZONE SCHEMAS
-# =========================================================
+
 
 class SurgeZoneCreate(BaseModel):
     zone_name: str
@@ -481,9 +420,6 @@ class SurgeZoneResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# AUDIT LOG SCHEMAS
-# =========================================================
 
 class AuditLogResponse(BaseModel):
     id: UUID

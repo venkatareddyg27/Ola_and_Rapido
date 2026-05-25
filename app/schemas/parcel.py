@@ -12,8 +12,7 @@ from app.core.enums import (
     ProofType,
     DeliveryAttemptStatus,
     PaymentStatus,
-    FeedbackType,
-)
+    FeedbackType)
 
 
 class ORMBase(BaseModel):
@@ -149,6 +148,8 @@ class ParcelStatusHistoryResponse(ParcelStatusHistoryBase, ORMBase):
     id: int
     parcel_id: int
     changed_at: datetime
+    
+    
 class ParcelProofBase(BaseModel):
     proof_type: ProofType
     proof_url: str | None = None

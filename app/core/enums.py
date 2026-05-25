@@ -73,7 +73,6 @@ class DriverStatus(str, enum.Enum):
     BREAK = "break"
     BLOCKED = "BLOCKED"
 
-
 class DriverOnTripStatus(str, enum.Enum):
 
     AVAILABLE = "available"
