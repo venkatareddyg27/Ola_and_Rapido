@@ -2,15 +2,9 @@ import uuid
 from datetime import datetime, date
 from decimal import Decimal
 from typing import Optional, List
-
 from pydantic import BaseModel, ConfigDict
-
 from app.core.enums import InspectionType, DisputeCategory
 
-
-# =========================================================
-# RENTAL SCHEMAS
-# =========================================================
 
 class RentalBase(BaseModel):
     vehicle_id: uuid.UUID
@@ -41,9 +35,6 @@ class RentalResponse(RentalBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# =========================================================
-# RENTAL INSPECTION SCHEMAS
-# =========================================================
 
 class RentalInspectionBase(BaseModel):
     rental_id: Optional[uuid.UUID] = None
@@ -82,11 +73,6 @@ class RentalInspectionResponse(RentalInspectionBase):
     id: uuid.UUID
 
     model_config = ConfigDict(from_attributes=True)
-
-
-# =========================================================
-# RENTAL DISPUTE SCHEMA
-# =========================================================
 
 class RentalDisputeRequest(BaseModel):
     user_id: uuid.UUID

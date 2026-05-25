@@ -16,7 +16,7 @@ from app.core.enums import (OTPPurpose,UserRole)
 
 from app.services.otp import (hash_otp,verify_otp_hash)
 
-from app.services.jwt import (create_access_token,create_refresh_token,verify_token)
+from app.core.security import (create_access_token)
 
 
 

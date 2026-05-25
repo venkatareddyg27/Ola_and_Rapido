@@ -1,79 +1,220 @@
-from app.core.enums import VehicleCategory
+from decimal import Decimal
 
-from app.utils.fare_config import (VEHICLE_PRICING)
+from app.utils.fare_config import (
 
+    BASE_FARES,
+
+    PER_KM_RATE,
+
+    PER_MINUTE_RATE,
+
+    BOOKING_FEE,
+
+    GST_PERCENTAGE,
+
+    MAX_SURGE_MULTIPLIER,
+
+    SURGE_THRESHOLDS)
 
 class FareCalculatorService:
 
+    @staticmethod
+    def calculate_surge_multiplier(
 
-    @classmethod
+        active_requests: int,
+
+        active_drivers: int) -> Decimal:
+
+        if active_drivers <= 0:
+
+            return MAX_SURGE_MULTIPLIER
+
+
+        demand_ratio = (
+
+            active_requests /
+
+            active_drivers)
+
+        if demand_ratio <= 1:
+
+            return SURGE_THRESHOLDS[1]
+
+        elif demand_ratio <= 2:
+
+            return SURGE_THRESHOLDS[2]
+
+        elif demand_ratio <= 3:
+
+            return SURGE_THRESHOLDS[3]
+
+        elif demand_ratio <= 5:
+
+            return SURGE_THRESHOLDS[5]
+
+        return MAX_SURGE_MULTIPLIER
+
+    @staticmethod
+    def calculate_tax(
+
+        amount: Decimal
+
+    ) -> Decimal:
+
+        tax = (
+
+            amount *
+
+            GST_PERCENTAGE
+
+        ) / Decimal("100")
+
+        return tax.quantize(
+            Decimal("0.01")
+        )
+
+    @staticmethod
     def calculate_fare(
-        cls,
-        vehicle_category: VehicleCategory,
+
+        vehicle_category: str,
+
         distance_km: float,
-        surge_multiplier: float = 1.0,
-        waiting_charge: float = 0,
-        toll_charge: float = 0) -> dict:
 
+        duration_minutes: int,
 
-        if vehicle_category not in VEHICLE_PRICING:
+        active_requests: int = 10,
 
-            raise ValueError(
-                "Invalid vehicle category")
+        active_drivers: int = 10):
 
+        vehicle_category = (vehicle_category.lower())
 
-        pricing = VEHICLE_PRICING[
-            vehicle_category]
+        base_fare = (
 
-        base_fare = pricing["base_fare"]
+            BASE_FARES.get(
 
-        per_km_rate = pricing["per_km_rate"]
+                vehicle_category,
 
-        minimum_fare = pricing[
-            "minimum_fare"]
+                Decimal("50")
+            )
+        )
+
+        distance_rate = (
+
+            PER_KM_RATE.get(
+
+                vehicle_category,
+
+                Decimal("10")
+            )
+        )
 
         distance_fare = (
-            distance_km *
-            per_km_rate)
+
+            Decimal(
+                str(distance_km)
+            )
+
+            * distance_rate
+        )
+
+        time_rate = (
+
+            PER_MINUTE_RATE.get(
+
+                vehicle_category,
+
+                Decimal("2")
+            )
+        )
+
+        time_fare = (
+
+            Decimal(
+                str(duration_minutes)
+            )
+
+            * time_rate
+        )
 
         subtotal = (
+
             base_fare +
+
             distance_fare +
-            waiting_charge +
-            toll_charge)
 
+            time_fare +
 
-        total_fare = (
+            BOOKING_FEE
+        )
+        surge_multiplier = (
+
+            FareCalculatorService
+            .calculate_surge_multiplier(
+
+                active_requests=active_requests,
+
+                active_drivers=active_drivers
+            )
+        )
+
+        surge_amount = (
+
             subtotal *
-            surge_multiplier)
 
-        if total_fare < minimum_fare:
+            (
+                surge_multiplier -
 
-            total_fare = minimum_fare
+                Decimal("1.0")
+            )
+        )
+
+        surged_total = (
+
+            subtotal +
+
+            surge_amount
+        )
+
+        tax_amount = (
+
+            FareCalculatorService
+            .calculate_tax(
+
+                surged_total
+            )
+        )
+
+        final_fare = (
+
+            surged_total +
+
+            tax_amount
+        )
+
+        final_fare = (
+            final_fare.quantize(
+                Decimal("0.01")
+            )
+        )
 
         return {
 
-            "vehicle_category":
-            vehicle_category.value,
+            "vehicle_category":vehicle_category,
 
-            "distance_km":
-            round(distance_km, 2),
+            "base_fare":float(base_fare),
 
-            "base_fare":
-            round(base_fare, 2),
+            "distance_fare":float(distance_fare),
 
-            "distance_fare":
-            round(distance_fare, 2),
+            "time_fare":float(time_fare),
 
-            "waiting_charge":
-            round(waiting_charge, 2),
+            "booking_fee":float(BOOKING_FEE),
 
-            "toll_charge":
-            round(toll_charge, 2),
+            "subtotal":float(subtotal),
 
-            "surge_multiplier":
-            surge_multiplier,
+            "surge_multiplier":float(surge_multiplier),
 
-            "total_fare":
-            round(total_fare, 2)
-        }
+            "surge_amount":float(surge_amount),
+
+            "tax_amount":float(tax_amount),
+
+            "total_fare":float(final_fare)}

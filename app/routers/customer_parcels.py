@@ -24,11 +24,6 @@ from app.schemas.trips import ParcelCreate, ParcelResponse
 
 from app.services.fare import FareCalculatorService
 from app.services.matching import DriverMatchingService
-<<<<<<< HEAD
-=======
-<<<<<<<<< Temporary merge branch 1
-=========
->>>>>>> de25bdea3b6f8b6c0e6bef6cca330e201d7ccdc4
 from app.services.distance_service import DistanceService
 
 from app.core.websocket_manager import websocket_manager
