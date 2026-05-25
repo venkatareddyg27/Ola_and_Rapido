@@ -85,17 +85,17 @@ class DriverOnTripStatus(str, enum.Enum):
 
 class VehicleCategory(str, enum.Enum):
 
-    HATCHBACK = "hatchback"
+    HATCHBACK = "HATCHBACK"
 
-    SEDAN = "sedan"
+    SEDAN = "SEDAN"
 
-    SUV = "suv"
+    SUV = "SUV"
 
-    LUXURY = "luxury"
+    LUXURY = "LUXURY"
 
-    BIKE = "bike"
+    BIKE = "BIKE"
 
-    AUTO = "auto"
+    AUTO = "AUTO"
 
 
 class VehicleStatus(str, enum.Enum):
@@ -126,36 +126,38 @@ class VehiclePhotoAngle(str, enum.Enum):
 
 class ServiceType(str, enum.Enum):
 
-    BIKE = "bike"
+    BIKE = "BIKE"
 
-    AUTO = "auto"
+    AUTO = "AUTO"
 
-    MINI = "mini"
+    MINI = "MINI"
 
-    SEDAN = "sedan"
+    SEDAN = "SEDAN"
 
-    SUV = "suv"
+    SUV = "SUV"
 
-    PARCEL = "parcel"
+    PARCEL = "PARCEL"
 
-    RENTAL = "rental"
+    RENTAL = "RENTAL"
 
 
 class TripStatus(str, enum.Enum):
 
-    SEARCHING_DRIVER = "searching_driver"
+    PENDING_CONFIRMATION = "PENDING"
 
-    DRIVER_ASSIGNED = "driver_assigned"
+    SEARCHING_DRIVER = "SEARCHING_DRIVER"
 
-    DRIVER_ARRIVED = "driver_arrived"
+    DRIVER_ASSIGNED = "DRIVER_ASSIGNED"
 
-    IN_PROGRESS = "in_progress"
+    DRIVER_ARRIVED = "DRIVER_ARRIVED"
 
-    COMPLETED = "completed"
+    IN_PROGRESS = "IN_PROGRESS"
 
-    CANCELLED = "cancelled"
+    COMPLETED = "COMPLETED"
 
-    NO_DRIVER_FOUND = "no_driver_found"
+    CANCELLED = "CANCELLED"
+
+    NO_DRIVER_FOUND = "NO_DRIVER_FOUND"
 
 
 class PackageType(str, enum.Enum):
@@ -334,87 +336,75 @@ class OTPPurposeEnum(str, enum.Enum):
 
 class ParcelStatus(str, enum.Enum):
 
-    CREATED = "created"
-
-    REQUESTED = "requested"
-
-    DRIVER_ASSIGNED = (
-        "driver_assigned"
-    )
-
-    ACCEPTED = "accepted"
-
-    PICKUP_STARTED = (
-        "pickup_started"
-    )
-
-    PICKED_UP = "picked_up"
-
-    IN_TRANSIT = "in_transit"
-
-    DELIVERED = "delivered"
-
-    CANCELLED = "cancelled"
-
-    FAILED = "failed"
-
+    PENDING_CONFIRMATION = "PENDING_CONFIRMATION"
+    PENDING = "PENDING"
+    CREATED = "CREATED"
+    REQUESTED = "REQUESTED"
+    DRIVER_ASSIGNED = "DRIVER_ASSIGNED"
+    ACCEPTED = "ACCEPTED"
+    PICKUP_STARTED = "PICKUP_STARTED"
+    PICKED_UP = "PICKED_UP"
+    IN_TRANSIT = "IN_TRANSIT"
+    DELIVERED = "DELIVERED"
+    CANCELLED = "CANCELLED"
+    FAILED = "FAILED"
 
 class ParcelType(str, enum.Enum):
 
-    PACKAGE = "package"
+    PACKAGE = "PACKAGE"
 
-    DOCUMENT = "document"
+    DOCUMENT = "DOCUMENT"
 
-    SMALL = "small"
+    SMALL = "SMALL"
 
-    LARGE = "large"
+    LARGE = "LARGE"
 
-    FOOD = "food"
+    FOOD = "FOOD"
 
 
 class ParcelPriority(str, enum.Enum):
 
-    LOW = "low"
+    LOW = "LOW"
 
-    NORMAL = "normal"
+    NORMAL = "NORMAL"
 
-    HIGH = "high"
+    HIGH = "HIGH"
 
-    URGENT = "urgent"
+    URGENT = "URGENT"
 
 
 class ProofType(str, enum.Enum):
 
-    PICKUP_PHOTO = "pickup_photo"
+    PICKUP_PHOTO = "PICKUP_PHOTO"
 
     DELIVERY_PHOTO = (
-        "delivery_photo"
+        "DELIVERY_PHOTO"
     )
 
-    OTP = "otp"
+    OTP = "OTP"
 
-    SIGNATURE = "signature"
+    SIGNATURE = "SIGNATURE"
 
 
 class DeliveryAttemptStatus(str,enum.Enum):
 
-    SUCCESS = "success"
+    SUCCESS = "SUCCESS"
 
-    FAILED = "failed"
+    FAILED = "FAILED"
 
-    RETRY = "retry"
+    RETRY = "RETRY"
 
 
 class FeedbackType(str, enum.Enum):
 
-    DRIVER = "driver"
+    DRIVER = "DRIVER"
 
-    CUSTOMER = "customer"
+    CUSTOMER = "CUSTOMER"
 
-    DELIVERY = "delivery"
+    DELIVERY = "DELIVERY"
 
-    PAYMENT = "payment"
+    PAYMENT = "PAYMENT"
 
-    APP = "app"
+    APP = "APP"
 
-    OTHER = "other"
+    OTHER = "OTHER"

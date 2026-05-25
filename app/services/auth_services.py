@@ -173,6 +173,8 @@ async def verify_otp_service(
 
             mobile_number=data.phone,
 
+            full_name="",
+
             role=UserRole.CUSTOMER,
 
             is_active=True,

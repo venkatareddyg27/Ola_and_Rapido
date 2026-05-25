@@ -1,4 +1,6 @@
-from app.core.enums import VehicleCategory
+from decimal import Decimal
+
+from app.core.enums import ParcelPriority, VehicleCategory
 
 from app.utils.fare_config import (
     VEHICLE_PRICING
@@ -113,4 +115,36 @@ class FareCalculatorService:
 
             "total_fare":
             round(total_fare, 2)
+        }
+
+    # =====================================================
+    # CALCULATE DELIVERY CHARGE
+    # =====================================================
+
+    @classmethod
+    def calculate_delivery_charge(
+        cls,
+        distance_km: float,
+        weight_kg: Decimal,
+        priority: ParcelPriority,
+    ) -> dict:
+
+        base_fare = Decimal("35.00")
+        per_km_charge = Decimal("10.00")
+        weight_charge_per_kg = Decimal("5.00")
+
+        distance_price = Decimal(str(round(distance_km, 2))) * per_km_charge
+        weight_price = weight_kg * weight_charge_per_kg
+
+        priority_fee = Decimal("0.00")
+
+        if priority.value == "high":
+            priority_fee = Decimal("30.00")
+        elif priority.value == "urgent":
+            priority_fee = Decimal("60.00")
+
+        total_charge = base_fare + distance_price + weight_price + priority_fee
+
+        return {
+            "total_charge": total_charge
         }
