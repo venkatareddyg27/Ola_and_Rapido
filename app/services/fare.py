@@ -1,15 +1,10 @@
 from app.core.enums import VehicleCategory
 
-from app.utils.fare_config import (
-    VEHICLE_PRICING
-)
+from app.utils.fare_config import (VEHICLE_PRICING)
 
 
 class FareCalculatorService:
 
-    # =====================================================
-    # CALCULATE FARE
-    # =====================================================
 
     @classmethod
     def calculate_fare(
@@ -18,75 +13,43 @@ class FareCalculatorService:
         distance_km: float,
         surge_multiplier: float = 1.0,
         waiting_charge: float = 0,
-        toll_charge: float = 0
-    ) -> dict:
+        toll_charge: float = 0) -> dict:
 
-        # =================================================
-        # VALIDATE CATEGORY
-        # =================================================
 
         if vehicle_category not in VEHICLE_PRICING:
 
             raise ValueError(
-                "Invalid vehicle category"
-            )
+                "Invalid vehicle category")
 
-        # =================================================
-        # GET PRICING
-        # =================================================
 
         pricing = VEHICLE_PRICING[
-            vehicle_category
-        ]
+            vehicle_category]
 
         base_fare = pricing["base_fare"]
 
         per_km_rate = pricing["per_km_rate"]
 
         minimum_fare = pricing[
-            "minimum_fare"
-        ]
-
-        # =================================================
-        # DISTANCE FARE
-        # =================================================
+            "minimum_fare"]
 
         distance_fare = (
             distance_km *
-            per_km_rate
-        )
-
-        # =================================================
-        # TOTAL BEFORE SURGE
-        # =================================================
+            per_km_rate)
 
         subtotal = (
             base_fare +
             distance_fare +
             waiting_charge +
-            toll_charge
-        )
+            toll_charge)
 
-        # =================================================
-        # APPLY SURGE
-        # =================================================
 
         total_fare = (
             subtotal *
-            surge_multiplier
-        )
-
-        # =================================================
-        # APPLY MINIMUM FARE
-        # =================================================
+            surge_multiplier)
 
         if total_fare < minimum_fare:
 
             total_fare = minimum_fare
-
-        # =================================================
-        # RETURN RESPONSE
-        # =================================================
 
         return {
 

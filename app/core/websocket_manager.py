@@ -11,13 +11,13 @@ class WebSocketManager:
         await websocket.accept()
         self.active_connections[user_id] = websocket
         print(
-            f"✅ WebSocket Connected: {user_id}")
+            f" WebSocket Connected: {user_id}")
 
     async def disconnect(self,user_id: str):
         if user_id in (self.active_connections):
             del self.active_connections[user_id]
             print(
-                f"❌ WebSocket Disconnected: "
+                f" WebSocket Disconnected: "
                 f"{user_id}")
 
     async def send_to_user(self,user_id: str,message: dict):
