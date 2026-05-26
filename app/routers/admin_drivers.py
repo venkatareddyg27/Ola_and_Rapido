@@ -1,19 +1,56 @@
 from uuid import UUID
-from fastapi import ( APIRouter, Depends, HTTPException, status )
 
-from sqlalchemy import ( select )
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status
+)
 
-from sqlalchemy.ext.asyncio import ( AsyncSession )
+from sqlalchemy import (
+    select
+)
 
-from app.core.database import ( get_db )
+from sqlalchemy.orm import (
+    selectinload
+)
 
-from app.core.security import ( get_current_user )
+from sqlalchemy.ext.asyncio import (
+    AsyncSession
+)
 
-from app.core.enums import ( DriverStatus, UserRole )
+from app.core.database import (
+    get_db
+)
 
-from app.models.user_models import ( User, DriverProfile, KYCDocument )
+from app.core.security import (
+    get_current_user
+)
 
-router = APIRouter( prefix="/admin/drivers", tags=["Admin Drivers"] )
+from app.core.enums import (
+    DriverStatus,
+    UserRole
+)
+
+from app.models.user_models import (
+    User,
+    DriverProfile,
+    KYCDocument
+)
+
+
+router = APIRouter(
+
+    prefix="/admin/drivers",
+
+    tags=["Admin Drivers"]
+
+)
+
+
+# =========================================================
+# ADMIN VALIDATION
+# =========================================================
 
 def require_admin(
     current_user: User
@@ -28,7 +65,9 @@ def require_admin(
 
             detail=
             "Admin access required"
+
         )
+
 
 # =========================================================
 # GET ALL DRIVERS
@@ -42,6 +81,7 @@ async def get_all_drivers(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
     require_admin(current_user)
@@ -49,11 +89,67 @@ async def get_all_drivers(
     result = await db.execute(
 
         select(DriverProfile)
+
+        .options(
+
+            selectinload(
+                DriverProfile.user
+            )
+
+        )
+
     )
 
     drivers = result.scalars().all()
 
-    return drivers
+    response = []
+
+    for driver in drivers:
+
+        response.append({
+
+            "driver_id": driver.id,
+
+            "driver_name": (
+
+                driver.user.full_name
+
+                if driver.user
+
+                else None
+
+            ),
+
+            "email": (
+
+                driver.user.email
+
+                if driver.user
+
+                else None
+
+            ),
+
+            "phone_number": (
+
+                driver.user.mobile_number
+
+                if driver.user
+
+                else None
+
+            ),
+
+            "status": driver.status,
+
+            "is_verified": (
+                driver.is_verified
+            )
+
+        })
+
+    return response
+
 
 # =========================================================
 # GET SINGLE DRIVER
@@ -69,18 +165,30 @@ async def get_driver(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
     require_admin(current_user)
 
     result = await db.execute(
 
-        select(DriverProfile).where(
+        select(DriverProfile)
+
+        .options(
+
+            selectinload(
+                DriverProfile.user
+            )
+
+        )
+
+        .where(
             DriverProfile.id == driver_id
         )
+
     )
 
-    driver = result.scalar_one_or_none()
+    driver = result.scalars().first()
 
     if not driver:
 
@@ -89,26 +197,247 @@ async def get_driver(
             status_code=404,
 
             detail="Driver not found"
+
         )
 
+    # =====================================================
     # GET KYC DOCUMENTS
+    # =====================================================
 
     kyc_result = await db.execute(
 
-        select(KYCDocument).where(
+        select(KYCDocument)
+
+        .where(
             KYCDocument.user_id ==
             driver.user_id
         )
+
     )
 
-    kyc = kyc_result.scalar_one_or_none()
+    kyc = kyc_result.scalars().first()
 
     return {
 
-        "driver": driver,
+        "driver_id": driver.id,
+
+        "driver_name": (
+
+            driver.user.full_name
+
+            if driver.user
+
+            else None
+
+        ),
+
+        "email": (
+
+            driver.user.email
+
+            if driver.user
+
+            else None
+
+        ),
+
+        "phone_number": (
+
+            driver.user.mobile_number
+
+            if driver.user
+
+            else None
+
+        ),
+
+        "status": driver.status,
+
+        "is_verified": (
+            driver.is_verified
+        ),
 
         "kyc_documents": kyc
+
     }
+
+
+# =========================================================
+# GET DRIVER DOCUMENTS
+# =========================================================
+
+@router.get("/{driver_id}/documents")
+async def get_driver_documents(
+
+    driver_id: UUID,
+
+    db: AsyncSession = Depends(get_db),
+
+    current_user: User = Depends(
+        get_current_user
+    )
+
+):
+
+    require_admin(current_user)
+
+    # =====================================================
+    # GET DRIVER
+    # =====================================================
+
+    result = await db.execute(
+
+        select(DriverProfile)
+
+        .options(
+
+            selectinload(
+                DriverProfile.user
+            )
+
+        )
+
+        .where(
+            DriverProfile.id == driver_id
+        )
+
+    )
+
+    driver = result.scalars().first()
+
+    # =====================================================
+    # DRIVER NOT FOUND
+    # =====================================================
+
+    if not driver:
+
+        raise HTTPException(
+
+            status_code=404,
+
+            detail="Driver not found"
+
+        )
+
+    # =====================================================
+    # GET KYC DOCUMENTS
+    # =====================================================
+
+    kyc_result = await db.execute(
+
+        select(KYCDocument)
+
+        .where(
+            KYCDocument.user_id
+            == driver.user_id
+        )
+
+    )
+
+    kyc = kyc_result.scalars().first()
+
+    # =====================================================
+    # DOCUMENTS NOT FOUND
+    # =====================================================
+
+    if not kyc:
+
+        raise HTTPException(
+
+            status_code=404,
+
+            detail="KYC documents not found"
+
+        )
+
+    # =====================================================
+    # RESPONSE
+    # =====================================================
+
+    return {
+
+        "driver_id": driver.id,
+
+        "driver_name": (
+
+            driver.user.full_name
+
+            if driver.user
+
+            else None
+
+        ),
+
+        "email": (
+
+            driver.user.email
+
+            if driver.user
+
+            else None
+
+        ),
+
+        "phone_number": (
+
+            driver.user.mobile_number
+
+            if driver.user
+
+            else None
+
+        ),
+
+        "is_verified": (
+            driver.is_verified
+        ),
+
+        "driver_status": (
+            driver.status
+        ),
+
+        # =================================================
+        # DOCUMENTS
+        # =================================================
+
+        "aadhaar_number": (
+            kyc.aadhaar_number
+        ),
+
+        "pan_number": (
+            kyc.pan_number
+        ),
+
+        "driving_license_number": (
+            kyc.license_number
+        ),
+
+        "aadhaar_front_image": (
+            kyc.aadhaar_front_url
+        ),
+
+        "aadhaar_back_image": (
+            kyc.aadhaar_back_url
+        ),
+
+        "pan_card_image": (
+            kyc.pan_front_url
+        ),
+
+        "driving_license_image": (
+            kyc.license_front_url
+        ),
+
+        "verification_status": (
+            kyc.verification_status
+        ),
+
+        "submitted_at": (
+            kyc.created_at
+        )
+
+    }
+
 
 # =========================================================
 # VERIFY DRIVER
@@ -124,18 +453,22 @@ async def verify_driver(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
     require_admin(current_user)
 
     result = await db.execute(
 
-        select(DriverProfile).where(
+        select(DriverProfile)
+
+        .where(
             DriverProfile.id == driver_id
         )
+
     )
 
-    driver = result.scalar_one_or_none()
+    driver = result.scalars().first()
 
     if not driver:
 
@@ -144,6 +477,7 @@ async def verify_driver(
             status_code=404,
 
             detail="Driver not found"
+
         )
 
     driver.is_verified = True
@@ -158,7 +492,9 @@ async def verify_driver(
 
         "message":
         "Driver verified successfully"
+
     }
+
 
 # =========================================================
 # VERIFY DRIVER DOCUMENTS
@@ -174,20 +510,26 @@ async def verify_driver_documents(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
     require_admin(current_user)
 
+    # =====================================================
     # GET DRIVER
+    # =====================================================
 
     result = await db.execute(
 
-        select(DriverProfile).where(
+        select(DriverProfile)
+
+        .where(
             DriverProfile.id == driver_id
         )
+
     )
 
-    driver = result.scalar_one_or_none()
+    driver = result.scalars().first()
 
     if not driver:
 
@@ -196,19 +538,25 @@ async def verify_driver_documents(
             status_code=404,
 
             detail="Driver not found"
+
         )
 
+    # =====================================================
     # GET KYC DOCUMENTS
+    # =====================================================
 
     kyc_result = await db.execute(
 
-        select(KYCDocument).where(
+        select(KYCDocument)
+
+        .where(
             KYCDocument.user_id ==
             driver.user_id
         )
+
     )
 
-    kyc = kyc_result.scalar_one_or_none()
+    kyc = kyc_result.scalars().first()
 
     if not kyc:
 
@@ -217,15 +565,16 @@ async def verify_driver_documents(
             status_code=404,
 
             detail="KYC documents not found"
+
         )
 
+    # =====================================================
     # VERIFY DOCUMENTS
+    # =====================================================
 
     kyc.verification_status = (
         "verified"
     )
-
-    # VERIFY DRIVER
 
     driver.is_verified = True
 
@@ -239,7 +588,9 @@ async def verify_driver_documents(
 
         "message":
         "Driver documents verified successfully"
+
     }
+
 
 # =========================================================
 # REJECT DRIVER DOCUMENTS
@@ -257,20 +608,22 @@ async def reject_driver_documents(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
     require_admin(current_user)
 
-    # GET DRIVER
-
     result = await db.execute(
 
-        select(DriverProfile).where(
+        select(DriverProfile)
+
+        .where(
             DriverProfile.id == driver_id
         )
+
     )
 
-    driver = result.scalar_one_or_none()
+    driver = result.scalars().first()
 
     if not driver:
 
@@ -279,19 +632,21 @@ async def reject_driver_documents(
             status_code=404,
 
             detail="Driver not found"
-        )
 
-    # GET KYC DOCUMENTS
+        )
 
     kyc_result = await db.execute(
 
-        select(KYCDocument).where(
+        select(KYCDocument)
+
+        .where(
             KYCDocument.user_id ==
             driver.user_id
         )
+
     )
 
-    kyc = kyc_result.scalar_one_or_none()
+    kyc = kyc_result.scalars().first()
 
     if not kyc:
 
@@ -300,9 +655,8 @@ async def reject_driver_documents(
             status_code=404,
 
             detail="KYC documents not found"
-        )
 
-    # REJECT DOCUMENTS
+        )
 
     kyc.verification_status = (
         "rejected"
@@ -323,7 +677,9 @@ async def reject_driver_documents(
 
         "reason":
         reason
+
     }
+
 
 # =========================================================
 # REJECT DRIVER
@@ -341,18 +697,22 @@ async def reject_driver(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
     require_admin(current_user)
 
     result = await db.execute(
 
-        select(DriverProfile).where(
+        select(DriverProfile)
+
+        .where(
             DriverProfile.id == driver_id
         )
+
     )
 
-    driver = result.scalar_one_or_none()
+    driver = result.scalars().first()
 
     if not driver:
 
@@ -361,6 +721,7 @@ async def reject_driver(
             status_code=404,
 
             detail="Driver not found"
+
         )
 
     driver.is_verified = False
@@ -378,7 +739,9 @@ async def reject_driver(
 
         "reason":
         reason
+
     }
+
 
 # =========================================================
 # BLOCK DRIVER
@@ -394,18 +757,22 @@ async def block_driver(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
     require_admin(current_user)
 
     result = await db.execute(
 
-        select(DriverProfile).where(
+        select(DriverProfile)
+
+        .where(
             DriverProfile.id == driver_id
         )
+
     )
 
-    driver = result.scalar_one_or_none()
+    driver = result.scalars().first()
 
     if not driver:
 
@@ -414,6 +781,7 @@ async def block_driver(
             status_code=404,
 
             detail="Driver not found"
+
         )
 
     driver.status = (
@@ -426,7 +794,9 @@ async def block_driver(
 
         "message":
         "Driver blocked successfully"
+
     }
+
 
 # =========================================================
 # UNBLOCK DRIVER
@@ -442,18 +812,22 @@ async def unblock_driver(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
     require_admin(current_user)
 
     result = await db.execute(
 
-        select(DriverProfile).where(
+        select(DriverProfile)
+
+        .where(
             DriverProfile.id == driver_id
         )
+
     )
 
-    driver = result.scalar_one_or_none()
+    driver = result.scalars().first()
 
     if not driver:
 
@@ -462,6 +836,7 @@ async def unblock_driver(
             status_code=404,
 
             detail="Driver not found"
+
         )
 
     driver.status = (
@@ -474,7 +849,9 @@ async def unblock_driver(
 
         "message":
         "Driver unblocked successfully"
+
     }
+
 
 # =========================================================
 # DELETE DRIVER
@@ -490,18 +867,22 @@ async def delete_driver(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
     require_admin(current_user)
 
     result = await db.execute(
 
-        select(DriverProfile).where(
+        select(DriverProfile)
+
+        .where(
             DriverProfile.id == driver_id
         )
+
     )
 
-    driver = result.scalar_one_or_none()
+    driver = result.scalars().first()
 
     if not driver:
 
@@ -510,6 +891,7 @@ async def delete_driver(
             status_code=404,
 
             detail="Driver not found"
+
         )
 
     await db.delete(driver)
@@ -520,4 +902,5 @@ async def delete_driver(
 
         "message":
         "Driver deleted successfully"
+
     }

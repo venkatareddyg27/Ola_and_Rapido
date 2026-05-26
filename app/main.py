@@ -17,6 +17,8 @@ from app.routers.DriverCreation import (router as drivercreation_router)
 from app.routers.Driver_rides import (router as drivers_router)
 from app.routers.payments import (router as payments_router)
 from app.routers.admin_drivers import (router as admin_drivers_router)
+from app.routers.trip_invoice_router import (router as trip_invoice_router)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -46,6 +48,7 @@ app.include_router(auth_router)
 app.include_router(profile_router)
 app.include_router(admin_router)
 app.include_router(trips_router)
+app.include_router(trip_invoice_router)
 app.include_router(drivercreation_router)
 app.include_router(drivers_router)
 app.include_router(admin_drivers_router)

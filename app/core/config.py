@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_REGION: str = ""
     AWS_BUCKET_NAME: str = ""
-    SUPERADMIN_MOBILE: str = "+918639890450"
+    SUPERADMIN_MOBILE: str = "+919999999999"
     SUPERADMIN_PASSWORD: str = "Admin@123"
     SUPERADMIN_ROLE: str = "SUPER_ADMIN"
 

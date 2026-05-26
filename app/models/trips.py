@@ -87,6 +87,8 @@ class Trip(Base):
     ratings = relationship( "Rating", back_populates="trip", cascade="all, delete-orphan" )
 
     disputes = relationship( "Dispute", back_populates="trip", cascade="all, delete-orphan" )
+    
+    invoice = relationship("TripInvoice",back_populates="trip",uselist=False)
 
 class TripLocation(Base):
 

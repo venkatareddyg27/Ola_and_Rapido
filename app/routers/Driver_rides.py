@@ -280,7 +280,7 @@ async def get_nearby_trips(
         select(Trip).where(
 
             Trip.status ==
-            TripStatus.SEARCHING,
+            TripStatus.SEARCHING_DRIVER,
 
             Trip.driver_id == None
         )
@@ -299,9 +299,9 @@ async def get_nearby_trips(
 
                 float(driver_location.longitude),
 
-                float(trip.pickup_latitude),
+                float(trip.pickup_lat),
 
-                float(trip.pickup_longitude)
+                float(trip.pickup_lng)
             )
         )
 
@@ -325,16 +325,16 @@ async def get_nearby_trips(
             str(trip.id),
 
             "pickup_latitude":
-            float(trip.pickup_latitude),
+            float(trip.pickup_lat),
 
             "pickup_longitude":
-            float(trip.pickup_longitude),
+            float(trip.pickup_lng),
 
             "drop_latitude":
-            float(trip.drop_latitude),
+            float(trip.drop_lat),
 
             "drop_longitude":
-            float(trip.drop_longitude),
+            float(trip.drop_lng),
 
             "estimated_fare":
             float(trip.estimated_fare),

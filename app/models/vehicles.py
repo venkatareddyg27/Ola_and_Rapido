@@ -48,7 +48,8 @@ class Vehicle(Base):
     documents = relationship( "VehicleDocument", back_populates="vehicle", cascade="all, delete-orphan")
 
     owner = relationship( "User", back_populates="owned_vehicles")
-
+    
+    trip_invoices = relationship("TripInvoice",back_populates="vehicle")
 class VehiclePhoto(Base):
     __tablename__ = "vehicle_photos"
 

@@ -54,10 +54,6 @@ from app.core.security import (
     get_current_user
 )
 
-from app.services.matching import (
-    DriverMatchingService
-)
-
 from app.services.fare import (
     FareCalculatorService
 )
@@ -108,10 +104,6 @@ async def estimate_trip(
     )
 ):
 
-    # =====================================================
-    # CUSTOMER CHECK
-    # =====================================================
-
     require_customer_role(
         current_user
     )
@@ -132,6 +124,16 @@ async def estimate_trip(
     )
 
     # =====================================================
+    # ESTIMATED DURATION
+    # =====================================================
+
+    estimated_duration = (
+        DistanceService.estimate_duration(
+            distance_km
+        )
+    )
+
+    # =====================================================
     # CALCULATE FARE
     # =====================================================
 
@@ -142,13 +144,12 @@ async def estimate_trip(
             payload.vehicle_category,
 
             distance_km=
-            distance_km
+            distance_km,
+
+            duration_minutes=
+            estimated_duration
         )
     )
-
-    # =====================================================
-    # RESPONSE
-    # =====================================================
 
     return {
 
@@ -157,6 +158,9 @@ async def estimate_trip(
 
         "distance_km":
         distance_km,
+
+        "estimated_duration_minutes":
+        estimated_duration,
 
         "estimated_fare":
         fare_details["total_fare"],
@@ -177,16 +181,14 @@ async def book_trip(
 
     payload: TripCreate,
 
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(
+        get_db
+    ),
 
     current_user: User = Depends(
         get_current_user
     )
 ):
-
-    # =====================================================
-    # CUSTOMER CHECK
-    # =====================================================
 
     require_customer_role(
         current_user
@@ -229,6 +231,16 @@ async def book_trip(
     )
 
     # =====================================================
+    # ESTIMATED DURATION
+    # =====================================================
+
+    estimated_duration = (
+        DistanceService.estimate_duration(
+            distance_km
+        )
+    )
+
+    # =====================================================
     # CALCULATE FARE
     # =====================================================
 
@@ -239,7 +251,10 @@ async def book_trip(
             payload.vehicle_category,
 
             distance_km=
-            distance_km
+            distance_km,
+
+            duration_minutes=
+            estimated_duration
         )
     )
 
@@ -248,7 +263,10 @@ async def book_trip(
     # =====================================================
 
     ride_otp = str(
-        random.randint(1000, 9999)
+        random.randint(
+            1000,
+            9999
+        )
     )
 
     # =====================================================
@@ -257,7 +275,8 @@ async def book_trip(
 
     trip = Trip(
 
-        customer_id=current_user.id,
+        customer_id=
+        current_user.id,
 
         pickup_address=
         payload.pickup_address,
@@ -296,74 +315,12 @@ async def book_trip(
         ride_otp,
 
         status=
-        TripStatus.SEARCHING_DRIVER
+        TripStatus.SEARCHING_DRIVER,
+
+        driver_id=None
     )
 
     db.add(trip)
-
-    await db.commit()
-
-    await db.refresh(trip)
-
-    # =====================================================
-    # MATCH DRIVER
-    # =====================================================
-
-    matching_service = (
-        DriverMatchingService(
-            db=db
-        )
-    )
-
-    accepted_driver = (
-        await matching_service.match_driver(
-
-            trip_id=trip.id,
-
-            pickup_lat=float(
-                payload.pickup_lat
-            ),
-
-            pickup_lng=float(
-                payload.pickup_lng
-            ),
-
-            vehicle_category=
-            payload.vehicle_category.value
-        )
-    )
-
-    # =====================================================
-    # NO DRIVER FOUND
-    # =====================================================
-
-    if not accepted_driver:
-
-        trip.status = (
-            TripStatus.NO_DRIVER_FOUND
-        )
-
-        await db.commit()
-
-        raise HTTPException(
-
-            status_code=404,
-
-            detail=
-            "No nearby drivers found"
-        )
-
-    # =====================================================
-    # ASSIGN DRIVER
-    # =====================================================
-
-    trip.driver_id = UUID(
-        accepted_driver
-    )
-
-    trip.status = (
-        TripStatus.DRIVER_ASSIGNED
-    )
 
     await db.commit()
 
@@ -381,16 +338,14 @@ async def book_trip(
 )
 async def get_active_trip(
 
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(
+        get_db
+    ),
 
     current_user: User = Depends(
         get_current_user
     )
 ):
-
-    # =====================================================
-    # CUSTOMER CHECK
-    # =====================================================
 
     require_customer_role(
         current_user
@@ -433,57 +388,6 @@ async def get_active_trip(
     return trip
 
 # =========================================================
-# GET TRIP DETAILS
-# =========================================================
-
-@router.get(
-    "/{trip_id}",
-    response_model=TripResponse
-)
-async def get_trip(
-
-    trip_id: UUID,
-
-    db: AsyncSession = Depends(get_db),
-
-    current_user: User = Depends(
-        get_current_user
-    )
-):
-
-    # =====================================================
-    # CUSTOMER CHECK
-    # =====================================================
-
-    require_customer_role(
-        current_user
-    )
-
-    result = await db.execute(
-
-        select(Trip).where(
-
-            Trip.id == trip_id,
-
-            Trip.customer_id ==
-            current_user.id
-        )
-    )
-
-    trip = result.scalars().first()
-
-    if not trip:
-
-        raise HTTPException(
-
-            status_code=404,
-
-            detail="Trip not found"
-        )
-
-    return trip
-
-# =========================================================
 # GET TRIP HISTORY
 # =========================================================
 
@@ -500,16 +404,14 @@ async def get_trip_history(
         le=100
     ),
 
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(
+        get_db
+    ),
 
     current_user: User = Depends(
         get_current_user
     )
 ):
-
-    # =====================================================
-    # CUSTOMER CHECK
-    # =====================================================
 
     require_customer_role(
         current_user
@@ -555,6 +457,55 @@ async def get_trip_history(
     }
 
 # =========================================================
+# GET TRIP DETAILS
+# =========================================================
+
+@router.get(
+    "/{trip_id}",
+    response_model=TripResponse
+)
+async def get_trip(
+
+    trip_id: UUID,
+
+    db: AsyncSession = Depends(
+        get_db
+    ),
+
+    current_user: User = Depends(
+        get_current_user
+    )
+):
+
+    require_customer_role(
+        current_user
+    )
+
+    result = await db.execute(
+
+        select(Trip).where(
+
+            Trip.id == trip_id,
+
+            Trip.customer_id ==
+            current_user.id
+        )
+    )
+
+    trip = result.scalars().first()
+
+    if not trip:
+
+        raise HTTPException(
+
+            status_code=404,
+
+            detail="Trip not found"
+        )
+
+    return trip
+
+# =========================================================
 # CANCEL TRIP
 # =========================================================
 
@@ -565,16 +516,14 @@ async def cancel_trip(
 
     reason: str,
 
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(
+        get_db
+    ),
 
     current_user: User = Depends(
         get_current_user
     )
 ):
-
-    # =====================================================
-    # CUSTOMER CHECK
-    # =====================================================
 
     require_customer_role(
         current_user
@@ -647,16 +596,14 @@ async def rate_trip(
 
     payload: TripRatingRequest,
 
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(
+        get_db
+    ),
 
     current_user: User = Depends(
         get_current_user
     )
 ):
-
-    # =====================================================
-    # CUSTOMER CHECK
-    # =====================================================
 
     require_customer_role(
         current_user
@@ -697,15 +644,20 @@ async def rate_trip(
 
     rating = Rating(
 
-        trip_id=trip.id,
+        trip_id=
+        trip.id,
 
-        rater_id=current_user.id,
+        rater_id=
+        current_user.id,
 
-        ratee_id=trip.driver_id,
+        ratee_id=
+        trip.driver_id,
 
-        score=payload.score,
+        score=
+        payload.score,
 
-        comment=payload.comment
+        comment=
+        payload.comment
     )
 
     db.add(rating)
@@ -717,5 +669,5 @@ async def rate_trip(
     return {
 
         "message":
-        "Driver rated successfully"
+        "Rating for Driver successfully Completed"
     }

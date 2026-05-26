@@ -417,3 +417,12 @@ class FeedbackType(str, enum.Enum):
     APP = "app"
 
     OTHER = "other"
+    
+class TripType(str, enum.Enum):
+    ride = "ride"
+    parcel = "parcel"
+    
+class InvoiceStatus(str, enum.Enum):
+    generated = "generated"
+    sent = "sent"
+    cancelled = "cancelled"

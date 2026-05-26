@@ -16,56 +16,39 @@ class User(Base):
 
     mobile_number = Column(String(20), unique=True, nullable=False, index=True)
     email = Column(String(100), unique=True)
- 
     first_name = Column(String(60))
     last_name = Column(String(60))
     full_name = Column(String(100))
- 
     profile_photo_url = Column(String(255))
- 
     role = Column(Enum(UserRole), default=UserRole.CUSTOMER)
     status = Column(Enum(UserStatus), default=UserStatus.PENDING)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column( DateTime, default=datetime.utcnow, onupdate=datetime.utcnow )
+    
+    
     driver_profile = relationship( "DriverProfile", back_populates="user", uselist=False )
-
     owned_vehicles = relationship( "Vehicle", back_populates="owner", cascade="all, delete-orphan")
-
     kyc_documents = relationship( "KYCDocument", back_populates="user", cascade="all, delete-orphan")
-
     otp_logs = relationship( "OTPLog", back_populates="user", cascade="all, delete-orphan" )
-
     customer_trips = relationship( "Trip", back_populates="customer" )
-
     payments = relationship( "Payment", back_populates="user", cascade="all, delete-orphan" )
-
     wallet = relationship( "Wallet", back_populates="user", uselist=False, cascade="all, delete-orphan" )
-
     rentals_as_renter = relationship( "Rental", foreign_keys="Rental.renter_id" ,back_populates="renter", cascade="all, delete-orphan" )
-    
     rentals_as_owner = relationship( "Rental", foreign_keys="Rental.owner_id", back_populates="owner", cascade="all, delete-orphan" )
-
-    rental_inspections = relationship( "RentalInspection", foreign_keys="RentalInspection.inspector_user_id", back_populates="inspector", cascade="all, delete-orphan" )
-    
+    rental_inspections = relationship( "RentalInspection", foreign_keys="RentalInspection.inspector_user_id", back_populates="inspector", cascade="all, delete-orphan" )   
     ratings_given = relationship( "Rating", foreign_keys="Rating.rater_id", back_populates="rater", cascade="all, delete-orphan" )
-
     ratings_received = relationship( "Rating", foreign_keys="Rating.ratee_id", back_populates="ratee", cascade="all, delete-orphan" )
-
     notifications = relationship( "Notification", back_populates="user", cascade="all, delete-orphan" )
-
     disputes = relationship( "Dispute", foreign_keys="Dispute.user_id", back_populates="user", cascade="all, delete-orphan")
-
     resolved_disputes = relationship( "Dispute", foreign_keys="Dispute.resolved_by",back_populates="resolver" )
-    
-    promo_codes = relationship( "PromoCode",back_populates="user", cascade="all, delete-orphan")
-    
+    promo_codes = relationship( "PromoCode",back_populates="user", cascade="all, delete-orphan")   
     promo_codes = relationship( "PromoCode", foreign_keys="PromoCode.created_by", back_populates="creator", cascade="all, delete-orphan" )
-
     surge_zones = relationship( "SurgeZone", foreign_keys="SurgeZone.created_by", back_populates="creator", cascade="all, delete-orphan" )
-
-    audit_logs = relationship( "AuditLog", foreign_keys="AuditLog.actor_id", back_populates="actor", cascade="all, delete-orphan" )
+    audit_logs = relationship( "AuditLog", foreign_keys="AuditLog.actor_id", back_populates="actor", cascade="all, delete-orphan" )  
+    trip_invoices = relationship("TripInvoice",back_populates="customer")
+    
     
 class DriverProfile(Base):
 
@@ -112,6 +95,10 @@ class DriverProfile(Base):
     payouts = relationship( "DriverPayout", back_populates="driver", cascade="all, delete-orphan" )
 
     locations = relationship(  "DriverLocation", back_populates="driver", cascade="all, delete-orphan")
+    
+    trip_invoices = relationship("TripInvoice",back_populates="driver")
+    
+    
 class KYCDocument(Base):
     __tablename__ = "kyc_documents"
 
@@ -151,10 +138,10 @@ class KYCDocument(Base):
     
     verification_status = Column(String(50), default="pending")
 
-    user = relationship(
-        "User",
-        back_populates="kyc_documents"
-    )
+    user = relationship("User",back_populates="kyc_documents")
+    
+    
+    
 class OTPLog(Base):
     __tablename__ = "otp_logs"
  

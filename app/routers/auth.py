@@ -4,51 +4,70 @@ from fastapi import (
     HTTPException
 )
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import (
+    AsyncSession
+)
 
-from fastapi.security import HTTPAuthorizationCredentials
+from fastapi.security import (
+    HTTPAuthorizationCredentials
+)
 
-from app.core.database import get_db
+from app.core.database import (
+    get_db
+)
 
 from app.core.security import (
+
     get_current_user,
-    security
+
+    security,
+
+    blacklist_token
 )
 
 from app.schemas.auth_schema import (
+
     VerifyOTPRequest,
+
     LoginRequest,
+
     RegisterRequest
 )
 
 from app.services.auth_services import (
+
     verify_otp_service,
+
     login_service,
+
     register_service
 )
 
-from app.models.user_models import User
-
+from app.models.user_models import (
+    User
+)
 
 # =========================================================
 # AUTH ROUTER
 # =========================================================
 
 router = APIRouter(
+
     prefix="/auth",
+
     tags=["Authentication"]
 )
-
 
 # =========================================================
 # PROFILE ROUTER
 # =========================================================
 
 profile_router = APIRouter(
+
     prefix="/profile",
+
     tags=["Update Profile"]
 )
-
 
 # =========================================================
 # LOGIN
@@ -56,24 +75,31 @@ profile_router = APIRouter(
 
 @router.post("/login")
 async def login(
+
     data: LoginRequest,
-    db: AsyncSession = Depends(get_db)
+
+    db: AsyncSession = Depends(
+        get_db
+    )
 ):
 
     try:
 
         return await login_service(
+
             data=data,
+
             db=db
         )
 
     except Exception as e:
 
         raise HTTPException(
+
             status_code=400,
+
             detail=str(e)
         )
-
 
 # =========================================================
 # VERIFY OTP
@@ -81,24 +107,31 @@ async def login(
 
 @router.post("/verify-otp")
 async def verify_otp(
+
     data: VerifyOTPRequest,
-    db: AsyncSession = Depends(get_db)
+
+    db: AsyncSession = Depends(
+        get_db
+    )
 ):
 
     try:
 
         return await verify_otp_service(
+
             data=data,
+
             db=db
         )
 
     except Exception as e:
 
         raise HTTPException(
+
             status_code=400,
+
             detail=str(e)
         )
-
 
 # =========================================================
 # LOGOUT
@@ -106,18 +139,29 @@ async def verify_otp(
 
 @router.post("/logout")
 async def logout(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+
+    credentials:
+    HTTPAuthorizationCredentials = Depends(
+        security
+    )
 ):
 
-    token = credentials.credentials
+    token = (
+        credentials.credentials
+    )
 
-    BLACKLISTED_TOKENS.add(token)
+    blacklist_token(
+        token
+    )
 
     return {
-        "success": True,
-        "message": "Logged out successfully. Please login again."
-    }
 
+        "success":
+        True,
+
+        "message":
+        "Logged out successfully. Please login again."
+    }
 
 # =========================================================
 # CURRENT USER
@@ -125,20 +169,26 @@ async def logout(
 
 @router.get("/me")
 async def get_me(
-    current_user: User = Depends(get_current_user)
+
+    current_user: User = Depends(
+        get_current_user
+    )
 ):
 
     return {
 
-        "message": "Authorized Successfully",
+        "message":
+        "Authorized Successfully",
 
-        "user_id": str(current_user.id),
+        "user_id":
+        str(current_user.id),
 
-        "mobile_number": current_user.mobile_number,
+        "mobile_number":
+        current_user.mobile_number,
 
-        "role": str(current_user.role)
+        "role":
+        str(current_user.role)
     }
-
 
 # =========================================================
 # UPDATE PROFILE
@@ -146,20 +196,28 @@ async def get_me(
 
 @profile_router.post("/update")
 async def update_profile(
+
     data: RegisterRequest,
-    db: AsyncSession = Depends(get_db)
+
+    db: AsyncSession = Depends(
+        get_db
+    )
 ):
 
     try:
 
         return await register_service(
+
             data=data,
+
             db=db
         )
 
     except Exception as e:
 
         raise HTTPException(
+
             status_code=400,
+
             detail=str(e)
         )

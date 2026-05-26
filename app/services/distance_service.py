@@ -18,15 +18,10 @@ class DistanceService:
         drop_lng: float) -> float:
 
         lat1 = radians(pickup_lat)
-
         lon1 = radians(pickup_lng)
-
         lat2 = radians(drop_lat)
-
         lon2 = radians(drop_lng)
-
         dlat = lat2 - lat1
-
         dlon = lon2 - lon1
 
         a = (
@@ -59,33 +54,19 @@ class DistanceService:
         cls,
 
         distance_km: float,
-
         average_speed_kmph: float = 35) -> int:
-
-
         if average_speed_kmph <= 0:
-
             return 0
 
-        duration_hours = (
-            distance_km /
-            average_speed_kmph)
-
-        duration_minutes = (
-            duration_hours * 60)
+        duration_hours = (distance_km /average_speed_kmph)
+        duration_minutes = (duration_hours * 60)
 
         return round(duration_minutes)
 
-
     @classmethod
     def is_serviceable_distance(
-
         cls,
-
         distance_km: float,
-
         max_distance_km: float = 100) -> bool:
 
-        return (
-            distance_km <=
-            max_distance_km)
+        return (distance_km <=max_distance_km)
