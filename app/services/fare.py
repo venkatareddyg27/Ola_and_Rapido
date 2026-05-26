@@ -1,9 +1,6 @@
 from decimal import Decimal
-<<<<<<< HEAD
 
-from app.core.enums import ParcelPriority, VehicleCategory
-=======
->>>>>>> f2ee36bfc246b6f5cc76cdb3587828f6ef82e797
+from app.core.enums import ParcelPriority
 
 from app.utils.fare_config import (
 
@@ -203,24 +200,16 @@ class FareCalculatorService:
         )
 
         return {
-
-            "vehicle_category":vehicle_category,
-
-            "base_fare":float(base_fare),
-
-            "distance_fare":float(distance_fare),
-
-            "time_fare":float(time_fare),
-
-            "booking_fee":float(BOOKING_FEE),
-
-            "subtotal":float(subtotal),
-
-            "surge_multiplier":float(surge_multiplier),
-
-<<<<<<< HEAD
-            "total_fare":
-            round(total_fare, 2)
+            "vehicle_category": vehicle_category,
+            "base_fare": float(base_fare),
+            "distance_fare": float(distance_fare),
+            "time_fare": float(time_fare),
+            "booking_fee": float(BOOKING_FEE),
+            "subtotal": float(subtotal),
+            "surge_multiplier": float(surge_multiplier),
+            "surge_amount": float(surge_amount),
+            "tax_amount": float(tax_amount),
+            "total_fare": float(final_fare),
         }
 
     # =====================================================
@@ -251,13 +240,11 @@ class FareCalculatorService:
 
         total_charge = base_fare + distance_price + weight_price + priority_fee
 
+        tax_amount = FareCalculatorService.calculate_tax(total_charge)
+        final_fare = (total_charge + tax_amount).quantize(Decimal("0.01"))
+
         return {
-            "total_charge": total_charge
+            "total_charge": float(total_charge),
+            "tax_amount": float(tax_amount),
+            "total_fare": float(final_fare),
         }
-=======
-            "surge_amount":float(surge_amount),
-
-            "tax_amount":float(tax_amount),
-
-            "total_fare":float(final_fare)}
->>>>>>> f2ee36bfc246b6f5cc76cdb3587828f6ef82e797
