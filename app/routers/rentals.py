@@ -2,10 +2,13 @@ from uuid import UUID
 from decimal import Decimal
 from datetime import datetime
 
+from django import db
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.security import get_current_user
 
+from app.models.user_models import User
 from app.core.database import get_db
 from app.models.vehicles import Vehicle
 from app.models.rentals import Rental, RentalInspection
@@ -14,7 +17,10 @@ from app.models.support import Dispute
 from app.schemas.rentals import (
     RentalCreate,
     RentalDisputeRequest,
+    RentalDriverUpdate,
     RentalInspectionCreate,
+    RentalDriverCreate,
+    RentalDriverResponse
 )
 
 from app.core.enums import (
@@ -22,8 +28,9 @@ from app.core.enums import (
     DepositStatus,
     DisputeStatus,
     DisputePriority,
+    UserRole,
 )
-
+from app.models.rentals import RentalDriver
 
 router = APIRouter(
     prefix="/rentals",
@@ -237,4 +244,69 @@ async def raise_rental_dispute(
         "success": True,
         "message": "Dispute raised successfully",
         "dispute_id": dispute.id,
+    }
+
+@router.post("/", response_model=RentalDriverResponse)
+async def create_rental_driver(
+    payload: RentalDriverCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+  
+    if current_user.role != UserRole.RENTER and payload.renter_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Only renters can book drivers for themselves"
+        )
+     
+    rental_driver = RentalDriver(
+        renter_id=current_user.id,
+        no_of_seats=payload.no_of_seats,
+        no_of_days=payload.no_of_days,
+        date_of_booking=payload.date_of_booking
+    )
+
+    db.add(rental_driver)
+    await db.commit()
+    await db.refresh(rental_driver)
+
+    return rental_driver
+  
+@router.put("/{rental_driver_id}/assign")
+async def assign_driver_to_rental(
+    rental_driver_id: UUID,
+    payload: RentalDriverUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if str(current_user.role).upper() != "RENTER":
+        raise HTTPException(
+            status_code=403,
+            detail="Only renters can assign drivers"
+        )
+
+    result = await db.execute(
+        select(RentalDriver).where(RentalDriver.id == rental_driver_id)
+    )
+    rental_driver = result.scalar_one_or_none()
+
+    if not rental_driver:
+        raise HTTPException(status_code=404, detail="Rental driver request not found")
+
+    if rental_driver.renter_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only assign drivers to your own rental requests"
+        )
+
+    rental_driver.driver_id = payload.driver_id
+
+    await db.commit()
+    await db.refresh(rental_driver)
+
+    return {
+        "success": True,
+        "message": "Driver assigned successfully",
+        "rental_driver_id": rental_driver.id,
+        "driver_id": rental_driver.driver_id,
     }

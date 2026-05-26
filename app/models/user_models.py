@@ -29,6 +29,7 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column( DateTime, default=datetime.utcnow, onupdate=datetime.utcnow )
+    fcm_token = Column(String, nullable=True)
     driver_profile = relationship( "DriverProfile", back_populates="user", uselist=False )
 
     owned_vehicles = relationship( "Vehicle", back_populates="owner", cascade="all, delete-orphan")
@@ -66,52 +67,72 @@ class User(Base):
     surge_zones = relationship( "SurgeZone", foreign_keys="SurgeZone.created_by", back_populates="creator", cascade="all, delete-orphan" )
 
     audit_logs = relationship( "AuditLog", foreign_keys="AuditLog.actor_id", back_populates="actor", cascade="all, delete-orphan" )
+    rental_driver_records = relationship(
+    "RentalDriver",
+    back_populates="renter",
+    foreign_keys="RentalDriver.renter_id"
+)
     
 class DriverProfile(Base):
-
     __tablename__ = "driver_profiles"
 
-    id = Column( UUID(as_uuid=True), primary_key=True, default=uuid.uuid4 )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    user_id = Column( UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False )
-    
-    vehicle_id = Column( UUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=True )
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        unique=True,
+        nullable=False
+    )
 
-    subscription_plan = Column( Enum(SubscriptionPlan), default=SubscriptionPlan.BASIC )
+    vehicle_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("vehicles.id"),
+        nullable=True
+    )
 
-    commission_rate = Column( Numeric(5, 2), default=10.00 )
+    subscription_plan = Column(
+        Enum(SubscriptionPlan),
+        default=SubscriptionPlan.BASIC
+    )
 
-    bank_account_number = Column( String(100), nullable=True )
+    commission_rate = Column(Numeric(5, 2), default=10.00)
 
-    ifsc_code = Column( String(50), nullable=True )
+    bank_account_number = Column(String(100), nullable=True)
+    ifsc_code = Column(String(50), nullable=True)
+    upi_id = Column(String(100), nullable=True)
+    selfie_url = Column(String(255), nullable=True)
 
-    upi_id = Column( String(100), nullable=True)
+    status = Column(Enum(DriverStatus), default=DriverStatus.OFFLINE)
+    is_verified = Column(Boolean, default=False)
 
-    selfie_url = Column( String(255), nullable=True )
+    rating = Column(Numeric(3, 2), default=5.0)
+    total_trips = Column(Integer, default=0)
 
-    status = Column( Enum(DriverStatus), default=DriverStatus.OFFLINE )
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    is_verified = Column( Boolean, default=False )
+    user = relationship("User", back_populates="driver_profile")
+    vehicle = relationship("Vehicle", back_populates="drivers")
+    trips = relationship("Trip", back_populates="driver")
 
-    rating = Column( Numeric(3, 2), default=5.0 )
+    subscriptions = relationship(
+        "DriverSubscription",
+        back_populates="driver",
+        cascade="all, delete-orphan"
+    )
 
-    total_trips = Column( Integer, default=0 )
+    payouts = relationship(
+        "DriverPayout",
+        back_populates="driver",
+        cascade="all, delete-orphan"
+    )
 
-    created_at = Column( DateTime, default=datetime.utcnow )
-
-    updated_at = Column( DateTime, default=datetime.utcnow, onupdate=datetime.utcnow )
-    
-    user = relationship( "User", back_populates="driver_profile" )
-
-    vehicle = relationship( "Vehicle", back_populates="drivers" )
-
-    trips = relationship( "Trip", back_populates="driver" )
-
-    subscriptions = relationship( "DriverSubscription", back_populates="driver", cascade="all, delete-orphan" )
-
-    payouts = relationship( "DriverPayout", back_populates="driver", cascade="all, delete-orphan" )
-
-    locations = relationship(  "DriverLocation", back_populates="driver", cascade="all, delete-orphan")
+    locations = relationship(
+        "DriverLocation",
+        back_populates="driver",
+        cascade="all, delete-orphan"
+    )
 class KYCDocument(Base):
     __tablename__ = "kyc_documents"
 

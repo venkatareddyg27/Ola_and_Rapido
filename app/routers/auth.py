@@ -28,7 +28,7 @@ from app.services.auth_services import (
 )
 
 from app.models.user_models import User
-
+BLACKLISTED_TOKENS = set()
 
 # =========================================================
 # AUTH ROUTER

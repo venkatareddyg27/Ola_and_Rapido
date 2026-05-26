@@ -1,14 +1,11 @@
 import enum
 
 class UserRole(str, enum.Enum):
-
-    CUSTOMER = "customer"
-
-    DRIVER = "driver"
-
-    OWNER = "owner"
-
-    ADMIN = "admin"
+    RENTER = "RENTER"
+    DRIVER = "DRIVER"
+    OWNER = "OWNER"
+    ADMIN = "ADMIN" 
+    CUSTOMER = "CUSTOMER"
 
 class UserStatus(str, enum.Enum):
 
@@ -73,7 +70,7 @@ class DriverStatus(str, enum.Enum):
     BREAK = "break"
     BLOCKED = "BLOCKED"
 
-    BLOCKED="blocked"
+ 
 
 
 class DriverOnTripStatus(str, enum.Enum):

@@ -50,7 +50,7 @@ class Rental(Base):
 
     vehicle = relationship( "Vehicle", back_populates="rentals" )
 
-    renter = relationship( "User", foreign_keys=[renter_id], back_populates="rentals_as_renter" )
+    renter = relationship( "User", foreign_keys=[renter_id], back_populates="rentals_as_renter")
 
     owner = relationship( "User", foreign_keys=[owner_id], back_populates="rentals_as_owner" )
 
@@ -88,3 +88,23 @@ class RentalInspection(Base):
     rental = relationship( "Rental", back_populates="inspections" )
 
     inspector = relationship( "User", foreign_keys=[inspector_user_id], back_populates="rental_inspections" )
+
+class RentalDriver(Base):
+    __tablename__ = "rental_drivers"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    renter_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    no_of_seats = Column(Integer, nullable=False)
+    date_of_booking = Column(DateTime(timezone=True), default=datetime.utcnow)
+    no_of_days = Column(Integer, nullable=False)
+
+    rating = Column(Integer, nullable=True)
+    comments = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+
+    renter = relationship(
+    "User",
+    foreign_keys=[renter_id],
+    back_populates="rental_driver_records"
+)

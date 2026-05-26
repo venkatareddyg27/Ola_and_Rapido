@@ -93,3 +93,29 @@ class RentalDisputeRequest(BaseModel):
     category: DisputeCategory
     description: str
     damage_amount: Optional[Decimal] = None
+
+
+class RentalDriverCreate(BaseModel):
+    renter_id: uuid.UUID
+    no_of_seats: int
+    no_of_days: int
+    date_of_booking: Optional[datetime] = None
+    
+    
+class RentalDriverUpdate(BaseModel):
+    no_of_seats: Optional[int] = None
+    no_of_days: Optional[int] = None
+    rating: Optional[int] = None
+    comments: Optional[str] = None
+class RentalDriverResponse(BaseModel):
+    id: uuid.UUID
+    renter_id: uuid.UUID
+    no_of_seats: int
+    date_of_booking: datetime
+    no_of_days: int
+    rating: Optional[int]
+    comments: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

@@ -24,12 +24,11 @@ from app.schemas.trips import ParcelCreate, ParcelResponse
 
 from app.services.fare import FareCalculatorService
 from app.services.matching import DriverMatchingService
-<<<<<<<<< Temporary merge branch 1
-=========
+
 from app.services.distance_service import DistanceService
-from app.core.redis import redis_client
-=======
->>>>>>> 59991ca0536f039b08790ab020f6e176289710ad
+from app.core.config import settings
+
+
 from app.core.websocket_manager import websocket_manager
 
 
@@ -199,7 +198,7 @@ async def book_parcel(
     # 6. Match driver
     matching_service = DriverMatchingService(
         db=db,
-        redis_client=redis_client,
+        #redis_client=redis_client,
         websocket_manager=websocket_manager,
     )
 

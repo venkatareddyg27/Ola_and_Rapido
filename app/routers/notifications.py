@@ -1,49 +1,20 @@
-# notifications.py
-
-from uuid import UUID
 from datetime import datetime
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Query
-)
-
-from sqlalchemy import (
-    select,
-    update,
-    delete,
-    desc
-)
-
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select, update, delete, desc
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-
-from app.models.support import (
-    Notification
-)
-
-from app.models.user_models import (
-    User
-)
-
+from app.core.security import get_current_user
+from app.models.support import Notification
+from app.models.user_models import User
 from app.schemas.support import (
     NotificationCreate,
     NotificationResponse,
-    NotificationMarkReadRequest
+    NotificationMarkReadRequest,
+    FCMTokenRequest
 )
-
-from app.core.security import (
-    get_current_user
-)
-
-from app.core.websocket_manager import (
-    websocket_manager
-)
+from app.services.notification import notify_user
 
 router = APIRouter(
     prefix="/notifications",
@@ -51,207 +22,99 @@ router = APIRouter(
 )
 
 
-# =========================================================
-# GET USER NOTIFICATIONS
-# =========================================================
+@router.post("/save-fcm-token")
+async def save_fcm_token(
+    payload: FCMTokenRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    current_user.fcm_token = payload.fcm_token
+    await db.commit()
 
-@router.get(
-    "/",
-    response_model=list[NotificationResponse]
-)
+    return {
+        "message": "FCM token saved successfully"
+    }
+
+
+@router.get("/", response_model=list[NotificationResponse])
 async def get_notifications(
     page: int = Query(1, ge=1),
-
     limit: int = Query(10, le=100),
-
     unread_only: bool = False,
-
     db: AsyncSession = Depends(get_db),
-
-    current_user: User = Depends(
-        get_current_user
-    )
+    current_user: User = Depends(get_current_user)
 ):
-    """
-    Get user notifications
-    with pagination.
-    """
-
     offset = (page - 1) * limit
 
-    query = (
-        select(Notification)
-        .where(
-            Notification.user_id ==
-            current_user.id
-        )
+    query = select(Notification).where(
+        Notification.user_id == current_user.id
     )
 
-    # =====================================================
-    # FILTER UNREAD
-    # =====================================================
-
     if unread_only:
-
-        query = query.where(
-            Notification.is_read == False
-        )
+        query = query.where(Notification.read_at == None)
 
     query = (
-        query.order_by(
-            desc(Notification.created_at)
-        )
+        query.order_by(desc(Notification.created_at))
         .offset(offset)
         .limit(limit)
     )
 
     result = await db.execute(query)
 
-    notifications = (
-        result.scalars().all()
-    )
-
-    return notifications
+    return result.scalars().all()
 
 
-# =========================================================
-# SEND NOTIFICATION
-# =========================================================
-
-@router.post(
-    "/send",
-    response_model=NotificationResponse
-)
+@router.post("/send", response_model=NotificationResponse)
 async def send_notification(
     payload: NotificationCreate,
-
     db: AsyncSession = Depends(get_db),
-
-    current_user: User = Depends(
-        get_current_user
-    )
+    current_user: User = Depends(get_current_user)
 ):
-    """
-    Send notification
-    to specific user.
-    """
-
-    # =====================================================
-    # CREATE NOTIFICATION
-    # =====================================================
-
-    notification = Notification(
+    return await notify_user(
+        db=db,
         user_id=payload.user_id,
-
         title=payload.title,
-
-        message=payload.message,
-
-        notification_type=(
-            payload.notification_type
-        ),
-
-        is_read=False
+        body=payload.body,
+        notification_type=payload.type,
+        data=payload.data
     )
 
-    db.add(notification)
-
-    await db.commit()
-
-    await db.refresh(notification)
-
-    # =====================================================
-    # REALTIME WEBSOCKET EVENT
-    # =====================================================
-
-    await websocket_manager.send_to_user(
-        user_id=str(payload.user_id),
-        message={
-            "event": "NEW_NOTIFICATION",
-
-            "title": payload.title,
-
-            "message": payload.message,
-
-            "notification_id": (
-                str(notification.id)
-            )
-        }
-    )
-
-    return notification
-
-
-# =========================================================
-# MARK NOTIFICATIONS AS READ
-# =========================================================
 
 @router.put("/mark-read")
-async def mark_notifications_read(
+async def mark_notification_read(
     payload: NotificationMarkReadRequest,
-
     db: AsyncSession = Depends(get_db),
-
-    current_user: User = Depends(
-        get_current_user
-    )
+    current_user: User = Depends(get_current_user)
 ):
-    """
-    Mark notifications as read.
-    """
-
     await db.execute(
         update(Notification)
         .where(
-            Notification.id.in_(
-                payload.notification_ids
-            ),
-            Notification.user_id ==
-            current_user.id
+            Notification.id == payload.notification_id,
+            Notification.user_id == current_user.id
         )
-        .values(
-            is_read=True,
-            read_at=datetime.utcnow()
-        )
+        .values(read_at=datetime.utcnow())
     )
 
     await db.commit()
 
     return {
-        "message": (
-            "Notifications marked as read"
-        )
+        "message": "Notification marked as read"
     }
 
-
-# =========================================================
-# CLEAR ALL NOTIFICATIONS
-# =========================================================
 
 @router.delete("/clear")
 async def clear_notifications(
     db: AsyncSession = Depends(get_db),
-
-    current_user: User = Depends(
-        get_current_user
-    )
+    current_user: User = Depends(get_current_user)
 ):
-    """
-    Clear all notifications
-    for authenticated user.
-    """
-
     await db.execute(
         delete(Notification).where(
-            Notification.user_id ==
-            current_user.id
+            Notification.user_id == current_user.id
         )
     )
 
     await db.commit()
 
     return {
-        "message": (
-            "All notifications cleared"
-        )
+        "message": "All notifications cleared"
     }

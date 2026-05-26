@@ -48,7 +48,6 @@ class RatingResponse(RatingBase):
 # =========================================================
 # NOTIFICATION SCHEMAS
 # =========================================================
-
 class NotificationBase(BaseModel):
     user_id: UUID
     title: str
@@ -67,14 +66,19 @@ class NotificationUpdate(BaseModel):
 
 class NotificationResponse(NotificationBase):
     id: UUID
-    read_at: Optional[datetime]
+    read_at: Optional[datetime] = None
     created_at: datetime
-class NotificationMarkReadRequest(BaseModel):
-    notification_id: UUID
-    read_at: datetime
+
     class Config:
         from_attributes = True
 
+
+class NotificationMarkReadRequest(BaseModel):
+    notification_id: UUID
+
+
+class FCMTokenRequest(BaseModel):
+    fcm_token: str
 
 # =========================================================
 # DISPUTE SCHEMAS
