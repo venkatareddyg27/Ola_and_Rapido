@@ -136,7 +136,7 @@ class TripParcel(Base):
 
     pod_otp = Column( String(6) )
 
-    status = Column( String(50), default="pending" )
+    status = Column(String(50), default="PENDING", nullable=False)
 
     created_at = Column( DateTime, default=datetime.utcnow )
 

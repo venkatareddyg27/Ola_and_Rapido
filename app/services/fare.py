@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from app.core.enums import ParcelPriority
+
 from app.utils.fare_config import (
 
     BASE_FARES,
@@ -198,23 +200,51 @@ class FareCalculatorService:
         )
 
         return {
+            "vehicle_category": vehicle_category,
+            "base_fare": float(base_fare),
+            "distance_fare": float(distance_fare),
+            "time_fare": float(time_fare),
+            "booking_fee": float(BOOKING_FEE),
+            "subtotal": float(subtotal),
+            "surge_multiplier": float(surge_multiplier),
+            "surge_amount": float(surge_amount),
+            "tax_amount": float(tax_amount),
+            "total_fare": float(final_fare),
+        }
 
-            "vehicle_category":vehicle_category,
+    # =====================================================
+    # CALCULATE DELIVERY CHARGE
+    # =====================================================
 
-            "base_fare":float(base_fare),
+    @classmethod
+    def calculate_delivery_charge(
+        cls,
+        distance_km: float,
+        weight_kg: Decimal,
+        priority: ParcelPriority,
+    ) -> dict:
 
-            "distance_fare":float(distance_fare),
+        base_fare = Decimal("35.00")
+        per_km_charge = Decimal("10.00")
+        weight_charge_per_kg = Decimal("5.00")
 
-            "time_fare":float(time_fare),
+        distance_price = Decimal(str(round(distance_km, 2))) * per_km_charge
+        weight_price = weight_kg * weight_charge_per_kg
 
-            "booking_fee":float(BOOKING_FEE),
+        priority_fee = Decimal("0.00")
 
-            "subtotal":float(subtotal),
+        if priority.value == "high":
+            priority_fee = Decimal("30.00")
+        elif priority.value == "urgent":
+            priority_fee = Decimal("60.00")
 
-            "surge_multiplier":float(surge_multiplier),
+        total_charge = base_fare + distance_price + weight_price + priority_fee
 
-            "surge_amount":float(surge_amount),
+        tax_amount = FareCalculatorService.calculate_tax(total_charge)
+        final_fare = (total_charge + tax_amount).quantize(Decimal("0.01"))
 
-            "tax_amount":float(tax_amount),
-
-            "total_fare":float(final_fare)}
+        return {
+            "total_charge": float(total_charge),
+            "tax_amount": float(tax_amount),
+            "total_fare": float(final_fare),
+        }

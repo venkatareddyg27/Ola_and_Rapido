@@ -18,54 +18,56 @@ from app.routers.Driver_rides import (router as drivers_router)
 from app.routers.payments import (router as payments_router)
 from app.routers.admin_drivers import (router as admin_drivers_router)
 from app.routers.trip_invoice_router import (router as trip_invoice_router)
-
+from app.routers.driver_parcel import (router as driver_parcel_router)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
+ 
     async with engine.begin() as conn:
-
+ 
         await conn.run_sync(
             Base.metadata.create_all
         )
-
+ 
     async with AsyncSessionLocal() as db:
-
+ 
         await create_default_admin(db)
-
+ 
     yield
-
+ 
 app = FastAPI(
-
+ 
     title="Rapido & Ola Backend",
-
+ 
     version="1.0.0",
-
+ 
     lifespan=lifespan)
-
-
+ 
+ 
 app.include_router(auth_router)
 app.include_router(profile_router)
 app.include_router(admin_router)
 app.include_router(trips_router)
 app.include_router(trip_invoice_router)
+app.include_router(parcels_router)
 app.include_router(drivercreation_router)
 app.include_router(drivers_router)
+app.include_router(driver_parcel_router)
 app.include_router(admin_drivers_router)
 app.include_router(vehicles_router)
 app.include_router(ratings_router)
 app.include_router(rentals_router)
-app.include_router(parcels_router)
 app.include_router(promo_router)
 app.include_router(notifications_router)
 app.include_router(dispute_router)
 app.include_router(payments_router)
-
+ 
 @app.get("/")
 async def root():
-
+ 
     return {
-
+ 
         "message":
         "Backend Running Successfully"
     }
+ 

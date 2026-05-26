@@ -1,78 +1,42 @@
-# promo.py
-
 from uuid import UUID
 from datetime import datetime
+from fastapi import (APIRouter,Depends,HTTPException)
+from sqlalchemy import (select)
+from sqlalchemy.ext.asyncio import (AsyncSession)
+from app.core.database import (get_db)
+from app.models.user_models import (User)
+from app.models.operations import (PromoCode)
+from app.schemas.operations import (PromoApplyRequest,PromoApplyResponse,PromoCreate, PromoResponse)
+from app.core.security import (get_current_user)
+from app.core.enums import (UserRole,DiscountType)
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    status
-)
-
-from sqlalchemy import (
-    select,
-    and_
-)
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.database import get_db
-
-from app.models.user_models import User
-from app.models.operations import PromoCode
-
-from app.schemas.operations import (
-    PromoApplyRequest,
-    PromoApplyResponse,
-    PromoCreate,
-    PromoResponse
-)
-
-from app.core.security import (
-    get_current_user
-)
-
-from app.core.enums import (
-    UserRole
-)
-
-router = APIRouter(
-    prefix="/promo",
-    tags=["Promotions"]
-)
+router = APIRouter(prefix="/promo",tags=["Promotions"])
 
 
-# =========================================================
-# APPLY PROMO CODE
-# =========================================================
-
-@router.post(
-    "/apply",
-    response_model=PromoApplyResponse
-)
+@router.post("/apply",response_model=PromoApplyResponse)
 async def apply_promo(
+
     payload: PromoApplyRequest,
 
     db: AsyncSession = Depends(get_db),
 
     current_user: User = Depends(
         get_current_user
-    )
-):
-    """
-    Apply promo code and calculate discount.
-    """
-
-    # =====================================================
-    # GET PROMO
-    # =====================================================
+    )):
 
     result = await db.execute(
-        select(PromoCode).where(
-            PromoCode.code == payload.code,
-            PromoCode.is_active == True
+
+        select(PromoCode)
+
+        .where(
+            PromoCode.code ==
+            payload.code.upper()
         )
+
+        .where(
+            PromoCode.active == True
+        )
+
     )
 
     promo = result.scalars().first()
@@ -80,133 +44,266 @@ async def apply_promo(
     if not promo:
 
         raise HTTPException(
+
             status_code=404,
+
             detail="Invalid promo code"
+
         )
 
-    # =====================================================
-    # VALIDATE EXPIRY
-    # =====================================================
+    current_time = datetime.utcnow()
 
-    if promo.valid_till < datetime.utcnow():
+    if (
+        promo.valid_from
+        and
+        promo.valid_from > current_time
+    ):
 
         raise HTTPException(
+
             status_code=400,
+
+            detail="Promo code not started yet"
+
+        )
+
+    if (
+        promo.valid_until
+        and
+        promo.valid_until < current_time
+    ):
+
+        raise HTTPException(
+
+            status_code=400,
+
             detail="Promo code expired"
+
         )
 
-    # =====================================================
-    # VALIDATE MINIMUM AMOUNT
-    # =====================================================
-
-    if payload.trip_amount < promo.min_trip_amount:
+    if (
+        promo.min_order
+        and
+        payload.order_amount
+        < promo.min_order
+    ):
 
         raise HTTPException(
+
             status_code=400,
+
             detail=(
-                f"Minimum trip amount should be "
-                f"{promo.min_trip_amount}"
+                f"Minimum order amount "
+                f"should be "
+                f"{promo.min_order}"
             )
+
         )
 
-    # =====================================================
-    # CALCULATE DISCOUNT
-    # =====================================================
+    if (
+        promo.usage_limit
+        and
+        promo.used_count
+        >=
+        promo.usage_limit
+    ):
 
-    discount = (
-        payload.trip_amount *
-        promo.discount_percent
-    ) / 100
+        raise HTTPException(
 
-    # =====================================================
-    # MAX DISCOUNT LIMIT
-    # =====================================================
+            status_code=400,
 
-    if promo.max_discount_amount:
+            detail=(
+                "Promo usage limit exceeded"
+            )
+
+        )
+
+    if (
+        promo.service_types
+        and
+        payload.service_type
+        not in promo.service_types
+    ):
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=(
+                "Promo not applicable "
+                "for this service"
+            )
+
+        )
+
+    discount = 0
+
+    if (
+        promo.discount_type
+        ==
+        DiscountType.PERCENTAGE
+    ):
+
+        discount = (
+
+            payload.order_amount
+
+            * promo.discount_value
+
+        ) / 100
+
+    else:
+
+        discount = (
+            promo.discount_value
+        )
+
+    if promo.max_discount:
 
         discount = min(
+
             discount,
-            promo.max_discount_amount
+
+            promo.max_discount
+
         )
 
     final_amount = (
-        payload.trip_amount - discount
+
+        payload.order_amount
+        - discount
+
     )
 
+    if final_amount < 0:
+
+        final_amount = 0
+
+    promo.used_count += 1
+
+    await db.commit()
+
     return {
-        "promo_code": promo.code,
-        "discount_amount": round(discount, 2),
-        "final_amount": round(final_amount, 2)
+
+        "promo_code":
+        promo.code,
+
+        "discount_amount":
+        round(discount, 2),
+
+        "final_amount":
+        round(final_amount, 2)
+
     }
 
-
-# =========================================================
-# GET ACTIVE PROMOS
-# =========================================================
 
 @router.get(
     "/active",
     response_model=list[PromoResponse]
 )
 async def get_active_promos(
-    db: AsyncSession = Depends(get_db)
+
+    db: AsyncSession = Depends(
+        get_db
+    )
+
 ):
-    """
-    Get all active promo codes.
-    """
+
+    current_time = datetime.utcnow()
 
     result = await db.execute(
-        select(PromoCode).where(
-            PromoCode.is_active == True,
-            PromoCode.valid_till > datetime.utcnow()
+
+        select(PromoCode)
+
+        .where(
+            PromoCode.active == True
         )
+
     )
 
     promos = result.scalars().all()
 
-    return promos
+    active_promos = []
 
+    for promo in promos:
 
-# =========================================================
-# ADMIN CREATE PROMO
-# =========================================================
+        if (
+            promo.valid_from
+            and
+            promo.valid_from > current_time
+        ):
+
+            continue
+
+        if (
+
+            promo.valid_until
+
+            and
+
+            promo.valid_until
+            < current_time
+
+        ):
+
+            continue
+
+        if (
+            promo.usage_limit
+            and
+            promo.used_count >= promo.usage_limit
+        ):
+
+            continue
+
+        active_promos.append(
+            promo
+        )
+
+    return active_promos
+
 
 @router.post(
     "/create",
     response_model=PromoResponse
 )
 async def create_promo(
+
     payload: PromoCreate,
 
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(
+        get_db
+    ),
 
     current_user: User = Depends(
         get_current_user
     )
-):
-    """
-    Admin creates promo code.
-    """
 
-    # =====================================================
-    # ADMIN VALIDATION
-    # =====================================================
+):
 
     if current_user.role != UserRole.ADMIN:
 
         raise HTTPException(
-            status_code=403,
-            detail="Only admin can create promos"
-        )
 
-    # =====================================================
-    # CHECK EXISTING CODE
-    # =====================================================
+            status_code=403,
+
+            detail=(
+                "Only admin "
+                "can create promos"
+            )
+
+        )
 
     result = await db.execute(
-        select(PromoCode).where(
-            PromoCode.code == payload.code
+
+        select(PromoCode)
+
+        .where(
+            PromoCode.code
+            ==
+            payload.code.upper()
         )
+
     )
 
     existing = result.scalars().first()
@@ -214,30 +311,98 @@ async def create_promo(
     if existing:
 
         raise HTTPException(
+
             status_code=400,
-            detail="Promo code already exists"
+
+            detail=(
+                "Promo code "
+                "already exists"
+            )
+
         )
 
-    # =====================================================
-    # CREATE PROMO
-    # =====================================================
+
+    if payload.discount_value <= 0:
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=(
+                "Discount value "
+                "must be greater than 0"
+            )
+
+        )
+
+    valid_from = (
+        payload.valid_from
+        if payload.valid_from
+        else None
+    )
+
+    valid_until = (
+        payload.valid_until
+        if payload.valid_until
+        else None
+    )
+
+    if (
+        valid_until
+        and
+        valid_from
+        and
+        valid_until < valid_from
+    ):
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail=(
+                "valid_until must be "
+                "greater than valid_from"
+            )
+
+        )
 
     promo = PromoCode(
+
         code=payload.code.upper(),
 
         description=payload.description,
 
-        discount_percent=payload.discount_percent,
+        discount_type=
+        payload.discount_type,
 
-        max_discount_amount=payload.max_discount_amount,
+        discount_value=
+        payload.discount_value,
 
-        min_trip_amount=payload.min_trip_amount,
+        max_discount=
+        payload.max_discount,
 
-        valid_till=payload.valid_till,
+        min_order=
+        payload.min_order,
 
-        is_active=True,
+        usage_limit=
+        payload.usage_limit,
 
-        creator_id=current_user.id
+        used_count=0,
+
+        valid_from=
+        valid_from,
+
+        valid_until=
+        valid_until,
+
+        service_types=
+        payload.service_types,
+
+        active=True,
+
+        created_by=
+        current_user.id
+
     )
 
     db.add(promo)

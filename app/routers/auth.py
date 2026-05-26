@@ -47,6 +47,7 @@ from app.models.user_models import (
     User
 )
 
+
 # =========================================================
 # AUTH ROUTER
 # =========================================================
@@ -56,7 +57,9 @@ router = APIRouter(
     prefix="/auth",
 
     tags=["Authentication"]
+
 )
+
 
 # =========================================================
 # PROFILE ROUTER
@@ -66,8 +69,10 @@ profile_router = APIRouter(
 
     prefix="/profile",
 
-    tags=["Update Profile"]
+    tags=["Profile"]
+
 )
+
 
 # =========================================================
 # LOGIN
@@ -81,6 +86,7 @@ async def login(
     db: AsyncSession = Depends(
         get_db
     )
+
 ):
 
     try:
@@ -90,6 +96,7 @@ async def login(
             data=data,
 
             db=db
+
         )
 
     except Exception as e:
@@ -99,7 +106,9 @@ async def login(
             status_code=400,
 
             detail=str(e)
+
         )
+
 
 # =========================================================
 # VERIFY OTP
@@ -113,6 +122,7 @@ async def verify_otp(
     db: AsyncSession = Depends(
         get_db
     )
+
 ):
 
     try:
@@ -122,6 +132,7 @@ async def verify_otp(
             data=data,
 
             db=db
+
         )
 
     except Exception as e:
@@ -131,7 +142,9 @@ async def verify_otp(
             status_code=400,
 
             detail=str(e)
+
         )
+
 
 # =========================================================
 # LOGOUT
@@ -144,6 +157,7 @@ async def logout(
     HTTPAuthorizationCredentials = Depends(
         security
     )
+
 ):
 
     token = (
@@ -156,12 +170,13 @@ async def logout(
 
     return {
 
-        "success":
-        True,
+        "success": True,
 
         "message":
         "Logged out successfully. Please login again."
+
     }
+
 
 # =========================================================
 # CURRENT USER
@@ -173,6 +188,7 @@ async def get_me(
     current_user: User = Depends(
         get_current_user
     )
+
 ):
 
     return {
@@ -183,12 +199,20 @@ async def get_me(
         "user_id":
         str(current_user.id),
 
+        "full_name":
+        current_user.full_name,
+
         "mobile_number":
         current_user.mobile_number,
 
+        "email":
+        current_user.email,
+
         "role":
         str(current_user.role)
+
     }
+
 
 # =========================================================
 # UPDATE PROFILE
@@ -202,6 +226,7 @@ async def update_profile(
     db: AsyncSession = Depends(
         get_db
     )
+
 ):
 
     try:
@@ -211,6 +236,7 @@ async def update_profile(
             data=data,
 
             db=db
+
         )
 
     except Exception as e:
@@ -220,4 +246,5 @@ async def update_profile(
             status_code=400,
 
             detail=str(e)
+
         )

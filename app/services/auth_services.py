@@ -222,9 +222,9 @@ async def verify_otp_service(
             mobile_number=
             data.phone,
 
-            role=
-            UserRole.CUSTOMER,
+            full_name="",
 
+            role=UserRole.CUSTOMER,
             is_active=True,
 
             is_verified=True

@@ -227,7 +227,6 @@ class TripLocationResponse(
         from_attributes=True
     )
 
-
 class ParcelBase(BaseModel):
 
     trip_id: uuid.UUID

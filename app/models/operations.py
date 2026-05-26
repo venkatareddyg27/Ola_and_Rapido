@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-
+from sqlalchemy import Text
 from sqlalchemy import ( Column, String, Numeric, Integer, Boolean, DateTime, ForeignKey, Enum )
 
 from sqlalchemy.dialects.postgresql import ( UUID, ARRAY, JSONB )
@@ -23,7 +23,9 @@ class PromoCode(Base):
     discount_type = Column( Enum(DiscountType), nullable=False )
 
     discount_value = Column( Numeric(10, 2), nullable=False )
-
+    
+    description = Column(Text,nullable=True)
+    
     max_discount = Column( Numeric(10, 2) )
 
     min_order = Column( Numeric(10, 2) )

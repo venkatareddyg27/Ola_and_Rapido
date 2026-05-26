@@ -257,7 +257,29 @@ async def get_driver(
             driver.is_verified
         ),
 
-        "kyc_documents": kyc
+        "kyc_documents": (
+
+            {
+
+                "aadhaar_number":
+                kyc.aadhaar_number,
+
+                "pan_number":
+                kyc.pan_number,
+
+                "license_number":
+                kyc.license_number,
+
+                "verification_status":
+                kyc.verification_status
+
+            }
+
+            if kyc
+
+            else None
+
+        )
 
     }
 
@@ -281,10 +303,6 @@ async def get_driver_documents(
 
     require_admin(current_user)
 
-    # =====================================================
-    # GET DRIVER
-    # =====================================================
-
     result = await db.execute(
 
         select(DriverProfile)
@@ -304,10 +322,6 @@ async def get_driver_documents(
     )
 
     driver = result.scalars().first()
-
-    # =====================================================
-    # DRIVER NOT FOUND
-    # =====================================================
 
     if not driver:
 
@@ -336,10 +350,6 @@ async def get_driver_documents(
 
     kyc = kyc_result.scalars().first()
 
-    # =====================================================
-    # DOCUMENTS NOT FOUND
-    # =====================================================
-
     if not kyc:
 
         raise HTTPException(
@@ -349,10 +359,6 @@ async def get_driver_documents(
             detail="KYC documents not found"
 
         )
-
-    # =====================================================
-    # RESPONSE
-    # =====================================================
 
     return {
 
@@ -515,10 +521,6 @@ async def verify_driver_documents(
 
     require_admin(current_user)
 
-    # =====================================================
-    # GET DRIVER
-    # =====================================================
-
     result = await db.execute(
 
         select(DriverProfile)
@@ -540,10 +542,6 @@ async def verify_driver_documents(
             detail="Driver not found"
 
         )
-
-    # =====================================================
-    # GET KYC DOCUMENTS
-    # =====================================================
 
     kyc_result = await db.execute(
 
@@ -567,10 +565,6 @@ async def verify_driver_documents(
             detail="KYC documents not found"
 
         )
-
-    # =====================================================
-    # VERIFY DOCUMENTS
-    # =====================================================
 
     kyc.verification_status = (
         "verified"
@@ -784,8 +778,12 @@ async def block_driver(
 
         )
 
+    # =====================================================
+    # TEMPORARY BLOCK STATUS
+    # =====================================================
+
     driver.status = (
-        DriverStatus.BLOCKED
+        DriverStatus.INACTIVE
     )
 
     await db.commit()
