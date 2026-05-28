@@ -1,59 +1,19 @@
-# notifications.py
-
-from uuid import UUID
 from datetime import datetime
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Query
-)
-
-from sqlalchemy import (
-    select,
-    update,
-    delete,
-    desc
-)
-
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
-
+from fastapi import (APIRouter,Depends,Query)
+from sqlalchemy import (select,update,delete,desc)
+from sqlalchemy.ext.asyncio import (AsyncSession)
 from app.core.database import get_db
-
-from app.models.support import (
-    Notification
-)
-
-from app.models.user_models import (
-    User
-)
-
-from app.schemas.support import (
-    NotificationCreate,
-    NotificationResponse,
-    NotificationMarkReadRequest
-)
-
-from app.core.security import (
-    get_current_user
-)
-
-from app.core.websocket_manager import (
-    websocket_manager
-)
+from app.models.support import (Notification)
+from app.models.user_models import (User)
+from app.schemas.support import (NotificationCreate,NotificationResponse,NotificationMarkReadRequest)
+from app.core.security import (get_current_user)
+from app.core.websocket_manager import (websocket_manager)
 
 router = APIRouter(
     prefix="/notifications",
-    tags=["Notifications"]
-)
+    tags=["Notifications"])
 
 
-# =========================================================
-# GET USER NOTIFICATIONS
-# =========================================================
 
 @router.get(
     "/",
@@ -87,10 +47,6 @@ async def get_notifications(
         )
     )
 
-    # =====================================================
-    # FILTER UNREAD
-    # =====================================================
-
     if unread_only:
 
         query = query.where(
@@ -113,11 +69,6 @@ async def get_notifications(
 
     return notifications
 
-
-# =========================================================
-# SEND NOTIFICATION
-# =========================================================
-
 @router.post(
     "/send",
     response_model=NotificationResponse
@@ -135,10 +86,6 @@ async def send_notification(
     Send notification
     to specific user.
     """
-
-    # =====================================================
-    # CREATE NOTIFICATION
-    # =====================================================
 
     notification = Notification(
         user_id=payload.user_id,
@@ -160,10 +107,6 @@ async def send_notification(
 
     await db.refresh(notification)
 
-    # =====================================================
-    # REALTIME WEBSOCKET EVENT
-    # =====================================================
-
     await websocket_manager.send_to_user(
         user_id=str(payload.user_id),
         message={
@@ -181,10 +124,6 @@ async def send_notification(
 
     return notification
 
-
-# =========================================================
-# MARK NOTIFICATIONS AS READ
-# =========================================================
 
 @router.put("/mark-read")
 async def mark_notifications_read(
@@ -223,10 +162,6 @@ async def mark_notifications_read(
         )
     }
 
-
-# =========================================================
-# CLEAR ALL NOTIFICATIONS
-# =========================================================
 
 @router.delete("/clear")
 async def clear_notifications(

@@ -2,7 +2,6 @@ from datetime import datetime
 from decimal import Decimal
 import uuid
 from pydantic import BaseModel, Field
-
 from app.core.enums import (
     ParcelStatus,
     ParcelType,

@@ -1,60 +1,20 @@
 import random
+from datetime import (datetime,timedelta)
+from fastapi import (HTTPException)
+from sqlalchemy import (select)
+from sqlalchemy.ext.asyncio import (AsyncSession)
+from app.models.user_models import (User,OTPLog)
+from app.schemas.auth_schema import (VerifyOTPRequest,RegisterRequest,LoginRequest)
+from app.core.enums import (OTPPurpose,UserRole)
+from app.services.otp import (hash_otp,verify_otp_hash)
+from app.core.security import (create_access_token,create_refresh_token)
 
-from datetime import (
-    datetime,
-    timedelta
-)
-
-from fastapi import (
-    HTTPException
-)
-
-from sqlalchemy import (
-    select
-)
-
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
-
-from app.models.user_models import (
-    User,
-    OTPLog
-)
-
-from app.schemas.auth_schema import (
-    VerifyOTPRequest,
-    RegisterRequest,
-    LoginRequest
-)
-
-from app.core.enums import (
-    OTPPurpose,
-    UserRole
-)
-
-from app.services.otp import (
-    hash_otp,
-    verify_otp_hash
-)
-
-from app.core.security import (
-
-    create_access_token,
-
-    create_refresh_token
-)
-
-# =========================================================
-# LOGIN SERVICE
-# =========================================================
 
 async def login_service(
 
     data: LoginRequest,
 
-    db: AsyncSession
-):
+    db: AsyncSession):
 
     otp = str(
         random.randint(
@@ -117,16 +77,12 @@ async def login_service(
         data.phone
     }
 
-# =========================================================
-# VERIFY OTP SERVICE
-# =========================================================
 
 async def verify_otp_service(
 
     data: VerifyOTPRequest,
 
-    db: AsyncSession
-):
+    db: AsyncSession):
 
     query = select(OTPLog).where(
 
@@ -183,19 +139,12 @@ async def verify_otp_service(
             "Invalid OTP"
         )
 
-    # =====================================================
-    # MARK OTP USED
-    # =====================================================
 
     otp_log.used_at = (
         datetime.utcnow()
     )
 
     await db.commit()
-
-    # =====================================================
-    # GET USER
-    # =====================================================
 
     user_query = select(User).where(
 
@@ -211,9 +160,6 @@ async def verify_otp_service(
         user_result.scalars().first()
     )
 
-    # =====================================================
-    # CREATE USER
-    # =====================================================
 
     if not user:
 
@@ -235,10 +181,6 @@ async def verify_otp_service(
         await db.commit()
 
         await db.refresh(user)
-
-    # =====================================================
-    # CREATE TOKENS
-    # =====================================================
 
     access_token = (
         create_access_token(
@@ -288,13 +230,9 @@ async def verify_otp_service(
         }
     }
 
-# =========================================================
-# LOGOUT SERVICE
-# =========================================================
 
 async def logout_service(
-    refresh_token: str
-):
+    refresh_token: str):
 
     return {
 
@@ -302,16 +240,11 @@ async def logout_service(
         "Logout successful"
     }
 
-# =========================================================
-# REGISTER SERVICE
-# =========================================================
-
 async def register_service(
 
     data: RegisterRequest,
 
-    db: AsyncSession
-):
+    db: AsyncSession):
 
     result = await db.execute(
 

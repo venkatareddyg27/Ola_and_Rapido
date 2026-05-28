@@ -2,28 +2,18 @@ from uuid import UUID
 from decimal import Decimal
 from datetime import datetime
 import random
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.core.enums import (
-    UserRole,
-    ServiceType,
-    TripStatus,
-    ParcelStatus,
-    VehicleCategory,
-)
+from app.core.enums import (UserRole,ServiceType,TripStatus,ParcelStatus,VehicleCategory,)
 from app.models.user_models import User
 from app.models.trips import Trip, TripParcel, TripLocation
 from app.schemas.parcel import ParcelCreate, ParcelBookingResponse
 from app.services.fare import FareCalculatorService
 from app.services.distance_service import DistanceService
-from app.services.matching import DriverMatchingService
 
-from app.core.websocket_manager import websocket_manager
 
 
 router = APIRouter(prefix="/customer/parcels", tags=["Customer Parcels"])

@@ -1,34 +1,20 @@
 from uuid import UUID
 from decimal import Decimal
 from datetime import datetime
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
 from app.models.vehicles import Vehicle
 from app.models.rentals import Rental, RentalInspection
 from app.models.support import Dispute
-
-from app.schemas.rentals import (
-    RentalCreate,
-    RentalDisputeRequest,
-    RentalInspectionCreate,
-)
-
-from app.core.enums import (
-    RentalStatus,
-    DepositStatus,
-    DisputeStatus,
-    DisputePriority,
-)
+from app.schemas.rentals import (RentalCreate,RentalDisputeRequest,RentalInspectionCreate,)
+from app.core.enums import (RentalStatus,DepositStatus,DisputeStatus,DisputePriority)
 
 
 router = APIRouter(
     prefix="/rentals",
-    tags=["Rentals"]
-)
+    tags=["Rentals"])
 
 
 @router.get("/vehicles")

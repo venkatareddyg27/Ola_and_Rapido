@@ -1,81 +1,26 @@
 import random
-
 from uuid import UUID
-
 from datetime import datetime
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Query
-)
-
-from sqlalchemy import (
-    select,
-    desc,
-    and_
-)
-
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
-
-from app.core.database import (
-    get_db
-)
-
-from app.models.trips import (
-    Trip
-)
-
-from app.models.user_models import (
-    User
-)
-
-from app.models.support import (
-    Rating
-)
-
-from app.schemas.trips import (
-    TripCreate,
-    TripResponse,
-    TripEstimateRequest,
-    TripEstimateResponse,
-    TripRatingRequest
-)
-
-from app.core.enums import (
-    TripStatus,
-    UserRole
-)
-
-from app.core.security import (
-    get_current_user
-)
-
-from app.services.fare import (
-    FareCalculatorService
-)
-
-from app.services.distance_service import (
-    DistanceService
-)
+from fastapi import (APIRouter,Depends,HTTPException,Query)
+from sqlalchemy import (select,desc,and_)
+from sqlalchemy.ext.asyncio import (AsyncSession)
+from app.core.database import (get_db)
+from app.models.trips import (Trip)
+from app.models.user_models import (User)
+from app.models.support import (Rating)
+from app.schemas.trips import (TripCreate,TripResponse,TripEstimateRequest,TripEstimateResponse,TripRatingRequest)
+from app.core.enums import (TripStatus,UserRole)
+from app.core.security import (get_current_user)
+from app.services.fare import (FareCalculatorService)
+from app.services.distance_service import (DistanceService)
 
 router = APIRouter(
-
     prefix="/trips",
+    tags=["Customer Trips"])
 
-    tags=["Customer Trips"]
-)
-
-# =========================================================
-# CUSTOMER ROLE CHECK
-# =========================================================
 
 def require_customer_role(
-    current_user: User
-):
+    current_user: User):
 
     if current_user.role != UserRole.CUSTOMER:
 
@@ -86,10 +31,6 @@ def require_customer_role(
             detail=
             "Only customers can access this API"
         )
-
-# =========================================================
-# ESTIMATE RIDE
-# =========================================================
 
 @router.post(
     "/estimate",
@@ -108,9 +49,6 @@ async def estimate_trip(
         current_user
     )
 
-    # =====================================================
-    # CALCULATE DISTANCE
-    # =====================================================
 
     distance_km = (
         DistanceService.calculate_distance(
@@ -123,19 +61,12 @@ async def estimate_trip(
         )
     )
 
-    # =====================================================
-    # ESTIMATED DURATION
-    # =====================================================
 
     estimated_duration = (
         DistanceService.estimate_duration(
             distance_km
         )
     )
-
-    # =====================================================
-    # CALCULATE FARE
-    # =====================================================
 
     fare_details = (
         FareCalculatorService.calculate_fare(
@@ -169,9 +100,6 @@ async def estimate_trip(
         fare_details
     }
 
-# =========================================================
-# BOOK RIDE
-# =========================================================
 
 @router.post(
     "/book",
@@ -194,10 +122,6 @@ async def book_trip(
         current_user
     )
 
-    # =====================================================
-    # VALIDATE COORDINATES
-    # =====================================================
-
     if not all([
 
         payload.pickup_lat,
@@ -215,10 +139,6 @@ async def book_trip(
             "Coordinates are required"
         )
 
-    # =====================================================
-    # CALCULATE DISTANCE
-    # =====================================================
-
     distance_km = (
         DistanceService.calculate_distance(
 
@@ -229,20 +149,11 @@ async def book_trip(
             float(payload.drop_lng)
         )
     )
-
-    # =====================================================
-    # ESTIMATED DURATION
-    # =====================================================
-
     estimated_duration = (
         DistanceService.estimate_duration(
             distance_km
         )
     )
-
-    # =====================================================
-    # CALCULATE FARE
-    # =====================================================
 
     fare_details = (
         FareCalculatorService.calculate_fare(
@@ -258,20 +169,12 @@ async def book_trip(
         )
     )
 
-    # =====================================================
-    # GENERATE OTP
-    # =====================================================
-
     ride_otp = str(
         random.randint(
             1000,
             9999
         )
     )
-
-    # =====================================================
-    # CREATE TRIP
-    # =====================================================
 
     trip = Trip(
 
@@ -328,10 +231,6 @@ async def book_trip(
 
     return trip
 
-# =========================================================
-# GET ACTIVE TRIP
-# =========================================================
-
 @router.get(
     "/active",
     response_model=TripResponse
@@ -387,9 +286,6 @@ async def get_active_trip(
 
     return trip
 
-# =========================================================
-# GET TRIP HISTORY
-# =========================================================
 
 @router.get("/history")
 async def get_trip_history(
@@ -456,10 +352,6 @@ async def get_trip_history(
         trips
     }
 
-# =========================================================
-# GET TRIP DETAILS
-# =========================================================
-
 @router.get(
     "/{trip_id}",
     response_model=TripResponse
@@ -505,9 +397,6 @@ async def get_trip(
 
     return trip
 
-# =========================================================
-# CANCEL TRIP
-# =========================================================
 
 @router.put("/{trip_id}/cancel")
 async def cancel_trip(
@@ -585,9 +474,6 @@ async def cancel_trip(
         "Trip cancelled successfully"
     }
 
-# =========================================================
-# RATE DRIVER
-# =========================================================
 
 @router.post("/{trip_id}/rate")
 async def rate_trip(

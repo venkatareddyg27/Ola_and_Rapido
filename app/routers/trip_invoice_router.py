@@ -1,81 +1,34 @@
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    status
-)
-
+from fastapi import (APIRouter,Depends,HTTPException,status)
 from fastapi.responses import FileResponse
-
 from sqlalchemy import select
-
-from sqlalchemy.orm import (
-    selectinload
-)
-
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
-
+from sqlalchemy.orm import (selectinload)
+from sqlalchemy.ext.asyncio import (AsyncSession)
 from app.core.database import get_db
-
-from app.core.security import (
-    get_current_user
-)
-
-from app.models.user_models import User
-
-from app.models.user_models import (
-    DriverProfile
-)
-
+from app.core.security import (get_current_user)
+from app.models.user_models import (User,DriverProfile)
 from app.models.trips import Trip
-
-from app.models.trip_invoices import (
-    TripInvoice
-)
-
-from app.schemas.trip_invoice import (
-    TripInvoiceResponse
-)
-
-from app.services.trip_invoice_service import (
-    TripInvoiceService
-)
+from app.models.trip_invoices import (TripInvoice)
+from app.schemas.trip_invoice import (TripInvoiceResponse)
+from app.services.trip_invoice_service import (TripInvoiceService)
 
 
 router = APIRouter(
-
     prefix="/trip-invoices",
+    tags=["Trip Invoices"])
 
-    tags=["Trip Invoices"]
-
-)
-
-
-# =====================================================
-# GENERATE INVOICE
-# =====================================================
 
 @router.post(
     "/generate",
-    response_model=TripInvoiceResponse
-)
+    response_model=TripInvoiceResponse)
 async def generate_trip_invoice(
 
     db: AsyncSession = Depends(get_db),
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     try:
-
-        # =============================================
-        # GET LATEST COMPLETED TRIP
-        # =============================================
 
         result = await db.execute(
 
@@ -101,7 +54,7 @@ async def generate_trip_invoice(
             )
 
             .where(
-                Trip.status == "completed"
+                Trip.status == "COMPLETED"
             )
 
             .order_by(
@@ -111,10 +64,6 @@ async def generate_trip_invoice(
         )
 
         trip = result.scalars().first()
-
-        # =============================================
-        # NO COMPLETED TRIP
-        # =============================================
 
         if not trip:
 
@@ -126,20 +75,12 @@ async def generate_trip_invoice(
 
             )
 
-        # =============================================
-        # GENERATE INVOICE
-        # =============================================
-
         invoice = await (
             TripInvoiceService.generate_invoice(
                 db=db,
                 trip_id=trip.id
             )
         )
-
-        # =============================================
-        # RELOAD WITH RELATIONSHIPS
-        # =============================================
 
         invoice_result = await db.execute(
 
@@ -176,27 +117,15 @@ async def generate_trip_invoice(
             .first()
         )
 
-        # =============================================
-        # RESPONSE
-        # =============================================
-
         return {
 
             "id": invoice.id,
 
             "trip_id": invoice.trip_id,
 
-            "invoice_number": (
-                invoice.invoice_number
-            ),
+            "invoice_number": (invoice.invoice_number),
 
-            "trip_type": (
-                invoice.trip_type
-            ),
-
-            # =====================================
-            # CUSTOMER
-            # =====================================
+            "trip_type": (invoice.trip_type),
 
             "customer_name": (
 
@@ -207,10 +136,6 @@ async def generate_trip_invoice(
                 else None
 
             ),
-
-            # =====================================
-            # DRIVER
-            # =====================================
 
             "driver_name": (
 
@@ -223,10 +148,6 @@ async def generate_trip_invoice(
 
             ),
 
-            # =====================================
-            # VEHICLE
-            # =====================================
-
             "vehicle_number": (
 
                 invoice.vehicle.vehicle_number
@@ -236,10 +157,6 @@ async def generate_trip_invoice(
                 else None
 
             ),
-
-            # =====================================
-            # FARE
-            # =====================================
 
             "base_fare": invoice.base_fare,
 
@@ -263,25 +180,13 @@ async def generate_trip_invoice(
 
             "total_amount": invoice.total_amount,
 
-            # =====================================
-            # PAYMENT
-            # =====================================
-
             "payment_method": invoice.payment_method,
 
             "payment_status": invoice.payment_status,
 
             "invoice_status": invoice.invoice_status,
 
-            # =====================================
-            # PDF
-            # =====================================
-
             "pdf_url": invoice.pdf_url,
-
-            # =====================================
-            # TIMESTAMPS
-            # =====================================
 
             "generated_at": invoice.generated_at,
 
@@ -305,23 +210,16 @@ async def generate_trip_invoice(
         )
 
 
-# =====================================================
-# GET LATEST INVOICE
-# =====================================================
-
 @router.get(
     "/latest",
-    response_model=TripInvoiceResponse
-)
+    response_model=TripInvoiceResponse)
 async def get_latest_invoice(
 
     db: AsyncSession = Depends(get_db),
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     try:
 
@@ -372,114 +270,82 @@ async def get_latest_invoice(
 
         return {
 
-                "id": invoice.id,
+            "id": invoice.id,
 
-                "trip_id": invoice.trip_id,
+            "trip_id": invoice.trip_id,
 
-                "invoice_number": (
-                    invoice.invoice_number
-                ),
+            "invoice_number": (invoice.invoice_number),
 
-                "trip_type": (
-                    invoice.trip_type
-                ),
+            "trip_type": (invoice.trip_type),
 
-                # =====================================
-                # CUSTOMER
-                # =====================================
+            "customer_name": (
 
-                "customer_name": (
+                invoice.customer.full_name
 
-                    invoice.customer.full_name
+                if invoice.customer
 
-                    if invoice.customer
+                else None
 
-                    else None
+            ),
 
-                ),
+            "driver_name": (
 
-                # =====================================
-                # DRIVER
-                # =====================================
+                invoice.driver.user.full_name
 
-                "driver_name": (
+                if invoice.driver
+                and invoice.driver.user
 
-                    invoice.driver.user.full_name
+                else None
 
-                    if invoice.driver
-                    and invoice.driver.user
+            ),
 
-                    else None
+            "vehicle_number": (
 
-                ),
+                invoice.vehicle.vehicle_number
 
-                # =====================================
-                # VEHICLE
-                # =====================================
+                if invoice.vehicle
 
-                "vehicle_number": (
+                else None
 
-                    invoice.vehicle.vehicle_number
+            ),
 
-                    if invoice.vehicle
+            "base_fare": invoice.base_fare,
 
-                    else None
+            "distance_km": invoice.distance_km,
 
-                ),
+            "distance_charge": invoice.distance_charge,
 
-                # =====================================
-                # FARE
-                # =====================================
+            "duration_minutes": invoice.duration_minutes,
 
-                "base_fare": invoice.base_fare,
+            "time_charge": invoice.time_charge,
 
-                "distance_km": invoice.distance_km,
+            "waiting_charge": invoice.waiting_charge,
 
-                "distance_charge": invoice.distance_charge,
+            "surge_charge": invoice.surge_charge,
 
-                "duration_minutes": invoice.duration_minutes,
+            "tax_amount": invoice.tax_amount,
 
-                "time_charge": invoice.time_charge,
+            "discount_amount": invoice.discount_amount,
 
-                "waiting_charge": invoice.waiting_charge,
+            "subtotal": invoice.subtotal,
 
-                "surge_charge": invoice.surge_charge,
+            "total_amount": invoice.total_amount,
 
-                "tax_amount": invoice.tax_amount,
+            "payment_method": invoice.payment_method,
 
-                "discount_amount": invoice.discount_amount,
+            "payment_status": invoice.payment_status,
 
-                "subtotal": invoice.subtotal,
+            "invoice_status": invoice.invoice_status,
 
-                "total_amount": invoice.total_amount,
+            "pdf_url": invoice.pdf_url,
 
-                # =====================================
-                # PAYMENT
-                # =====================================
+            "generated_at": invoice.generated_at,
 
-                "payment_method": invoice.payment_method,
+            "created_at": invoice.created_at,
 
-                "payment_status": invoice.payment_status,
+            "updated_at": invoice.updated_at
 
-                "invoice_status": invoice.invoice_status,
-
-                # =====================================
-                # PDF
-                # =====================================
-
-                "pdf_url": invoice.pdf_url,
-
-                # =====================================
-                # TIMESTAMPS
-                # =====================================
-
-                "generated_at": invoice.generated_at,
-
-                "created_at": invoice.created_at,
-
-                "updated_at": invoice.updated_at
-
-            }
+        }
 
     except HTTPException:
         raise
@@ -495,24 +361,15 @@ async def get_latest_invoice(
         )
 
 
-# =====================================================
-# DOWNLOAD PDF
-# =====================================================
-
 @router.get(
-    "/download/{invoice_number}"
-)
-async def download_invoice(
-
-    invoice_number: str,
+    "/download")
+async def download_latest_invoice(
 
     db: AsyncSession = Depends(get_db),
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     try:
 
@@ -521,13 +378,12 @@ async def download_invoice(
             select(TripInvoice)
 
             .where(
-                TripInvoice.invoice_number
-                == invoice_number
-            )
-
-            .where(
                 TripInvoice.customer_id
                 == current_user.id
+            )
+
+            .order_by(
+                TripInvoice.created_at.desc()
             )
 
         )

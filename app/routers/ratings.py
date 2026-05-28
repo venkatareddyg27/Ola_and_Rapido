@@ -1,59 +1,19 @@
-
 from uuid import UUID
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException
-)
-
-from sqlalchemy import (
-    select,
-    func,
-    desc
-)
-
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
-
+from fastapi import (APIRouter,Depends,HTTPException)
+from sqlalchemy import (select,func,desc)
+from sqlalchemy.ext.asyncio import (AsyncSession)
 from app.core.database import get_db
-
-from app.models.support import (
-    Rating
-)
-
-from app.models.trips import (
-    Trip
-)
-
-from app.models.user_models import (
-    User,
-    DriverProfile
-)
-
-from app.schemas.support import (
-    RatingCreate,
-    RatingResponse
-)
-
-from app.core.security import (
-    get_current_user
-)
-
-from app.core.enums import (
-    TripStatus
-)
+from app.models.support import (Rating)
+from app.models.trips import (Trip)
+from app.models.user_models import (User,DriverProfile)
+from app.schemas.support import (RatingCreate,RatingResponse)
+from app.core.security import ( get_current_user)
+from app.core.enums import (TripStatus)
 
 router = APIRouter(
     prefix="/ratings",
-    tags=["Ratings"]
-)
+    tags=["Ratings"])
 
-
-# =========================================================
-# SUBMIT RATING
-# =========================================================
 
 @router.post(
     "/",
@@ -73,10 +33,6 @@ async def submit_rating(
     for completed trip.
     """
 
-    # =====================================================
-    # GET TRIP
-    # =====================================================
-
     result = await db.execute(
         select(Trip).where(
             Trip.id == payload.trip_id,
@@ -95,9 +51,6 @@ async def submit_rating(
             detail="Trip not found"
         )
 
-    # =====================================================
-    # VALIDATE TRIP STATUS
-    # =====================================================
 
     if trip.status != (
         TripStatus.COMPLETED
@@ -108,9 +61,6 @@ async def submit_rating(
             detail="Trip not completed"
         )
 
-    # =====================================================
-    # CHECK EXISTING RATING
-    # =====================================================
 
     existing_result = await db.execute(
         select(Rating).where(
@@ -135,9 +85,6 @@ async def submit_rating(
             detail="Trip already rated"
         )
 
-    # =====================================================
-    # CREATE RATING
-    # =====================================================
 
     rating = Rating(
 
@@ -154,9 +101,6 @@ async def submit_rating(
 
     db.add(rating)
 
-    # =====================================================
-    # UPDATE DRIVER RATING
-    # =====================================================
 
     driver_result = await db.execute(
         select(DriverProfile).where(
@@ -199,10 +143,6 @@ async def submit_rating(
             total_count or 0
         )
 
-    # =====================================================
-    # UPDATE TRIP
-    # =====================================================
-
     trip.is_rated = True
 
     await db.commit()
@@ -212,9 +152,6 @@ async def submit_rating(
     return rating
 
 
-# =========================================================
-# GET DRIVER RATINGS
-# =========================================================
 
 @router.get("/driver/{driver_id}")
 async def get_driver_rating(
@@ -234,9 +171,6 @@ async def get_driver_rating(
 
     offset = (page - 1) * limit
 
-    # =====================================================
-    # DRIVER EXISTS
-    # =====================================================
 
     driver_result = await db.execute(
         select(DriverProfile).where(
@@ -258,9 +192,6 @@ async def get_driver_rating(
             detail="Driver not found"
         )
 
-    # =====================================================
-    # GET RATINGS
-    # =====================================================
 
     ratings_result = await db.execute(
 
@@ -285,10 +216,6 @@ async def get_driver_rating(
         .scalars()
         .all()
     )
-
-    # =====================================================
-    # GET AVERAGE RATING
-    # =====================================================
 
     avg_result = await db.execute(
 

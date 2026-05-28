@@ -1,82 +1,26 @@
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException
-)
+from fastapi import (APIRouter,Depends,HTTPException)
+from sqlalchemy.ext.asyncio import (AsyncSession)
+from fastapi.security import (HTTPAuthorizationCredentials)
+from app.core.database import (get_db)
+from app.core.security import (get_current_user,security,blacklist_token)
+from app.schemas.auth_schema import (VerifyOTPRequest,LoginRequest,RegisterRequest)
+from app.services.auth_services import (verify_otp_service,login_service,register_service)
+from app.models.user_models import (User)
 
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
-
-from fastapi.security import (
-    HTTPAuthorizationCredentials
-)
-
-from app.core.database import (
-    get_db
-)
-
-from app.core.security import (
-
-    get_current_user,
-
-    security,
-
-    blacklist_token
-)
-
-from app.schemas.auth_schema import (
-
-    VerifyOTPRequest,
-
-    LoginRequest,
-
-    RegisterRequest
-)
-
-from app.services.auth_services import (
-
-    verify_otp_service,
-
-    login_service,
-
-    register_service
-)
-
-from app.models.user_models import (
-    User
-)
-
-
-# =========================================================
-# AUTH ROUTER
-# =========================================================
 
 router = APIRouter(
 
     prefix="/auth",
 
-    tags=["Authentication"]
+    tags=["Authentication"])
 
-)
-
-
-# =========================================================
-# PROFILE ROUTER
-# =========================================================
 
 profile_router = APIRouter(
 
     prefix="/profile",
 
-    tags=["Profile"]
+    tags=["Profile"])
 
-)
-
-
-# =========================================================
-# LOGIN
-# =========================================================
 
 @router.post("/login")
 async def login(
@@ -85,9 +29,7 @@ async def login(
 
     db: AsyncSession = Depends(
         get_db
-    )
-
-):
+    )):
 
     try:
 
@@ -109,11 +51,6 @@ async def login(
 
         )
 
-
-# =========================================================
-# VERIFY OTP
-# =========================================================
-
 @router.post("/verify-otp")
 async def verify_otp(
 
@@ -121,9 +58,7 @@ async def verify_otp(
 
     db: AsyncSession = Depends(
         get_db
-    )
-
-):
+    )):
 
     try:
 
@@ -146,19 +81,13 @@ async def verify_otp(
         )
 
 
-# =========================================================
-# LOGOUT
-# =========================================================
-
 @router.post("/logout")
 async def logout(
 
     credentials:
     HTTPAuthorizationCredentials = Depends(
         security
-    )
-
-):
+    )):
 
     token = (
         credentials.credentials
@@ -178,18 +107,12 @@ async def logout(
     }
 
 
-# =========================================================
-# CURRENT USER
-# =========================================================
-
 @router.get("/me")
 async def get_me(
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     return {
 
@@ -213,11 +136,6 @@ async def get_me(
 
     }
 
-
-# =========================================================
-# UPDATE PROFILE
-# =========================================================
-
 @profile_router.post("/update")
 async def update_profile(
 
@@ -225,9 +143,7 @@ async def update_profile(
 
     db: AsyncSession = Depends(
         get_db
-    )
-
-):
+    )):
 
     try:
 

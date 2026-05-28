@@ -1,9 +1,7 @@
 from datetime import datetime
 from typing import Optional, Dict, Any
 from uuid import UUID
-
 from pydantic import BaseModel
-
 from app.core.enums import (
     DisputeCategory,
     DisputeStatus,

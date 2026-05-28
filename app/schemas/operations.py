@@ -1,29 +1,10 @@
 import uuid
-
 from datetime import datetime
-
 from decimal import Decimal
+from typing import (Optional,List,Dict,Any)
+from pydantic import (BaseModel,ConfigDict)
+from app.core.enums import (DiscountType)
 
-from typing import (
-    Optional,
-    List,
-    Dict,
-    Any
-)
-
-from pydantic import (
-    BaseModel,
-    ConfigDict
-)
-
-from app.core.enums import (
-    DiscountType
-)
-
-
-# =========================================================
-# PROMO CODE BASE
-# =========================================================
 
 class PromoCodeBase(BaseModel):
 
@@ -35,95 +16,49 @@ class PromoCodeBase(BaseModel):
 
     discount_value: Decimal
 
-    max_discount: Optional[
-        Decimal
-    ] = None
+    max_discount: Optional[Decimal] = None
 
-    min_order: Optional[
-        Decimal
-    ] = None
+    min_order: Optional[Decimal] = None
 
-    usage_limit: Optional[
-        int
-    ] = None
+    usage_limit: Optional[int] = None
 
     valid_from: datetime
 
     valid_until: datetime
 
-    service_types: Optional[
-        List[str]
-    ] = []
+    service_types: Optional[List[str]] = []
 
 
-# =========================================================
-# PROMO CREATE
-# =========================================================
-
-class PromoCodeCreate(
-    PromoCodeBase
-):
+class PromoCodeCreate(PromoCodeBase):
     pass
 
 
-# =========================================================
-# PROMO UPDATE
-# =========================================================
-
-class PromoCodeUpdate(
-    BaseModel
-):
+class PromoCodeUpdate(BaseModel):
 
     code: Optional[str] = None
 
-    description: Optional[
-        str
-    ] = None
+    description: Optional[str] = None
 
-    discount_type: Optional[
-        DiscountType
-    ] = None
+    discount_type: Optional[DiscountType] = None
 
-    discount_value: Optional[
-        Decimal
-    ] = None
+    discount_value: Optional[Decimal] = None
 
-    max_discount: Optional[
-        Decimal
-    ] = None
+    max_discount: Optional[Decimal] = None
 
-    min_order: Optional[
-        Decimal
-    ] = None
+    min_order: Optional[Decimal] = None
 
-    usage_limit: Optional[
-        int
-    ] = None
+    usage_limit: Optional[int] = None
 
-    valid_from: Optional[
-        datetime
-    ] = None
+    valid_from: Optional[datetime] = None
 
-    valid_until: Optional[
-        datetime
-    ] = None
+    valid_until: Optional[datetime] = None
 
-    service_types: Optional[
-        List[str]
-    ] = None
+    service_types: Optional[List[str]] = None
 
-    active: Optional[
-        bool
-    ] = None
+    active: Optional[ bool] = None
 
 
-# =========================================================
-# PROMO RESPONSE
-# =========================================================
-
-class PromoCodeResponse(
-    PromoCodeBase
-):
+class PromoCodeResponse(PromoCodeBase):
 
     id: uuid.UUID
 
@@ -131,26 +66,17 @@ class PromoCodeResponse(
 
     active: bool
 
-    created_by: Optional[
-        uuid.UUID
-    ] = None
+    created_by: Optional[ uuid.UUID] = None
 
     created_at: datetime
 
     updated_at: datetime
 
     model_config = ConfigDict(
-        from_attributes=True
-    )
+        from_attributes=True)
 
 
-# =========================================================
-# APPLY PROMO REQUEST
-# =========================================================
-
-class PromoApplyRequest(
-    BaseModel
-):
+class PromoApplyRequest(BaseModel):
 
     code: str
 
@@ -158,14 +84,7 @@ class PromoApplyRequest(
 
     service_type: str
 
-
-# =========================================================
-# APPLY PROMO RESPONSE
-# =========================================================
-
-class PromoApplyResponse(
-    BaseModel
-):
+class PromoApplyResponse(BaseModel):
 
     promo_code: str
 
@@ -174,13 +93,7 @@ class PromoApplyResponse(
     final_amount: Decimal
 
 
-# =========================================================
-# SURGE ZONE BASE
-# =========================================================
-
-class SurgeZoneBase(
-    BaseModel
-):
+class SurgeZoneBase(BaseModel):
 
     zone_name: str
 
@@ -188,57 +101,27 @@ class SurgeZoneBase(
 
     polygon: Dict[str, Any]
 
-    multiplier: Decimal = (
-        Decimal("1.0")
-    )
+    multiplier: Decimal = (Decimal("1.0"))
 
 
-# =========================================================
-# SURGE ZONE CREATE
-# =========================================================
-
-class SurgeZoneCreate(
-    SurgeZoneBase
-):
+class SurgeZoneCreate(SurgeZoneBase):
     pass
 
 
-# =========================================================
-# SURGE ZONE UPDATE
-# =========================================================
+class SurgeZoneUpdate(BaseModel):
 
-class SurgeZoneUpdate(
-    BaseModel
-):
+    zone_name: Optional[str] = None
 
-    zone_name: Optional[
-        str
-    ] = None
+    city: Optional[str] = None
 
-    city: Optional[
-        str
-    ] = None
+    polygon: Optional[Dict[str, Any]] = None
 
-    polygon: Optional[
-        Dict[str, Any]
-    ] = None
+    multiplier: Optional[Decimal] = None
 
-    multiplier: Optional[
-        Decimal
-    ] = None
-
-    active: Optional[
-        bool
-    ] = None
+    active: Optional[ bool] = None
 
 
-# =========================================================
-# SURGE ZONE RESPONSE
-# =========================================================
-
-class SurgeZoneResponse(
-    SurgeZoneBase
-):
+class SurgeZoneResponse(SurgeZoneBase):
 
     id: uuid.UUID
 
@@ -251,17 +134,10 @@ class SurgeZoneResponse(
     updated_at: datetime
 
     model_config = ConfigDict(
-        from_attributes=True
-    )
+        from_attributes=True)
 
 
-# =========================================================
-# AUDIT LOG BASE
-# =========================================================
-
-class AuditLogBase(
-    BaseModel
-):
+class AuditLogBase(BaseModel):
 
     action: str
 
@@ -269,37 +145,20 @@ class AuditLogBase(
 
     entity_id: str
 
-    old_value: Optional[
-        Dict[str, Any]
-    ] = None
+    old_value: Optional[Dict[str, Any]] = None
 
-    new_value: Optional[
-        Dict[str, Any]
-    ] = None
+    new_value: Optional[ Dict[str, Any]] = None
 
-    ip_address: Optional[
-        str
-    ] = None
+    ip_address: Optional[str] = None
 
 
-# =========================================================
-# AUDIT LOG CREATE
-# =========================================================
 
-class AuditLogCreate(
-    AuditLogBase
-):
+class AuditLogCreate(AuditLogBase):
 
     actor_id: uuid.UUID
 
 
-# =========================================================
-# AUDIT LOG RESPONSE
-# =========================================================
-
-class AuditLogResponse(
-    AuditLogBase
-):
+class AuditLogResponse(AuditLogBase):
 
     id: uuid.UUID
 
@@ -308,80 +167,50 @@ class AuditLogResponse(
     created_at: datetime
 
     model_config = ConfigDict(
-        from_attributes=True
-    )
+        from_attributes=True)
 
 
-# =========================================================
-# SIMPLE PROMO CREATE
-# =========================================================
 
-class PromoCreate(
-    BaseModel
-):
+class PromoCreate(BaseModel):
 
     code: str
 
-    description: Optional[
-        str
-    ] = None
+    description: Optional[str] = None
 
     discount_type: DiscountType
 
     discount_value: Decimal
 
-    max_discount: Optional[
-        Decimal
-    ] = None
+    max_discount: Optional[Decimal] = None
 
-    min_order: Optional[
-        Decimal
-    ] = None
+    min_order: Optional[Decimal] = None
 
-    usage_limit: Optional[
-        int
-    ] = None
+    usage_limit: Optional[int] = None
 
     valid_from: datetime
 
     valid_until: datetime
 
-    service_types: Optional[
-        List[str]
-    ] = []
+    service_types: Optional[List[str]] = []
 
 
-# =========================================================
-# SIMPLE PROMO RESPONSE
-# =========================================================
-
-class PromoResponse(
-    BaseModel
-):
+class PromoResponse(BaseModel):
 
     id: uuid.UUID
 
     code: str
 
-    description: Optional[
-        str
-    ] = None
+    description: Optional[str] = None
 
     discount_type: DiscountType
 
     discount_value: Decimal
 
-    max_discount: Optional[
-        Decimal
-    ] = None
+    max_discount: Optional[Decimal] = None
 
-    min_order: Optional[
-        Decimal
-    ] = None
+    min_order: Optional[Decimal] = None
 
-    usage_limit: Optional[
-        int
-    ] = None
+    usage_limit: Optional[int] = None
 
     used_count: int
 
@@ -389,20 +218,15 @@ class PromoResponse(
 
     valid_until: datetime
 
-    service_types: Optional[
-        List[str]
-    ] = []
+    service_types: Optional[List[str]] = []
 
     active: bool
 
-    created_by: Optional[
-        uuid.UUID
-    ] = None
+    created_by: Optional[uuid.UUID] = None
 
     created_at: datetime
 
     updated_at: datetime
 
     model_config = ConfigDict(
-        from_attributes=True
-    )
+        from_attributes=True)

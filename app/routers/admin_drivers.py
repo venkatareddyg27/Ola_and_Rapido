@@ -1,42 +1,12 @@
 from uuid import UUID
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    status
-)
-
-from sqlalchemy import (
-    select
-)
-
-from sqlalchemy.orm import (
-    selectinload
-)
-
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
-
-from app.core.database import (
-    get_db
-)
-
-from app.core.security import (
-    get_current_user
-)
-
-from app.core.enums import (
-    DriverStatus,
-    UserRole
-)
-
-from app.models.user_models import (
-    User,
-    DriverProfile,
-    KYCDocument
-)
+from fastapi import (APIRouter,Depends,HTTPException,status)
+from sqlalchemy import (select)
+from sqlalchemy.orm import (selectinload)
+from sqlalchemy.ext.asyncio import (AsyncSession)
+from app.core.database import (get_db)
+from app.core.security import (get_current_user)
+from app.core.enums import (DriverStatus,UserRole)
+from app.models.user_models import (User,DriverProfile,KYCDocument)
 
 
 router = APIRouter(
@@ -48,13 +18,8 @@ router = APIRouter(
 )
 
 
-# =========================================================
-# ADMIN VALIDATION
-# =========================================================
-
 def require_admin(
-    current_user: User
-):
+    current_user: User):
 
     if current_user.role != UserRole.ADMIN:
 
@@ -69,10 +34,6 @@ def require_admin(
         )
 
 
-# =========================================================
-# GET ALL DRIVERS
-# =========================================================
-
 @router.get("/")
 async def get_all_drivers(
 
@@ -80,9 +41,7 @@ async def get_all_drivers(
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     require_admin(current_user)
 
@@ -151,10 +110,6 @@ async def get_all_drivers(
     return response
 
 
-# =========================================================
-# GET SINGLE DRIVER
-# =========================================================
-
 @router.get("/{driver_id}")
 async def get_driver(
 
@@ -164,9 +119,7 @@ async def get_driver(
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     require_admin(current_user)
 
@@ -199,10 +152,6 @@ async def get_driver(
             detail="Driver not found"
 
         )
-
-    # =====================================================
-    # GET KYC DOCUMENTS
-    # =====================================================
 
     kyc_result = await db.execute(
 
@@ -284,10 +233,6 @@ async def get_driver(
     }
 
 
-# =========================================================
-# GET DRIVER DOCUMENTS
-# =========================================================
-
 @router.get("/{driver_id}/documents")
 async def get_driver_documents(
 
@@ -297,9 +242,7 @@ async def get_driver_documents(
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     require_admin(current_user)
 
@@ -332,10 +275,6 @@ async def get_driver_documents(
             detail="Driver not found"
 
         )
-
-    # =====================================================
-    # GET KYC DOCUMENTS
-    # =====================================================
 
     kyc_result = await db.execute(
 
@@ -402,10 +341,6 @@ async def get_driver_documents(
             driver.status
         ),
 
-        # =================================================
-        # DOCUMENTS
-        # =================================================
-
         "aadhaar_number": (
             kyc.aadhaar_number
         ),
@@ -445,10 +380,6 @@ async def get_driver_documents(
     }
 
 
-# =========================================================
-# VERIFY DRIVER
-# =========================================================
-
 @router.put("/{driver_id}/verify")
 async def verify_driver(
 
@@ -458,9 +389,7 @@ async def verify_driver(
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     require_admin(current_user)
 
@@ -501,11 +430,6 @@ async def verify_driver(
 
     }
 
-
-# =========================================================
-# VERIFY DRIVER DOCUMENTS
-# =========================================================
-
 @router.put("/{driver_id}/verify-documents")
 async def verify_driver_documents(
 
@@ -515,9 +439,7 @@ async def verify_driver_documents(
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     require_admin(current_user)
 
@@ -585,11 +507,6 @@ async def verify_driver_documents(
 
     }
 
-
-# =========================================================
-# REJECT DRIVER DOCUMENTS
-# =========================================================
-
 @router.put("/{driver_id}/reject-documents")
 async def reject_driver_documents(
 
@@ -601,9 +518,7 @@ async def reject_driver_documents(
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     require_admin(current_user)
 
@@ -675,10 +590,6 @@ async def reject_driver_documents(
     }
 
 
-# =========================================================
-# REJECT DRIVER
-# =========================================================
-
 @router.put("/{driver_id}/reject")
 async def reject_driver(
 
@@ -690,9 +601,7 @@ async def reject_driver(
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     require_admin(current_user)
 
@@ -737,10 +646,6 @@ async def reject_driver(
     }
 
 
-# =========================================================
-# BLOCK DRIVER
-# =========================================================
-
 @router.put("/{driver_id}/block")
 async def block_driver(
 
@@ -750,9 +655,7 @@ async def block_driver(
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     require_admin(current_user)
 
@@ -778,10 +681,6 @@ async def block_driver(
 
         )
 
-    # =====================================================
-    # TEMPORARY BLOCK STATUS
-    # =====================================================
-
     driver.status = (
         DriverStatus.INACTIVE
     )
@@ -796,10 +695,6 @@ async def block_driver(
     }
 
 
-# =========================================================
-# UNBLOCK DRIVER
-# =========================================================
-
 @router.put("/{driver_id}/unblock")
 async def unblock_driver(
 
@@ -809,9 +704,7 @@ async def unblock_driver(
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     require_admin(current_user)
 
@@ -850,11 +743,6 @@ async def unblock_driver(
 
     }
 
-
-# =========================================================
-# DELETE DRIVER
-# =========================================================
-
 @router.delete("/{driver_id}")
 async def delete_driver(
 
@@ -864,9 +752,7 @@ async def delete_driver(
 
     current_user: User = Depends(
         get_current_user
-    )
-
-):
+    )):
 
     require_admin(current_user)
 
