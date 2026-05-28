@@ -48,8 +48,9 @@ class User(Base):
     surge_zones = relationship( "SurgeZone", foreign_keys="SurgeZone.created_by", back_populates="creator", cascade="all, delete-orphan" )
     audit_logs = relationship( "AuditLog", foreign_keys="AuditLog.actor_id", back_populates="actor", cascade="all, delete-orphan" )  
     trip_invoices = relationship("TripInvoice",back_populates="customer")
-    
-    
+    rented_vehicles = relationship("RentedVehicle",back_populates="owner")
+    damage_reports = relationship("VehicleDamageReport",back_populates="reporter")
+
 class DriverProfile(Base):
 
     __tablename__ = "driver_profiles"

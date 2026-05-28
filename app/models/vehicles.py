@@ -1,11 +1,8 @@
 import uuid
 from datetime import datetime
-
 from sqlalchemy import ( Column, String, Integer, Enum, ForeignKey, DateTime )
-
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-
 from app.core.database import Base
 from app.core.enums import ( VehicleCategory, VehicleStatus, VehiclePhotoAngle )
 
@@ -41,15 +38,13 @@ class Vehicle(Base):
 
     photos = relationship( "VehiclePhoto", back_populates="vehicle", cascade="all, delete-orphan" )
 
-    rentals = relationship( "Rental", back_populates="vehicle" )
-
     drivers = relationship( "DriverProfile", back_populates="vehicle", foreign_keys="DriverProfile.vehicle_id")
     
     documents = relationship( "VehicleDocument", back_populates="vehicle", cascade="all, delete-orphan")
-
-    owner = relationship( "User", back_populates="owned_vehicles")
     
     trip_invoices = relationship("TripInvoice",back_populates="vehicle")
+    
+    
 class VehiclePhoto(Base):
     __tablename__ = "vehicle_photos"
 
@@ -63,11 +58,10 @@ class VehiclePhoto(Base):
     
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 
-    vehicle = relationship(
-        "Vehicle",
-        back_populates="photos"
-    )
+    vehicle = relationship("Vehicle",back_populates="photos")
 
+    
+    
 class VehicleDocument(Base):
 
     __tablename__ = "vehicle_documents"
