@@ -1,41 +1,47 @@
-from app.core.enums import VehicleCategory
+from decimal import Decimal
+
+BASE_FARES = {
+
+    "bike": Decimal("40"),
+
+    "auto": Decimal("60"),
+
+    "car": Decimal("100")
+}
+
+PER_KM_RATE = {
+
+    "bike": Decimal("8"),
+
+    "auto": Decimal("12"),
+
+    "car": Decimal("18")
+}
+
+PER_MINUTE_RATE = {
+
+    "bike": Decimal("1"),
+
+    "auto": Decimal("2"),
+
+    "car": Decimal("3")
+}
 
 
-VEHICLE_PRICING = {
+BOOKING_FEE = Decimal("10")
 
-    VehicleCategory.BIKE: {
-        "base_fare": 30,
-        "per_km_rate": 8,
-        "minimum_fare": 40
-    },
 
-    VehicleCategory.AUTO: {
-        "base_fare": 50,
-        "per_km_rate": 12,
-        "minimum_fare": 70
-    },
+GST_PERCENTAGE = Decimal("5")
 
-    VehicleCategory.HATCHBACK: {
-        "base_fare": 80,
-        "per_km_rate": 15,
-        "minimum_fare": 120
-    },
+MAX_SURGE_MULTIPLIER = Decimal("3.0")
 
-    VehicleCategory.SEDAN: {
-        "base_fare": 100,
-        "per_km_rate": 18,
-        "minimum_fare": 150
-    },
+SURGE_THRESHOLDS = {
 
-    VehicleCategory.SUV: {
-        "base_fare": 150,
-        "per_km_rate": 22,
-        "minimum_fare": 220
-    },
+    1: Decimal("1.0"),
 
-    VehicleCategory.LUXURY: {
-        "base_fare": 300,
-        "per_km_rate": 40,
-        "minimum_fare": 500
-    }
+    2: Decimal("1.2"),
+
+    3: Decimal("1.5"),
+
+    5: Decimal("2.0")
 }

@@ -1,149 +1,56 @@
 import random
 import hashlib
-
 from datetime import datetime, timedelta
 from fastapi import HTTPException
-from app.core.config import settings
 from app.core.enums import OTPPurpose
 
-
-# =========================================================
-# OTP SETTINGS
-# =========================================================
-
 OTP_EXPIRY_MINUTES = 10
+otp_storage = {}
 
-
-# =========================================================
-# GENERATE OTP
-# =========================================================
 
 def generate_otp():
+    return str(random.randint(100000, 999999))
 
-    return str(
-        random.randint(100000, 999999)
-    )
-
-
-# =========================================================
-# HASH OTP
-# =========================================================
 
 def hash_otp(otp: str):
-
-    return hashlib.sha256(
-        otp.encode()
-    ).hexdigest()
+    return hashlib.sha256(otp.encode()).hexdigest()
 
 
-# =========================================================
-# VERIFY OTP HASH
-# =========================================================
-
-def verify_otp_hash(
-    plain_otp: str,
-    hashed_otp: str
-):
-
+def verify_otp_hash(plain_otp: str, hashed_otp: str):
     return hash_otp(plain_otp) == hashed_otp
 
 
-# =========================================================
-# OTP EXPIRY
-# =========================================================
-
 def get_otp_expiry():
-
-    return datetime.utcnow() + timedelta(
-        minutes=OTP_EXPIRY_MINUTES
-    )
+    return datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
 
 
-# =========================================================
-# SEND SMS OTP (DEMO)
-# =========================================================
-
-async def send_sms_otp(
-    phone: str,
-    otp: str
-):
-
+async def send_sms_otp(phone: str, otp: str):
     print("\n==============================")
     print(f"PHONE: {phone}")
     print(f"OTP: {otp}")
     print("==============================\n")
-
     return True
 
-
-# =========================================================
-# OTP SERVICE
-# =========================================================
 
 class OTPService:
 
     @staticmethod
-    async def check_rate_limit(phone: str):
-
-        try:
-
-            rate_key = f"otp_rate:{phone}"
-
-            count = await redis_client.get(rate_key)
-
-            if count and int(count) >= settings.OTP_RATE_LIMIT:
-
-                raise HTTPException(
-                    status_code=429,
-                    detail="Too many OTP requests"
-                )
-
-            if count:
-
-                await redis_client.incr(rate_key)
-
-            else:
-
-                await redis_client.set(
-                    rate_key,
-                    1,
-                    ex=settings.OTP_RATE_LIMIT_WINDOW
-                )
-
-        except Exception:
-
-            # REDIS OPTIONAL
-            pass
-
-    @staticmethod
-    async def send_otp(
-        phone: str,
-        purpose: OTPPurpose
-    ):
-
+    async def send_otp(phone: str, purpose: OTPPurpose):
         otp = generate_otp()
-
         hashed_otp = hash_otp(otp)
+        expiry = get_otp_expiry()
 
-        try:
+        storage_key = f"{purpose.value}:{phone}"
 
-            await OTPService.check_rate_limit(phone)
-
-            redis_key = f"otp:{purpose.value}:{phone}"
-
-            await redis_client.set(
-                redis_key,
-                hashed_otp,
-                ex=settings.OTP_EXPIRY_SECONDS
-            )
-
-        except Exception:
-
-            print("Redis unavailable. Running demo mode.")
+        otp_storage[storage_key] = {
+            "otp": hashed_otp,
+            "expires_at": expiry
+        }
 
         print("\n==============================")
         print(f"PHONE: {phone}")
         print(f"OTP: {otp}")
+        print(f"PURPOSE: {purpose.value}")
         print("==============================\n")
 
         return {
@@ -152,53 +59,25 @@ class OTPService:
         }
 
     @staticmethod
-    async def verify_otp(
-        phone: str,
-        otp: str,
-        purpose: OTPPurpose
-    ):
+    async def verify_otp(phone: str, otp: str, purpose: OTPPurpose):
+        storage_key = f"{purpose.value}:{phone}"
+        otp_data = otp_storage.get(storage_key)
 
-        try:
+        if not otp_data:
+            raise HTTPException(status_code=400, detail="OTP expired or invalid")
 
-            redis_key = f"otp:{purpose.value}:{phone}"
+        if datetime.utcnow() > otp_data["expires_at"]:
+            del otp_storage[storage_key]
+            raise HTTPException(status_code=400, detail="OTP expired")
 
-            stored_hash = await redis_client.get(redis_key)
+        hashed_input = hash_otp(otp)
 
-            if not stored_hash:
+        if hashed_input != otp_data["otp"]:
+            raise HTTPException(status_code=400, detail="Invalid OTP")
 
-                raise HTTPException(
-                    status_code=400,
-                    detail="OTP expired or invalid"
-                )
+        del otp_storage[storage_key]
 
-            hashed_input = hash_otp(otp)
-
-            if hashed_input != stored_hash.decode():
-
-                raise HTTPException(
-                    status_code=400,
-                    detail="Invalid OTP"
-                )
-
-            await redis_client.delete(redis_key)
-
-            return {
-                "success": True,
-                "message": "OTP verified successfully"
-            }
-
-        except Exception:
-
-            # DEMO OTP FALLBACK
-
-            if otp in ["123456", "000000", "4812"]:
-
-                return {
-                    "success": True,
-                    "message": "Demo OTP verified"
-                }
-
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid OTP"
-            )
+        return {
+            "success": True,
+            "message": "OTP verified successfully"
+        }

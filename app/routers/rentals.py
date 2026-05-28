@@ -1,7 +1,7 @@
 from uuid import UUID
 from decimal import Decimal
 from datetime import datetime
-
+from uuid import UUID
 from django import db
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, and_
@@ -13,14 +13,18 @@ from app.core.database import get_db
 from app.models.vehicles import Vehicle
 from app.models.rentals import Rental, RentalInspection
 from app.models.support import Dispute
+from sqlalchemy.orm import selectinload
 
 from app.schemas.rentals import (
-    RentalCreate,
+    RentalDriverCreate,
     RentalDisputeRequest,
     RentalDriverUpdate,
     RentalInspectionCreate,
     RentalDriverCreate,
-    RentalDriverResponse
+    RentalDriverResponse,
+    RentalCreate,
+    CancelBookingRequest
+    
 )
 
 from app.core.enums import (
@@ -29,13 +33,159 @@ from app.core.enums import (
     DisputeStatus,
     DisputePriority,
     UserRole,
+    VehicleCategory
 )
-from app.models.rentals import RentalDriver
+from app.models.rentals import Rental
 
 router = APIRouter(
     prefix="/rentals",
     tags=["Rentals"]
 )
+@router.post("/renter")
+async def create_rental(
+    payload: RentalDriverCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(User).where(User.id == payload.renter_id)
+    )
+    renter = result.scalar_one_or_none()
+
+    if not renter:
+        raise HTTPException(status_code=404, detail="Renter not found")
+
+    if renter.role != "RENTER":
+        raise HTTPException(status_code=403, detail="Only renters allowed")
+
+    existing_rental = await db.execute(
+        select(Rental).where(Rental.renter_id == payload.renter_id)
+    )
+    existing_rental = existing_rental.scalars().first()
+
+    if existing_rental:
+        return {
+            "success": False,
+            "message": "Rental details already created for this renter"
+        }
+
+    rental = Rental(
+        renter_id=payload.renter_id,
+        no_of_seats=payload.no_of_seats,
+        no_of_days=payload.no_of_days,
+        date_of_booking=payload.date_of_booking or datetime.utcnow(),
+        return_date=payload.return_date or datetime.utcnow(),
+        status="BOOKED"
+    )
+
+    db.add(rental)
+    await db.commit()
+    await db.refresh(rental)
+
+    return {
+        "success": True,
+        "message": "Rental details created successfully",
+        "renter_id": str(renter.id)
+    }
+
+@router.put("/renter/{rental_id}")
+async def update_rental(
+    rental_id: UUID,
+    payload: RentalDriverUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Rental).where(Rental.id == rental_id)
+    )
+    rental = result.scalar_one_or_none()
+
+    if not rental:
+        raise HTTPException(status_code=404, detail="Rental not found")
+
+    rental.no_of_seats = payload.no_of_seats
+    rental.no_of_days = payload.no_of_days
+    rental.date_of_booking = payload.date_of_booking
+
+    await db.commit()
+    await db.refresh(rental)
+
+    return {
+        "success": True,
+        "message": "Rental updated successfully",
+        "rental_id": str(rental.id),
+    }
+
+@router.delete("/renter/{rental_id}")
+async def cancel_rental(
+    rental_id: UUID,
+    payload: CancelBookingRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Rental).where(Rental.id == rental_id)
+    )
+    rental = result.scalar_one_or_none()
+
+    if not rental:
+        raise HTTPException(status_code=404, detail="Rental not found")
+
+    if rental.is_cancelled:
+        raise HTTPException(status_code=400, detail="Already cancelled")
+
+    rental.is_cancelled = True
+    rental.cancel_reason = payload.reason
+    rental.cancelled_at = datetime.utcnow()
+    rental.status = "CANCELLED"
+
+    await db.commit()
+    await db.refresh(rental)
+
+    return {
+        "success": True,
+        "message": "Rental cancelled successfully",
+        "rental_id": str(rental.id),
+        "cancelled_at": rental.cancelled_at.isoformat()
+    }
+@router.get("/renter/{rental_id}")
+async def get_rental(
+    rental_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Rental)
+        .options(selectinload(Rental.renter))
+        .where(Rental.id == rental_id)
+    )
+
+    rental = result.scalar_one_or_none()
+
+    if not rental:
+        raise HTTPException(status_code=404, detail="Rental not found")
+
+    renter = rental.renter
+
+    return {
+        "success": True,
+        "data": {
+            "renter": {
+                "id": str(renter.id),
+                "name": renter.full_name,
+                "email": renter.email,
+                "mobile_number":renter.mobile_number
+            },
+            "booking": {
+                "rental_id": str(rental.id),
+                "vehicle_id": str(rental.vehicle_id),
+                "owner_id": str(rental.owner_id),
+                "no_of_seats": rental.no_of_seats,
+                "no_of_days": rental.no_of_days,
+                "date_of_booking": rental.date_of_booking.isoformat() if rental.date_of_booking else None,
+                "status": rental.status,
+                "is_cancelled": rental.is_cancelled,
+                "reason":rental.cancel_reason
+            }
+        }
+    }
+
 
 
 @router.get("/vehicles")
@@ -50,10 +200,17 @@ async def browse_rental_vehicles(
 ):
     query = select(Vehicle)
 
+    # ✅ FIX: convert string → enum
     if category:
-        query = query.where(Vehicle.category == category)
+        try:
+            category_enum = VehicleCategory[category.upper()]
+        except KeyError:
+            raise HTTPException(status_code=400, detail="Invalid category")
 
-    if max_price:
+        query = query.where(Vehicle.category == category_enum)
+
+    # ✅ FIX: handle 0 correctly
+    if max_price is not None:
         query = query.where(Vehicle.daily_rate <= max_price)
 
     result = await db.execute(query)
@@ -227,15 +384,15 @@ async def raise_rental_dispute(
         )
 
     dispute = Dispute(
-        user_id=payload.user_id,
-        rental_id=rental.id,
-        category=payload.category,
-        description=payload.description,
-        priority=DisputePriority.MEDIUM,
-        status=DisputeStatus.OPEN,
-        created_at=datetime.utcnow(),
-    )
-
+    user_id=payload.user_id,
+    rental_id=rental.id,
+    deduction_id=payload.deduction_id,
+    category=payload.category,
+    description=payload.description,
+    priority=DisputePriority.MEDIUM,
+    status=DisputeStatus.OPEN,
+    created_at=datetime.utcnow(),
+)
     db.add(dispute)
     await db.commit()
     await db.refresh(dispute)
@@ -244,69 +401,4 @@ async def raise_rental_dispute(
         "success": True,
         "message": "Dispute raised successfully",
         "dispute_id": dispute.id,
-    }
-
-@router.post("/", response_model=RentalDriverResponse)
-async def create_rental_driver(
-    payload: RentalDriverCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-  
-    if current_user.role != UserRole.RENTER and payload.renter_id != current_user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="Only renters can book drivers for themselves"
-        )
-     
-    rental_driver = RentalDriver(
-        renter_id=current_user.id,
-        no_of_seats=payload.no_of_seats,
-        no_of_days=payload.no_of_days,
-        date_of_booking=payload.date_of_booking
-    )
-
-    db.add(rental_driver)
-    await db.commit()
-    await db.refresh(rental_driver)
-
-    return rental_driver
-  
-@router.put("/{rental_driver_id}/assign")
-async def assign_driver_to_rental(
-    rental_driver_id: UUID,
-    payload: RentalDriverUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    if str(current_user.role).upper() != "RENTER":
-        raise HTTPException(
-            status_code=403,
-            detail="Only renters can assign drivers"
-        )
-
-    result = await db.execute(
-        select(RentalDriver).where(RentalDriver.id == rental_driver_id)
-    )
-    rental_driver = result.scalar_one_or_none()
-
-    if not rental_driver:
-        raise HTTPException(status_code=404, detail="Rental driver request not found")
-
-    if rental_driver.renter_id != current_user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="You can only assign drivers to your own rental requests"
-        )
-
-    rental_driver.driver_id = payload.driver_id
-
-    await db.commit()
-    await db.refresh(rental_driver)
-
-    return {
-        "success": True,
-        "message": "Driver assigned successfully",
-        "rental_driver_id": rental_driver.id,
-        "driver_id": rental_driver.driver_id,
     }

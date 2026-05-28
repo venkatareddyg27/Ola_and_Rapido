@@ -2,15 +2,9 @@ import uuid
 from datetime import datetime, date
 from decimal import Decimal
 from typing import Optional, List
-
 from pydantic import BaseModel, ConfigDict
-
 from app.core.enums import InspectionType, DisputeCategory
 
-
-# =========================================================
-# RENTAL SCHEMAS
-# =========================================================
 
 class RentalBase(BaseModel):
     vehicle_id: uuid.UUID
@@ -41,9 +35,6 @@ class RentalResponse(RentalBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# =========================================================
-# RENTAL INSPECTION SCHEMAS
-# =========================================================
 
 class RentalInspectionBase(BaseModel):
     rental_id: Optional[uuid.UUID] = None
@@ -83,11 +74,6 @@ class RentalInspectionResponse(RentalInspectionBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# =========================================================
-# RENTAL DISPUTE SCHEMA
-# =========================================================
-
 class RentalDisputeRequest(BaseModel):
     user_id: uuid.UUID
     category: DisputeCategory
@@ -99,14 +85,15 @@ class RentalDriverCreate(BaseModel):
     renter_id: uuid.UUID
     no_of_seats: int
     no_of_days: int
-    date_of_booking: Optional[datetime] = None
+    date_of_booking: date
+    return_date:date
     
     
 class RentalDriverUpdate(BaseModel):
     no_of_seats: Optional[int] = None
     no_of_days: Optional[int] = None
-    rating: Optional[int] = None
-    comments: Optional[str] = None
+    date_of_booking:date
+    return_date:date
 class RentalDriverResponse(BaseModel):
     id: uuid.UUID
     renter_id: uuid.UUID
@@ -119,3 +106,7 @@ class RentalDriverResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class CancelBookingRequest(BaseModel):
+    reason: str

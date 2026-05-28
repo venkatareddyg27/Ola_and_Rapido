@@ -1,26 +1,25 @@
 from datetime import datetime
 from decimal import Decimal
+import uuid
 from pydantic import BaseModel, Field
 
 from app.core.enums import (
     ParcelStatus,
     ParcelType,
     ParcelPriority,
+    VehicleCategory,
+    TripStatus,
     ProofType,
     DeliveryAttemptStatus,
     PaymentStatus,
-    FeedbackType,
-)
+    FeedbackType)
 
 
 class ORMBase(BaseModel):
     model_config = {"from_attributes": True}
 
-class ParcelBase(BaseModel):
-    sender_id: int
-    receiver_id: int | None = None
-    driver_id: int | None = None
 
+class ParcelCreate(BaseModel):
     pickup_address: str
     pickup_lat: Decimal
     pickup_lng: Decimal
@@ -31,22 +30,14 @@ class ParcelBase(BaseModel):
 
     parcel_type: ParcelType = ParcelType.PACKAGE
     priority: ParcelPriority = ParcelPriority.NORMAL
-
-
-class ParcelCreate(ParcelBase):
-    pickup_address: str
-    pickup_lat: Decimal
-    pickup_lng: Decimal
-    drop_lat: Decimal
-    drop_lng: Decimal
+    
     sender_name: str
-    sender_phone: str
     receiver_name: str
     receiver_phone: str
     receiver_address: str
+
     package_type: str
     weight_kg: Decimal
-    cod_amount: Decimal | None
 
 
 class ParcelUpdate(BaseModel):
@@ -58,15 +49,17 @@ class ParcelUpdate(BaseModel):
     cancelled_at: datetime | None = None
 
 
-class ParcelResponse(ParcelBase, ORMBase):
-    id: int
-    status: ParcelStatus
-    requested_at: datetime
-    picked_up_at: datetime | None = None
-    delivered_at: datetime | None = None
-    cancelled_at: datetime | None = None
-    created_at: datetime
-    updated_at: datetime
+class ParcelBookingResponse(BaseModel):
+    message: str
+    trip_id: uuid.UUID
+    parcel_id: uuid.UUID
+    distance_km: Decimal
+    delivery_charge: Decimal
+    vehicle_category: VehicleCategory
+    trip_status: TripStatus
+    parcel_status: str
+    
+    
 class ParcelItemBase(BaseModel):
     name: str
     description: str | None = None
@@ -135,7 +128,7 @@ class ParcelTrackingUpdate(BaseModel):
 class ParcelTrackingResponse(ParcelTrackingBase, ORMBase):
     id: int
     parcel_id: int
-    recorded_at: datetime
+    recorded_at: datetime   
 class ParcelStatusHistoryBase(BaseModel):
     old_status: ParcelStatus | None = None
     new_status: ParcelStatus
@@ -155,6 +148,8 @@ class ParcelStatusHistoryResponse(ParcelStatusHistoryBase, ORMBase):
     id: int
     parcel_id: int
     changed_at: datetime
+    
+    
 class ParcelProofBase(BaseModel):
     proof_type: ProofType
     proof_url: str | None = None
