@@ -20,17 +20,7 @@ from app.models.user_models import User
 from app.models.trips import Trip, TripParcel, TripLocation
 from app.schemas.parcel import ParcelCreate, ParcelBookingResponse
 from app.services.fare import FareCalculatorService
-
-from app.services.matching import DriverMatchingService
-
 from app.services.distance_service import DistanceService
-from app.core.config import settings
-
-from app.services.distance_service import DistanceService
-from app.services.matching import DriverMatchingService
-
-
-from app.core.websocket_manager import websocket_manager
 
 
 router = APIRouter(prefix="/customer/parcels", tags=["Customer Parcels"])
@@ -96,8 +86,8 @@ async def book_parcel(
         vehicle_category=vehicle_category,
         status=TripStatus.PENDING_CONFIRMATION,
         estimated_distance=Decimal(str(round(distance_km, 2))),
-        estimated_fare=fare_data["total_charge"],
-        fare=fare_data["total_charge"],
+        estimated_fare=Decimal(str(fare_data["total_charge"])),
+        fare=Decimal(str(fare_data["total_charge"])),
         ride_otp=generate_otp(),
     )
 
@@ -133,14 +123,9 @@ async def book_parcel(
 
     db.add(parcel)
     await db.commit()
+    await db.refresh(trip)
+    await db.refresh(parcel)
 
-
-    # 6. Match driver
-    matching_service = DriverMatchingService(
-        db=db,
-        #redis_client=redis_client,
-        websocket_manager=websocket_manager,
-    )
     return {
         "message": "Parcel draft created. Please review and confirm.",
         "trip_id": trip.id,
@@ -169,7 +154,6 @@ async def get_parcel_summary(
             Trip.customer_id == current_user.id,
             Trip.service_type == ServiceType.PARCEL,
         )
-
     )
 
     row = result.first()
@@ -236,6 +220,8 @@ async def confirm_parcel_booking(
     trip.updated_at = datetime.utcnow()
 
     await db.commit()
+    await db.refresh(trip)
+    await db.refresh(parcel)
 
     return {
         "message": "Parcel booking confirmed successfully. Searching for driver.",
@@ -349,7 +335,14 @@ async def track_parcel(
         "receiver_address": parcel.receiver_address,
         "package_type": parcel.package_type,
         "weight_kg": parcel.weight_kg,
-        "locations": locations,
+        "locations": [
+            {
+                "lat": float(location.lat),
+                "lng": float(location.lng),
+                "recorded_at": location.recorded_at,
+            }
+            for location in locations
+        ],
     }
 
 
@@ -431,6 +424,7 @@ async def cancel_parcel(
     trip.cancelled_at = datetime.utcnow()
     trip.cancel_reason = reason
     parcel.status = ParcelStatus.CANCELLED.value
+    trip.updated_at = datetime.utcnow()
 
     await db.commit()
 

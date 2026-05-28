@@ -223,11 +223,14 @@ class FeedbackType(str, enum.Enum):
     DELIVERY = "DELIVERY"
     PAYMENT = "PAYMENT"
     APP = "APP"
+
     OTHER = "OTHER"
-class DeductionType(str, enum.Enum):
-    FARE = "fare"
-    DAMAGE = "damage"
-    BEHAVIOUR = "behaviour"
-    PAYMENT = "payment"
-    DELIVERY = "delivery"
-    OTHER = "other"
+
+class TripType(str, enum.Enum):
+    ride = "ride"
+    parcel = "parcel"
+    
+class InvoiceStatus(str, enum.Enum):
+    generated = "generated"
+    sent = "sent"
+    cancelled = "cancelled"

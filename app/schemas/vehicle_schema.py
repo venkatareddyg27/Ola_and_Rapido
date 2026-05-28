@@ -15,6 +15,7 @@ class VehicleBase(BaseModel):
     sitting_capacity: Optional[int] = None
     fuel_type: Optional[str] = None
     colour: Optional[str] = None
+    daily_rate:float
 
 
 class VehicleCreate(VehicleBase):
@@ -50,13 +51,21 @@ class VehicleDocumentResponse(BaseModel):
         from_attributes=True)
 
 
-class VehicleResponse(VehicleBase):
+class VehicleResponse(BaseModel):
     id: UUID
+    owner_id: UUID
+    make: str | None = None
+    model: str
+    year: int
+    registration_number: str
+    category: VehicleCategory
     status: VehicleStatus
-    created_at: datetime
+    sitting_capacity: int
+    fuel_type: str | None = None
+    colour: str
+    daily_rate: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class VehiclePhotoBase(BaseModel):

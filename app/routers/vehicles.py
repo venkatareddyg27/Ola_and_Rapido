@@ -1,60 +1,22 @@
-
 from uuid import UUID
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    UploadFile,
-    File,
-    Form
-)
-
-from sqlalchemy import (
-    select
-)
-
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
-
+from fastapi import (APIRouter,Depends,HTTPException,UploadFile,File,Form)
+from sqlalchemy import (select)
+from sqlalchemy.ext.asyncio import (AsyncSession)
 from app.core.database import get_db
-
-from app.models.user_models import (
-    User,
-    DriverProfile
-)
-
-from app.models.vehicles import (
-    Vehicle,
-    VehicleDocument
-)
-
-from app.schemas.vehicle_schema import (
-    VehicleCreate,
-    VehicleResponse,
-    VehicleUpdateStatus,
-    VehicleDocumentResponse
-)
-
-from app.core.security import (
-    get_current_user
-)
+from app.models.user_models import (User,DriverProfile)
+from app.models.vehicles import (Vehicle,VehicleDocument)
+from app.schemas.vehicle_schema import (VehicleCreate,VehicleResponse,VehicleUpdateStatus,VehicleDocumentResponse,VehicleBase)
+from app.core.security import (get_current_user)
+from app.core.enums import VehicleStatus
 
 router = APIRouter(
     prefix="/vehicles",
-    tags=["Vehicles"]
-)
+    tags=["Vehicles"])
 
-
-# =========================================================
-# REGISTER VEHICLE
-# =========================================================
 
 @router.post(
     "/register",
-    response_model=VehicleResponse
-)
+    response_model=VehicleResponse)
 async def register_vehicle(
     payload: VehicleCreate,
 
@@ -68,9 +30,6 @@ async def register_vehicle(
     Register vehicle for driver.
     """
 
-    # =====================================================
-    # CHECK DRIVER PROFILE
-    # =====================================================
 
     result = await db.execute(
         select(DriverProfile).where(
@@ -90,32 +49,18 @@ async def register_vehicle(
             detail="Driver profile not found"
         )
 
-    # =====================================================
-    # CREATE VEHICLE
-    # =====================================================
-
     vehicle = Vehicle(
-
-        driver_id=driver_profile.id,
-
-        category=payload.category,
-
-        brand=payload.brand,
-
+        owner_id=driver_profile.user_id,
+        make=payload.make,
         model=payload.model,
-
-        vehicle_number=
-        payload.vehicle_number,
-
-        color=payload.color,
-
-        manufacturing_year=
-        payload.manufacturing_year,
-
-        seating_capacity=
-        payload.seating_capacity,
-
-        status="active"
+        year=payload.year,
+        registration_number=payload.registration_number,
+        category=payload.category,
+        status=VehicleStatus.ACTIVE,
+        sitting_capacity=payload.sitting_capacity,
+        fuel_type=payload.fuel_type,
+        colour=payload.colour,
+        daily_rate=payload.daily_rate   # REQUIRED
     )
 
     db.add(vehicle)
@@ -124,9 +69,6 @@ async def register_vehicle(
 
     await db.refresh(vehicle)
 
-    # =====================================================
-    # UPDATE DRIVER PROFILE
-    # =====================================================
 
     driver_profile.vehicle_id = (
         vehicle.id
@@ -135,11 +77,6 @@ async def register_vehicle(
     await db.commit()
 
     return vehicle
-
-
-# =========================================================
-# GET MY VEHICLES
-# =========================================================
 
 @router.get(
     "/my-vehicles",
@@ -156,10 +93,6 @@ async def my_vehicles(
     Get driver vehicles.
     """
 
-    # =====================================================
-    # DRIVER PROFILE
-    # =====================================================
-
     result = await db.execute(
         select(DriverProfile).where(
             DriverProfile.user_id ==
@@ -178,14 +111,11 @@ async def my_vehicles(
             detail="Driver profile not found"
         )
 
-    # =====================================================
-    # GET VEHICLES
-    # =====================================================
 
     vehicles_result = await db.execute(
         select(Vehicle).where(
-            Vehicle.driver_id ==
-            driver_profile.id
+            Vehicle.owner_id ==
+            current_user.id
         )
     )
 
@@ -194,11 +124,6 @@ async def my_vehicles(
     )
 
     return vehicles
-
-
-# =========================================================
-# GET VEHICLE DETAILS
-# =========================================================
 
 @router.get(
     "/{vehicle_id}",
@@ -236,10 +161,6 @@ async def get_vehicle(
 
     return vehicle
 
-
-# =========================================================
-# UPDATE VEHICLE STATUS
-# =========================================================
 
 @router.put("/{vehicle_id}/status")
 async def update_vehicle_status(
@@ -283,11 +204,6 @@ async def update_vehicle_status(
         "Vehicle status updated"
     }
 
-
-# =========================================================
-# UPLOAD VEHICLE DOCUMENT
-# =========================================================
-
 @router.post(
     "/{vehicle_id}/documents",
     response_model=VehicleDocumentResponse
@@ -309,10 +225,6 @@ async def upload_vehicle_document(
     Upload vehicle document.
     """
 
-    # =====================================================
-    # CHECK VEHICLE
-    # =====================================================
-
     result = await db.execute(
         select(Vehicle).where(
             Vehicle.id == vehicle_id
@@ -330,18 +242,10 @@ async def upload_vehicle_document(
             detail="Vehicle not found"
         )
 
-    # =====================================================
-    # STORE FILE
-    # =====================================================
-
     file_url = (
         f"/uploads/vehicles/"
         f"{file.filename}"
     )
-
-    # =====================================================
-    # CREATE DOCUMENT
-    # =====================================================
 
     document = VehicleDocument(
 

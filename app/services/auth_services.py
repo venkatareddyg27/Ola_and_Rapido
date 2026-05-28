@@ -1,6 +1,7 @@
 import random
 from datetime import datetime, timedelta
-from fastapi import HTTPException
+
+from fastapi import HTTPException,status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,16 +9,28 @@ from app.models.user_models import User, OTPLog
 from app.schemas.auth_schema import VerifyOTPRequest, RegisterRequest, LoginRequest
 from app.core.enums import OTPPurpose, UserRole
 from app.services.otp import hash_otp, verify_otp_hash
-from app.core.security import create_access_token
+from app.core.security import create_access_token, create_refresh_token
 
 
-async def login_service(data: LoginRequest, db: AsyncSession):
+async def login_service(
+    data: LoginRequest,
+    db: AsyncSession
+):
+    mobile=await db.execute(select(User).where(User.mobile_number == data.phone))
+
+    mobile_result=mobile.scalars().first()
+
+    if not mobile_result:
+         raise HTTPException( status_code=status.HTTP_404_NOT_FOUND, detail="User already registered" )
+    
     otp = str(random.randint(100000, 999999))
 
     print("\n===================================")
     print(f"PHONE NUMBER : {data.phone}")
-    print(f"OTP           : {otp}")
+    print(f"OTP          : {otp}")
     print("===================================\n")
+
+
 
     otp_log = OTPLog(
         phone=data.phone,
@@ -27,6 +40,7 @@ async def login_service(data: LoginRequest, db: AsyncSession):
     )
 
     db.add(otp_log)
+
     await db.commit()
     await db.refresh(otp_log)
 
@@ -37,32 +51,53 @@ async def login_service(data: LoginRequest, db: AsyncSession):
     }
 
 
-async def verify_otp_service(data: VerifyOTPRequest, db: AsyncSession):
-    query = (
-        select(OTPLog)
-        .where(OTPLog.phone == data.phone)
-        .order_by(OTPLog.created_at.desc())
+async def verify_otp_service(
+    data: VerifyOTPRequest,
+    db: AsyncSession
+):
+    query = select(OTPLog).where(
+        OTPLog.phone == data.phone
+    ).order_by(
+        OTPLog.created_at.desc()
     )
 
     result = await db.execute(query)
+
     otp_log = result.scalars().first()
 
     if not otp_log:
-        raise HTTPException(status_code=404, detail="OTP not found")
+        raise HTTPException(
+            status_code=404,
+            detail="OTP not found"
+        )
 
     if otp_log.expires_at < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="OTP expired")
+        raise HTTPException(
+            status_code=400,
+            detail="OTP expired"
+        )
 
-    is_valid = verify_otp_hash(data.otp, otp_log.otp_hash)
+    is_valid = verify_otp_hash(
+        data.otp,
+        otp_log.otp_hash
+    )
 
     if not is_valid:
-        raise HTTPException(status_code=400, detail="Invalid OTP")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid OTP"
+        )
 
     otp_log.used_at = datetime.utcnow()
+
     await db.commit()
 
-    user_query = select(User).where(User.mobile_number == data.phone)
+    user_query = select(User).where(
+        User.mobile_number == data.phone
+    )
+
     user_result = await db.execute(user_query)
+
     user = user_result.scalars().first()
 
     if not user:
@@ -73,19 +108,27 @@ async def verify_otp_service(data: VerifyOTPRequest, db: AsyncSession):
             is_active=True,
             is_verified=True
         )
+
         db.add(user)
+
         await db.commit()
         await db.refresh(user)
 
-    access_token = create_access_token({
-        "sub": str(user.id),
-        "role": str(user.role)
-    })
+    access_token = create_access_token(
+        str(user.id),
+        str(user.role)
+    )
+
+    refresh_token = create_refresh_token(
+        str(user.id),
+        str(user.role)
+    )
 
     return {
         "message": "OTP verified successfully",
         "verified": True,
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user": {
             "id": str(user.id),
@@ -101,10 +144,16 @@ async def logout_service(refresh_token: str):
     }
 
 
-async def register_service(data: RegisterRequest, db: AsyncSession):
+async def register_service(
+    data: RegisterRequest,
+    db: AsyncSession
+):
     result = await db.execute(
-        select(User).where(User.mobile_number == data.phone)
+        select(User).where(
+            User.mobile_number == data.phone
+        )
     )
+
     user = result.scalar_one_or_none()
 
     if not user:
@@ -135,6 +184,6 @@ async def register_service(data: RegisterRequest, db: AsyncSession):
             "full_name": user.full_name,
             "email": user.email,
             "profile_photo_url": user.profile_photo_url,
-            "role": user.role
+            "role": str(user.role)
         }
     }

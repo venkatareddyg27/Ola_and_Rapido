@@ -1,63 +1,24 @@
 from uuid import UUID
 from datetime import datetime, date
 from decimal import Decimal
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException
-)
-
-from sqlalchemy import (
-    select,
-    func,
-    update
-)
-
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
-
-from app.core.database import (
-    get_db
-)
-
-from app.core.enums import (
-    DriverStatus,
-    TripStatus,
-    UserRole
-)
-
-from app.core.security import (
-    get_current_user
-)
-
-from app.models.user_models import (
-    User,
-    DriverProfile,
-    DriverLocation
-)
-
-from app.models.trips import (
-    Trip
-)
-
-from app.services.distance_service import (
-    DistanceService
-)
+from fastapi import (APIRouter,Depends,HTTPException)
+from sqlalchemy import (select,func,update)
+from sqlalchemy.ext.asyncio import (AsyncSession)
+from app.core.database import (get_db)
+from app.core.enums import (DriverStatus,TripStatus,UserRole)
+from app.core.security import (get_current_user)
+from app.models.user_models import (User,DriverProfile,DriverLocation)
+from app.models.trips import (Trip)
+from app.services.distance_service import (DistanceService)
 
 router = APIRouter(
     prefix="/drivers",
     tags=["Driver Trips"]
 )
 
-# =========================================================
-# DRIVER ROLE VALIDATION
-# =========================================================
 
 def require_driver_role(
-    current_user: User
-):
+    current_user: User):
 
     if current_user.role != UserRole.DRIVER:
 
@@ -69,16 +30,12 @@ def require_driver_role(
             "Only drivers can access this API"
         )
 
-# =========================================================
-# GET DRIVER PROFILE
-# =========================================================
 
 async def get_driver_profile(
 
     db: AsyncSession,
 
-    user_id: UUID
-):
+    user_id: UUID):
 
     result = await db.execute(
 
@@ -100,10 +57,6 @@ async def get_driver_profile(
 
     return driver
 
-# =========================================================
-# UPDATE DRIVER STATUS
-# =========================================================
-
 @router.put("/status")
 async def update_driver_status(
 
@@ -121,8 +74,7 @@ async def update_driver_status(
 
     current_user: User = Depends(
         get_current_user
-    )
-):
+    )):
 
     require_driver_role(current_user)
 
@@ -217,10 +169,6 @@ async def update_driver_status(
         status
     }
 
-# =========================================================
-# NEARBY TRIPS
-# =========================================================
-
 @router.get("/nearby-trips")
 async def get_nearby_trips(
 
@@ -230,8 +178,7 @@ async def get_nearby_trips(
 
     current_user: User = Depends(
         get_current_user
-    )
-):
+    )):
 
     require_driver_role(current_user)
 
@@ -280,7 +227,7 @@ async def get_nearby_trips(
         select(Trip).where(
 
             Trip.status ==
-            TripStatus.SEARCHING,
+            TripStatus.SEARCHING_DRIVER,
 
             Trip.driver_id == None
         )
@@ -299,9 +246,9 @@ async def get_nearby_trips(
 
                 float(driver_location.longitude),
 
-                float(trip.pickup_latitude),
+                float(trip.pickup_lat),
 
-                float(trip.pickup_longitude)
+                float(trip.pickup_lng)
             )
         )
 
@@ -325,16 +272,16 @@ async def get_nearby_trips(
             str(trip.id),
 
             "pickup_latitude":
-            float(trip.pickup_latitude),
+            float(trip.pickup_lat),
 
             "pickup_longitude":
-            float(trip.pickup_longitude),
+            float(trip.pickup_lng),
 
             "drop_latitude":
-            float(trip.drop_latitude),
+            float(trip.drop_lat),
 
             "drop_longitude":
-            float(trip.drop_longitude),
+            float(trip.drop_lng),
 
             "estimated_fare":
             float(trip.estimated_fare),
@@ -359,10 +306,6 @@ async def get_nearby_trips(
         "trips":
         nearby_trips
     }
-
-# =========================================================
-# ACCEPT TRIP
-# =========================================================
 
 @router.put("/trips/{trip_id}/accept")
 async def accept_trip(
@@ -488,9 +431,6 @@ async def accept_trip(
         "Ride accepted"
     }
 
-# =========================================================
-# DRIVER ARRIVED
-# =========================================================
 
 @router.put("/trips/{trip_id}/arrived")
 async def arrived_trip(
@@ -561,9 +501,6 @@ async def arrived_trip(
         "Driver reached pickup"
     }
 
-# =========================================================
-# START TRIP
-# =========================================================
 
 @router.put("/trips/{trip_id}/start")
 async def start_trip(
@@ -649,9 +586,6 @@ async def start_trip(
         "Ride started"
     }
 
-# =========================================================
-# COMPLETE TRIP
-# =========================================================
 
 @router.put("/trips/{trip_id}/complete")
 async def complete_trip(
@@ -731,10 +665,6 @@ async def complete_trip(
         "message":
         "Ride completed"
     }
-
-# =========================================================
-# CANCEL TRIP
-# =========================================================
 
 @router.put("/trips/{trip_id}/cancel")
 async def cancel_trip(
@@ -818,9 +748,6 @@ async def cancel_trip(
         "Ride cancelled"
     }
 
-# =========================================================
-# CURRENT TRIP
-# =========================================================
 
 @router.get("/current-trip")
 async def current_trip(
@@ -868,9 +795,6 @@ async def current_trip(
 
     return trip
 
-# =========================================================
-# TODAY EARNINGS
-# =========================================================
 
 @router.get("/earnings/today")
 async def today_earnings(

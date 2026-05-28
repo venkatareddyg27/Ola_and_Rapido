@@ -1,78 +1,20 @@
 from uuid import UUID
-from datetime import datetime, date
-from decimal import Decimal
+from fastapi import (APIRouter,Depends,HTTPException)
+from sqlalchemy import (select,update)
+from sqlalchemy.ext.asyncio import (AsyncSession)
+from app.core.database import (get_db)
+from app.core.enums import (DriverStatus, UserRole)
+from app.core.security import (get_current_user)
+from app.models.user_models import (User,DriverProfile,KYCDocument)
+from app.models.vehicles import (Vehicle)
+from app.schemas.user_schema import (DriverProfileCreate,DriverProfileResponse,DriverDocumentsUpdate)
+from app.schemas.vehicle_schema import (VehicleCreate)
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException
-)
+router = APIRouter(prefix="/drivercreation",tags=["Drivers"])
 
-from sqlalchemy import (
-    select,
-    func,
-    update
-)
-
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
-
-from app.core.database import (
-    get_db
-)
-
-from app.core.enums import (
-    DriverStatus,
-    TripStatus,
-    UserRole
-)
-
-from app.core.security import (
-    get_current_user
-)
-
-from app.models.user_models import (
-    User,
-    DriverProfile,
-    DriverLocation,
-    KYCDocument
-)
-
-from app.models.trips import (
-    Trip
-)
-
-from app.models.vehicles import (
-    Vehicle
-)
-
-from app.schemas.user_schema import (
-    DriverProfileCreate,
-    DriverProfileResponse,
-    DriverDocumentsUpdate
-)
-
-from app.schemas.vehicle_schema import (
-    VehicleCreate
-)
-
-from app.services.distance_service import (
-    DistanceService
-)
-
-router = APIRouter(
-    prefix="/drivercreation",
-    tags=["Drivers"]
-)
-
-# =========================================================
-# DRIVER ROLE VALIDATION
-# =========================================================
 
 def require_driver_role(
-    current_user: User
-):
+    current_user: User):
 
     if current_user.role != UserRole.DRIVER:
 
@@ -84,16 +26,11 @@ def require_driver_role(
             "Only drivers can access this API"
         )
 
-# =========================================================
-# GET DRIVER PROFILE
-# =========================================================
-
 async def get_driver_profile(
 
     db: AsyncSession,
 
-    user_id: UUID
-):
+    user_id: UUID):
 
     result = await db.execute(
 
@@ -115,9 +52,6 @@ async def get_driver_profile(
 
     return driver
 
-# =========================================================
-# REGISTER DRIVER
-# =========================================================
 
 @router.post(
     "/register",
@@ -316,10 +250,6 @@ async def register_driver(
 
     return driver
 
-# =========================================================
-# UPLOAD DRIVER DOCUMENTS
-# =========================================================
-
 @router.put("/documents")
 async def upload_driver_documents(
 
@@ -358,10 +288,6 @@ async def upload_driver_documents(
             detail=
             "KYC documents not found"
         )
-
-    # =====================================================
-    # LICENSE
-    # =====================================================
 
     if payload.license_number:
 
@@ -403,10 +329,6 @@ async def upload_driver_documents(
             payload.license_back_url
         )
 
-    # =====================================================
-    # AADHAAR
-    # =====================================================
-
     if payload.aadhaar_number:
 
         existing_aadhaar = await db.execute(
@@ -447,9 +369,7 @@ async def upload_driver_documents(
             payload.aadhaar_back_url
         )
 
-    # =====================================================
-    # RC
-    # =====================================================
+
 
     if payload.rc_number:
 
@@ -491,9 +411,6 @@ async def upload_driver_documents(
             payload.rc_back_url
         )
 
-    # =====================================================
-    # OTHER DOCUMENTS
-    # =====================================================
 
     if payload.insurance_url:
 
@@ -507,9 +424,6 @@ async def upload_driver_documents(
             payload.pollution_certificate_url
         )
 
-    # =====================================================
-    # RESET VERIFICATION
-    # =====================================================
 
     kyc.verification_status = (
         "PENDING"
@@ -536,9 +450,6 @@ async def upload_driver_documents(
         "PENDING"
     }
 
-# =========================================================
-# ADD VEHICLE
-# =========================================================
 
 @router.post("/vehicle")
 async def add_vehicle(

@@ -14,7 +14,6 @@ from app.models.vehicles import Vehicle
 from app.models.rentals import Rental, RentalInspection
 from app.models.support import Dispute
 from sqlalchemy.orm import selectinload
-
 from app.schemas.rentals import (
     RentalDriverCreate,
     RentalDisputeRequest,
@@ -191,7 +190,7 @@ async def get_rental(
 @router.get("/vehicles")
 async def browse_rental_vehicles(
     lat: float | None = Query(None),
-    lng: float | None = Query(None),
+    long: float | None = Query(None),
     category: str | None = Query(None),
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
@@ -200,7 +199,6 @@ async def browse_rental_vehicles(
 ):
     query = select(Vehicle)
 
-    # ✅ FIX: convert string → enum
     if category:
         try:
             category_enum = VehicleCategory[category.upper()]
@@ -209,7 +207,7 @@ async def browse_rental_vehicles(
 
         query = query.where(Vehicle.category == category_enum)
 
-    # ✅ FIX: handle 0 correctly
+   
     if max_price is not None:
         query = query.where(Vehicle.daily_rate <= max_price)
 

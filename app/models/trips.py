@@ -52,19 +52,23 @@ class Trip(Base):
     customer = relationship("User", back_populates="customer_trips")
     driver = relationship("DriverProfile", back_populates="trips")
 
-    parcel = relationship(
-        "TripParcel",
-        back_populates="trip",
-        uselist=False,
-        cascade="all, delete-orphan"
-    )
-
-    locations = relationship("TripLocation", back_populates="trip", cascade="all, delete-orphan")
-    payments = relationship("Payment", back_populates="trip", cascade="all, delete-orphan")
-    ratings = relationship("Rating", back_populates="trip", cascade="all, delete-orphan")
-    disputes = relationship("Dispute", back_populates="trip", cascade="all, delete-orphan")
+    parcel = relationship( "TripParcel", back_populates="trip", uselist=False, cascade="all, delete-orphan" )
+  
 
 
+    locations = relationship( "TripLocation", back_populates="trip", cascade="all, delete-orphan" )
+
+    payments = relationship( "Payment", back_populates="trip", cascade="all, delete-orphan")
+
+    ratings = relationship( "Rating", back_populates="trip", cascade="all, delete-orphan" )
+
+    disputes = relationship( "Dispute", back_populates="trip", cascade="all, delete-orphan" )
+    invoice = relationship(
+    "TripInvoice",
+    back_populates="trip",
+    uselist=False,
+    cascade="all, delete-orphan"
+)
 class TripLocation(Base):
     __tablename__ = "trip_locations"
 
@@ -103,3 +107,4 @@ class TripParcel(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     trip = relationship("Trip", back_populates="parcel")
+    

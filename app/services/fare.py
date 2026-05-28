@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from app.core.enums import ParcelPriority, VehicleCategory
+
 from app.utils.fare_config import (
     BASE_FARES,
     PER_KM_RATE,
@@ -82,7 +83,6 @@ class FareCalculatorService:
     # =====================================================
     # CALCULATE DELIVERY CHARGE
     # =====================================================
-
     @classmethod
     def calculate_delivery_charge(
         cls,
@@ -105,8 +105,16 @@ class FareCalculatorService:
         elif priority.value == "urgent":
             priority_fee = Decimal("60.00")
 
-        total_charge = base_fare + distance_price + weight_price + priority_fee
+        surge_amount = Decimal("0.00")
+
+        total_charge = base_fare + distance_price + weight_price + priority_fee + surge_amount
+
+        tax_amount = FareCalculatorService.calculate_tax(total_charge)
+        final_fare = (total_charge + tax_amount).quantize(Decimal("0.01"))
 
         return {
-            "total_charge": float(total_charge)
+            "total_charge": float(total_charge),
+            "surge_amount": float(surge_amount),
+            "tax_amount": float(tax_amount),
+            "total_fare": float(final_fare),
         }

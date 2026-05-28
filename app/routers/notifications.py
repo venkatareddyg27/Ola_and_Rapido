@@ -1,42 +1,60 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, update, delete, desc
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query
+)
+
+from sqlalchemy import (
+    select,
+    update,
+    delete,
+    desc
+)
+
+from sqlalchemy.ext.asyncio import (
+    AsyncSession
+)
 
 from app.core.database import get_db
-from app.core.security import get_current_user
-from app.models.support import Notification
-from app.models.user_models import User
+
+from app.models.support import (
+    Notification
+)
+
+from app.models.user_models import (
+    User
+)
+
 from app.schemas.support import (
     NotificationCreate,
     NotificationResponse,
-    NotificationMarkReadRequest,
-    FCMTokenRequest
+    NotificationMarkReadRequest
 )
-from app.services.notification import notify_user
+
+from app.core.security import (
+    get_current_user
+)
+
+from app.core.websocket_manager import (
+    websocket_manager
+)
 
 router = APIRouter(
     prefix="/notifications",
-    tags=["Notifications"]
+    tags=["Notifications"])
+
+
+# =========================================================
+# GET USER NOTIFICATIONS
+# =========================================================
+
+@router.get(
+    "/",
+    response_model=list[NotificationResponse]
 )
-
-
-@router.post("/save-fcm-token")
-async def save_fcm_token(
-    payload: FCMTokenRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    current_user.fcm_token = payload.fcm_token
-    await db.commit()
-
-    return {
-        "message": "FCM token saved successfully"
-    }
-
-
-@router.get("/", response_model=list[NotificationResponse])
 async def get_notifications(
     page: int = Query(1, ge=1),
     limit: int = Query(10, le=100),
@@ -61,24 +79,79 @@ async def get_notifications(
 
     result = await db.execute(query)
 
-    return result.scalars().all()
+    notifications = (
+        result.scalars().all()
+    )
+
+    return notifications
 
 
-@router.post("/send", response_model=NotificationResponse)
+# =========================================================
+# SEND NOTIFICATION
+# =========================================================
+
+@router.post(
+    "/send",
+    response_model=NotificationResponse
+)
 async def send_notification(
     payload: NotificationCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return await notify_user(
-        db=db,
+    """
+    Send notification
+    to specific user.
+    """
+
+    # =====================================================
+    # CREATE NOTIFICATION
+    # =====================================================
+
+    notification = Notification(
         user_id=payload.user_id,
         title=payload.title,
-        body=payload.body,
-        notification_type=payload.type,
-        data=payload.data
+
+        message=payload.message,
+
+        notification_type=(
+            payload.notification_type
+        ),
+
+        is_read=False
     )
 
+    db.add(notification)
+
+    await db.commit()
+
+    await db.refresh(notification)
+
+    # =====================================================
+    # REALTIME WEBSOCKET EVENT
+    # =====================================================
+
+    await websocket_manager.send_to_user(
+        user_id=str(payload.user_id),
+        message={
+            "event": "NEW_NOTIFICATION",
+
+            "title": payload.title,
+
+            "message": payload.message,
+
+            "notification_id": (
+                str(notification.id)
+            )
+        }
+    )
+
+    return notification
+
+
+# =========================================================
+# MARK NOTIFICATIONS AS READ
+# =========================================================
 
 @router.put("/mark-read")
 async def mark_notification_read(

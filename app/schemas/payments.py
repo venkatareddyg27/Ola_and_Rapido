@@ -1,10 +1,8 @@
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
-from typing import Optional, List, Dict, Any
-
+from typing import Optional,Dict, Any
 from pydantic import BaseModel, EmailStr
-
 from app.core.enums import *
 
 
