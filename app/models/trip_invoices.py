@@ -1,13 +1,6 @@
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
-from sqlalchemy import (
-    Column,
-    String,
-    ForeignKey,
-    Numeric,
-    Integer,
-    DateTime,
-    Enum as SqlEnum)
+from sqlalchemy import (Column,String,ForeignKey,Numeric,Integer,DateTime,Enum as SqlEnum)
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.core.enums import TripType,PaymentStatus,InvoiceStatus
@@ -126,7 +119,10 @@ class TripInvoice(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow)
 
-    trip = relationship("Trip", back_populates="invoice")
+    trip = relationship(
+        "Trip",
+        back_populates="invoice")
+
     customer = relationship(
         "User",
         back_populates="trip_invoices")

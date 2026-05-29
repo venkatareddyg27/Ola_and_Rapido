@@ -79,6 +79,7 @@ class RentalDisputeRequest(BaseModel):
     category: DisputeCategory
     description: str
     damage_amount: Optional[Decimal] = None
+    
 
 
 class RentalDriverCreate(BaseModel):

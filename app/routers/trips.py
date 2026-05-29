@@ -352,56 +352,9 @@ async def get_trip_history(
         trips
     }
 
-@router.get(
-    "/{trip_id}",
-    response_model=TripResponse
-)
-async def get_trip(
 
-    trip_id: UUID,
-
-    db: AsyncSession = Depends(
-        get_db
-    ),
-
-    current_user: User = Depends(
-        get_current_user
-    )
-):
-
-    require_customer_role(
-        current_user
-    )
-
-    result = await db.execute(
-
-        select(Trip).where(
-
-            Trip.id == trip_id,
-
-            Trip.customer_id ==
-            current_user.id
-        )
-    )
-
-    trip = result.scalars().first()
-
-    if not trip:
-
-        raise HTTPException(
-
-            status_code=404,
-
-            detail="Trip not found"
-        )
-
-    return trip
-
-
-@router.put("/{trip_id}/cancel")
+@router.put("/cancel")
 async def cancel_trip(
-
-    trip_id: UUID,
 
     reason: str,
 
@@ -421,8 +374,6 @@ async def cancel_trip(
     result = await db.execute(
 
         select(Trip).where(
-
-            Trip.id == trip_id,
 
             Trip.customer_id ==
             current_user.id
@@ -475,10 +426,8 @@ async def cancel_trip(
     }
 
 
-@router.post("/{trip_id}/rate")
+@router.post("/rate")
 async def rate_trip(
-
-    trip_id: UUID,
 
     payload: TripRatingRequest,
 
@@ -498,8 +447,6 @@ async def rate_trip(
     result = await db.execute(
 
         select(Trip).where(
-
-            Trip.id == trip_id,
 
             Trip.customer_id ==
             current_user.id
